@@ -8,63 +8,172 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../wireframes/styles.css">
 <style>
-  body{ background:var(--bg); min-height:100vh; }
-  .wrap{ max-width:640px; margin:0 auto; padding:40px 24px 80px; }
-  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; margin-bottom:20px; }
-  #video{ width:100%; border-radius:var(--radius-md); background:#000; display:none; }
-  .result-card{ display:flex; gap:14px; align-items:center; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:10px; cursor:pointer; }
-  .result-card:hover{ border-color:var(--border-strong); }
-  .result-card img{ width:56px; height:56px; object-fit:cover; border-radius:8px; background:var(--surface-3); flex:0 0 56px; }
-  .status{ font-size:13.5px; color:var(--text-muted); margin-top:10px; }
-  .field{ background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:13px 15px; color:var(--text); font-family:var(--font-body); font-size:14px; width:100%; margin-bottom:10px; }
-  .row{ display:flex; gap:10px; }
-  .err{ color:var(--danger); font-size:13.5px; margin-top:8px; }
-  .collection-item{ display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
-  .collection-item img{ width:44px; height:44px; object-fit:cover; border-radius:7px; background:var(--surface-3); flex:0 0 44px; }
-  .muted{ color:var(--text-muted); font-size:12.5px; }
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(228,168,59,.09), transparent 45%),
+      var(--bg);
+    min-height:100vh;
+  }
+  .shell{ max-width:560px; margin:0 auto; padding:44px 22px 90px; }
+
+  .page-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:30px; }
+  .page-header .brand{ font-size:25px; }
+  .page-header .tag{ font-size:12px; color:var(--text-muted); font-weight:700; letter-spacing:.04em; text-transform:uppercase; border:1px solid var(--border); border-radius:999px; padding:6px 13px; }
+
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:24px; margin-bottom:18px; }
+  .card-head{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+  .card-head .icon-badge{ width:44px; height:44px; border-radius:12px; margin-bottom:0; flex:0 0 auto; }
+  .card-head-title{ font-weight:800; font-size:16.5px; }
+  .card-head-sub{ font-size:12.5px; color:var(--text-muted); margin-top:1px; }
+
+  .field{ margin-bottom:11px; }
+  .field:last-of-type{ margin-bottom:0; }
+  .row{ display:flex; gap:10px; margin-top:14px; }
+  .row .btn-primary, .row .btn-secondary{ flex:1; height:48px; }
+  .err{ color:var(--danger); font-size:13px; margin-top:12px; line-height:1.5; }
+
+  .user-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; }
+  .user-id{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .user-avatar{ width:42px; height:42px; border-radius:999px; background:var(--accent-soft); border:1px solid rgba(228,168,59,.35); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; flex:0 0 auto; }
+  .user-email{ font-weight:700; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .user-label{ font-size:12px; color:var(--text-muted); }
+  .btn-secondary.small{ height:38px; padding:0 16px; font-size:13.5px; flex:0 0 auto; }
+
+  .segmented{ margin-bottom:18px; }
+  .segmented-item.disabled{ opacity:.45; pointer-events:none; }
+
+  .scan-frame{ position:relative; border-radius:var(--radius-sm); overflow:hidden; background:radial-gradient(circle at 50% 40%, #262019, #100E0B 75%); min-height:80px; display:flex; align-items:center; justify-content:center; }
+  #video{ width:100%; display:none; background:#000; }
+  .scan-frame.live #video{ display:block; }
+  .reticle{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; display:none; }
+  .scan-frame.live .reticle{ display:block; }
+  .scan-frame.live .placeholder{ display:none; }
+  .placeholder{ padding:46px 20px; text-align:center; color:var(--text-faint); font-size:13.5px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+
+  .status{ font-size:13.5px; color:var(--text-muted); margin-top:14px; min-height:18px; }
+  .status.active{ color:var(--accent); font-weight:700; }
+
+  .count-badge{ color:var(--text-muted); font-weight:600; }
+
+  .list-card + .list-card{ margin-top:10px; }
+  .list-card{ cursor:default; }
+  .result-card{ cursor:pointer; transition:border-color .15s ease, transform .15s ease; }
+  .result-card:hover{ border-color:var(--border-strong); transform:translateY(-1px); }
+  .list-card .cover{ position:relative; overflow:hidden; border-radius:11px; }
+  .list-card .cover img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:opacity .2s ease; }
+  .list-card .chev{ flex:0 0 auto; }
+
+  .empty-state{ text-align:center; padding:26px 10px; color:var(--text-faint); font-size:13.5px; }
+  .empty-state svg{ margin:0 auto 10px; opacity:.6; }
+
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .spinner{ display:inline-block; width:13px; height:13px; border-radius:999px; border:2px solid rgba(228,168,59,.3); border-top-color:var(--accent); animation:spin .7s linear infinite; margin-right:7px; vertical-align:-2px; }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="shell">
 
-  <div class="brand" style="font-size:26px;margin-bottom:26px;">Plattenregal <span class="muted" style="font-family:var(--font-body);font-size:13px;">· Scanner-Prototyp</span></div>
+  <div class="page-header">
+    <div class="brand">Plattenregal</div>
+    <div class="tag">Scanner-Prototyp</div>
+  </div>
 
   <div class="card" id="auth-card">
     <div id="auth-logged-out">
-      <div class="section-title" style="margin-bottom:12px;">Anmelden</div>
+      <div class="card-head">
+        <div class="icon-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        </div>
+        <div>
+          <div class="card-head-title">Anmelden</div>
+          <div class="card-head-sub">Konto benötigt, um deine Sammlung zu speichern</div>
+        </div>
+      </div>
       <input class="field" id="email" type="email" placeholder="E-Mail-Adresse">
       <input class="field" id="password" type="password" placeholder="Passwort (min. 6 Zeichen)">
       <div class="row">
-        <button class="btn-primary" style="flex:1;height:46px;" onclick="signIn()">Anmelden</button>
-        <button class="btn-secondary" style="flex:1;height:46px;" onclick="signUp()">Registrieren</button>
+        <button class="btn-primary" onclick="signIn()">Anmelden</button>
+        <button class="btn-secondary" onclick="signUp()">Registrieren</button>
       </div>
       <div class="err" id="auth-error"></div>
     </div>
     <div id="auth-logged-in" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>Eingeloggt als <strong id="user-email"></strong></div>
-        <button class="btn-secondary" style="height:38px;padding:0 16px;" onclick="signOut()">Abmelden</button>
+      <div class="user-row">
+        <div class="user-id">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div style="min-width:0;">
+            <div class="user-email" id="user-email"></div>
+            <div class="user-label">Angemeldet</div>
+          </div>
+        </div>
+        <button class="btn-secondary small" onclick="signOut()">Abmelden</button>
       </div>
     </div>
   </div>
 
   <div class="card" id="scan-card" style="display:none;">
-    <div class="section-title" style="margin-bottom:12px;">Scannen</div>
-    <video id="video" autoplay muted playsinline></video>
-    <div class="row" style="margin-top:12px;">
-      <button class="btn-primary" style="flex:1;height:48px;" id="scan-btn" onclick="toggleScan()">Barcode-Scan starten</button>
+    <div class="card-head">
+      <div class="icon-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="8" width="10" height="8" rx="1"/><path d="M4 8V6a2 2 0 0 1 2-2h2M20 8V6a2 2 0 0 0-2-2h-2M4 16v2a2 2 0 0 0 2 2h2M20 16v2a2 2 0 0 1-2 2h-2"/></svg>
+      </div>
+      <div>
+        <div class="card-head-title">Scannen</div>
+        <div class="card-head-sub">Barcode der Schallplatte oder CD erfassen</div>
+      </div>
+    </div>
+
+    <div class="segmented" style="display:flex;">
+      <div class="segmented-item active">Barcode</div>
+      <div class="segmented-item disabled" title="Kommt bald">Cover-Foto</div>
+    </div>
+
+    <div class="scan-frame" id="scan-frame">
+      <video id="video" autoplay muted playsinline></video>
+      <svg class="reticle" width="220" height="140" viewBox="0 0 220 140">
+        <path d="M6 26 V6 H26" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M194 6 H214 V26" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M6 114 V134 H26" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M214 114 V134 H194" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+      <div class="placeholder">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="8" width="10" height="8" rx="1"/><path d="M4 8V6a2 2 0 0 1 2-2h2M20 8V6a2 2 0 0 0-2-2h-2M4 16v2a2 2 0 0 0 2 2h2M20 16v2a2 2 0 0 1-2 2h-2"/></svg>
+        Kamera noch nicht aktiv
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn-primary" style="height:52px;" id="scan-btn" onclick="toggleScan()">Barcode-Scan starten</button>
     </div>
     <div class="status" id="scan-status"></div>
   </div>
 
   <div class="card" id="results-card" style="display:none;">
-    <div class="section-title" style="margin-bottom:12px;">Treffer</div>
+    <div class="card-head">
+      <div class="icon-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </div>
+      <div>
+        <div class="card-head-title">Treffer</div>
+        <div class="card-head-sub">Zum Speichern antippen</div>
+      </div>
+    </div>
     <div id="results"></div>
   </div>
 
   <div class="card">
-    <div class="section-title" style="margin-bottom:12px;">Meine Sammlung <span class="muted" id="count-badge"></span></div>
-    <div id="collection"><div class="muted">Melde dich an, um deine Sammlung zu sehen.</div></div>
+    <div class="card-head">
+      <div class="icon-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div class="card-head-title">Meine Sammlung</div>
+          <div class="card-head-sub">Alle gescannten Tonträger</div>
+        </div>
+        <span class="count-badge" id="count-badge"></span>
+      </div>
+    </div>
+    <div id="collection"></div>
   </div>
 
 </div>

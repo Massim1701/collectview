@@ -43,12 +43,21 @@ function renderAuthState() {
     loggedIn.style.display = "block";
     scanCard.style.display = "block";
     document.getElementById("user-email").textContent = currentUser.email;
+    document.getElementById("user-avatar").textContent = currentUser.email.charAt(0).toUpperCase();
   } else {
     loggedOut.style.display = "block";
     loggedIn.style.display = "none";
     scanCard.style.display = "none";
     document.getElementById("results-card").style.display = "none";
   }
+}
+
+// Deterministischer Farbverlauf-Platzhalter für Cover ohne Bild
+function coverClass(seed) {
+  const s = String(seed || "");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return "cover-" + ((h % 6) + 1);
 }
 
 // ---------- Barcode scanning (ZXing) ----------
@@ -65,23 +74,27 @@ async function toggleScan() {
 
   try {
     codeReader = new ZXingBrowser.BrowserMultiFormatReader();
-    video.style.display = "block";
+    document.getElementById("scan-frame").classList.add("live");
     scanning = true;
     btn.textContent = "Scan stoppen";
-    status.textContent = "Kamera wird gestartet …";
+    status.className = "status active";
+    status.innerHTML = '<span class="spinner"></span>Kamera wird gestartet …';
 
     const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
     const deviceId = devices[devices.length - 1]?.deviceId; // meist die Rückkamera zuletzt
 
     scanControls = await codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
       if (result) {
+        status.className = "status";
         status.textContent = "Erkannt: " + result.getText();
         lookupBarcode(result.getText());
         stopScan();
       }
     });
-    status.textContent = "Barcode im Bild positionieren …";
+    status.className = "status active";
+    status.textContent = "Barcode im Rahmen positionieren …";
   } catch (e) {
+    status.className = "status";
     status.textContent = "Kamera-Zugriff fehlgeschlagen: " + e.message;
     scanning = false;
     btn.textContent = "Barcode-Scan starten";
@@ -91,7 +104,7 @@ async function toggleScan() {
 function stopScan() {
   if (scanControls) { scanControls.stop(); scanControls = null; }
   scanning = false;
-  document.getElementById("video").style.display = "none";
+  document.getElementById("scan-frame").classList.remove("live");
   document.getElementById("scan-btn").textContent = "Barcode-Scan starten";
 }
 
@@ -115,7 +128,11 @@ function renderResults(results, barcode) {
   list.innerHTML = "";
 
   if (results.length === 0) {
-    list.innerHTML = `<div class="muted">Keine Treffer für Barcode ${barcode}.</div>`;
+    list.innerHTML = `
+      <div class="empty-state">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        Keine Treffer für Barcode ${escapeHtml(barcode)}.
+      </div>`;
     card.style.display = "block";
     return;
   }
@@ -123,13 +140,16 @@ function renderResults(results, barcode) {
   results.slice(0, 8).forEach((r) => {
     const [artist, title] = splitTitle(r.title);
     const el = document.createElement("div");
-    el.className = "result-card";
+    el.className = "list-card result-card";
     el.innerHTML = `
-      <img src="${r.cover_image || r.thumb || ""}" onerror="this.style.visibility='hidden'">
-      <div style="flex:1;">
-        <div style="font-weight:700;">${escapeHtml(title)}</div>
-        <div class="muted">${escapeHtml(artist)} · ${escapeHtml((r.format || []).join(", "))} · ${r.year || "?"} · ${r.country || "?"}</div>
+      <div class="cover ${coverClass(r.id)}" style="width:56px;height:56px;flex:0 0 56px;">
+        ${(r.cover_image || r.thumb) ? `<img src="${r.cover_image || r.thumb}" onerror="this.style.opacity='0'">` : ""}
       </div>
+      <div style="min-width:0;">
+        <div class="list-card-title">${escapeHtml(title)}</div>
+        <div class="list-card-sub">${escapeHtml(artist)} · ${escapeHtml((r.format || []).join(", "))} · ${r.year || "?"} · ${r.country || "?"}</div>
+      </div>
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
     `;
     el.onclick = () => addToCollection(r, artist, title, barcode);
     list.appendChild(el);
@@ -175,7 +195,7 @@ async function loadCollection() {
   const el = document.getElementById("collection");
   const badge = document.getElementById("count-badge");
   if (!currentUser) {
-    el.innerHTML = `<div class="muted">Melde dich an, um deine Sammlung zu sehen.</div>`;
+    el.innerHTML = `<div class="empty-state">Melde dich an, um deine Sammlung zu sehen.</div>`;
     badge.textContent = "";
     return;
   }
@@ -189,18 +209,24 @@ async function loadCollection() {
     return;
   }
 
-  badge.textContent = `(${data.length})`;
+  badge.textContent = `${data.length}`;
   if (data.length === 0) {
-    el.innerHTML = `<div class="muted">Noch nichts gescannt.</div>`;
+    el.innerHTML = `
+      <div class="empty-state">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Noch nichts gescannt.
+      </div>`;
     return;
   }
 
   el.innerHTML = data.map((item) => `
-    <div class="collection-item">
-      <img src="${item.cover_url || ""}" onerror="this.style.visibility='hidden'">
-      <div>
-        <div style="font-weight:700;">${escapeHtml(item.title)}</div>
-        <div class="muted">${escapeHtml(item.artist)} · ${escapeHtml(item.format || "")} · ${item.year || "?"}</div>
+    <div class="list-card">
+      <div class="cover ${coverClass(item.discogs_id || item.title)}" style="width:52px;height:52px;flex:0 0 52px;">
+        ${item.cover_url ? `<img src="${item.cover_url}" onerror="this.style.opacity='0'">` : ""}
+      </div>
+      <div style="min-width:0;">
+        <div class="list-card-title">${escapeHtml(item.title)}</div>
+        <div class="list-card-sub">${escapeHtml(item.artist)} · ${escapeHtml(item.format || "")} · ${item.year || "?"}</div>
       </div>
     </div>
   `).join("");
