@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onboarding / Login – Wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body class="page-shell">
+<a class="back-link" href="./index.html">&larr; Alle Screens</a>
+
+<div class="app-frame">
+  <div class="scroll" style="padding-top:56px;display:flex;flex-direction:column;">
+
+    <div class="hero-record" style="width:100%;height:220px;border-radius:22px;margin-bottom:32px;position:relative;overflow:hidden;background:linear-gradient(150deg,#2B2E45,#6672BD);">
+      <div style="position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:999px;border:22px solid rgba(0,0,0,.25);"></div>
+      <div style="position:absolute;right:38px;top:38px;width:56px;height:56px;border-radius:999px;background:var(--bg);"></div>
+    </div>
+
+    <div class="brand" style="font-size:30px;margin-bottom:6px;">Plattenregal</div>
+    <div style="color:var(--text-muted);font-size:15px;margin-bottom:30px;">Deine Plattensammlung. Digital.</div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:10px;">
+      <input class="field" type="email" placeholder="E-Mail-Adresse">
+      <input class="field" type="password" placeholder="Passwort">
+    </div>
+    <a href="#" style="font-size:13px;font-weight:700;color:var(--accent);align-self:flex-end;margin:10px 0 22px;">Passwort vergessen?</a>
+
+    <button class="btn-primary" style="height:56px;font-size:15.5px;margin-bottom:20px;">Anmelden</button>
+
+    <div class="divider-row" style="margin-bottom:20px;">
+      <div class="line"></div> oder <div class="line"></div>
+    </div>
+
+    <button class="btn-secondary" style="height:52px;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">
+      <svg width="17" height="17" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8"/><text x="12" y="16" font-size="11" text-anchor="middle" fill="currentColor" font-family="Manrope">G</text></svg>
+      Mit Google fortfahren
+    </button>
+
+    <div style="flex:1;"></div>
+    <div style="text-align:center;font-size:14px;color:var(--text-muted);padding-top:20px;">Noch kein Konto? <a href="#" style="color:var(--accent);font-weight:800;">Registrieren</a></div>
+
+  </div>
+</div>
+</body>
+</html>
