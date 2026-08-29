@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scanner – Plattenregal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<style>
+  body{ background:var(--bg); min-height:100vh; }
+  .wrap{ max-width:640px; margin:0 auto; padding:40px 24px 80px; }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; margin-bottom:20px; }
+  #video{ width:100%; border-radius:var(--radius-md); background:#000; display:none; }
+  .result-card{ display:flex; gap:14px; align-items:center; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:10px; cursor:pointer; }
+  .result-card:hover{ border-color:var(--border-strong); }
+  .result-card img{ width:56px; height:56px; object-fit:cover; border-radius:8px; background:var(--surface-3); flex:0 0 56px; }
+  .status{ font-size:13.5px; color:var(--text-muted); margin-top:10px; }
+  .field{ background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:13px 15px; color:var(--text); font-family:var(--font-body); font-size:14px; width:100%; margin-bottom:10px; }
+  .row{ display:flex; gap:10px; }
+  .err{ color:var(--danger); font-size:13.5px; margin-top:8px; }
+  .collection-item{ display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+  .collection-item img{ width:44px; height:44px; object-fit:cover; border-radius:7px; background:var(--surface-3); flex:0 0 44px; }
+  .muted{ color:var(--text-muted); font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand" style="font-size:26px;margin-bottom:26px;">Plattenregal <span class="muted" style="font-family:var(--font-body);font-size:13px;">· Scanner-Prototyp</span></div>
+
+  <div class="card" id="auth-card">
+    <div id="auth-logged-out">
+      <div class="section-title" style="margin-bottom:12px;">Anmelden</div>
+      <input class="field" id="email" type="email" placeholder="E-Mail-Adresse">
+      <input class="field" id="password" type="password" placeholder="Passwort (min. 6 Zeichen)">
+      <div class="row">
+        <button class="btn-primary" style="flex:1;height:46px;" onclick="signIn()">Anmelden</button>
+        <button class="btn-secondary" style="flex:1;height:46px;" onclick="signUp()">Registrieren</button>
+      </div>
+      <div class="err" id="auth-error"></div>
+    </div>
+    <div id="auth-logged-in" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>Eingeloggt als <strong id="user-email"></strong></div>
+        <button class="btn-secondary" style="height:38px;padding:0 16px;" onclick="signOut()">Abmelden</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="scan-card" style="display:none;">
+    <div class="section-title" style="margin-bottom:12px;">Scannen</div>
+    <video id="video" autoplay muted playsinline></video>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn-primary" style="flex:1;height:48px;" id="scan-btn" onclick="toggleScan()">Barcode-Scan starten</button>
+    </div>
+    <div class="status" id="scan-status"></div>
+  </div>
+
+  <div class="card" id="results-card" style="display:none;">
+    <div class="section-title" style="margin-bottom:12px;">Treffer</div>
+    <div id="results"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title" style="margin-bottom:12px;">Meine Sammlung <span class="muted" id="count-badge"></span></div>
+    <div id="collection"><div class="muted">Melde dich an, um deine Sammlung zu sehen.</div></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://unpkg.com/@zxing/browser@0.2.1"></script>
+<script src="./config.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
