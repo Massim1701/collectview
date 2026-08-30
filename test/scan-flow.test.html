@@ -489,6 +489,25 @@ test("Zufallstreffer der unscharfen Suche werden aussortiert", async () => {
   assertIncludes(out().textContent, "aussortiert");
 });
 
+test("Aussortierte Treffer bleiben erreichbar", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([
+    fremderTreffer(9, "Black Eyed Peas - Greatest Hits"),
+    fremderTreffer(8, "Various - Full Moon Party"),
+  ]);
+
+  await lookupBarcode("111");
+  assertEqual(head(), "Keine Treffer");
+
+  const link = out().querySelector('[data-action="show-dropped"]');
+  assert(link, "ein Filter darf nichts spurlos verschwinden lassen");
+  link.click();
+
+  assertIncludes(head(), "Treffer gefunden");
+  assertIncludes(out().textContent, "Black Eyed Peas");
+});
+
 test("Ein einzelner Zufallstreffer springt nicht mehr aufs Ergebnis", async () => {
   resetStub();
   if (scanning) stopScan();

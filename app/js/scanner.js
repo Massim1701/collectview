@@ -600,6 +600,13 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     // die angezeigt werden – größere Stichprobe, klareres Bild.
     const alle = echte.map((r) => normalizeResult(r, barcode));
     const results = alle.slice(0, 8);
+    // Was der Abgleich aussortiert hat, bleibt erreichbar. Ein Filter,
+    // der Dinge spurlos verschwinden lässt, ist schlimmer als keiner:
+    // liegt er daneben, steht der Nutzer ohne Weg da.
+    currentScan.aussortiert = roh
+      .filter((r) => !resultHasBarcode(r, barcode))
+      .slice(0, 8)
+      .map((r) => normalizeResult(r, barcode));
 
     // Discogs hat geantwortet, aber nichts davon trägt diesen Barcode:
     // das ist "nicht gefunden", nicht "hier ist deine Platte".
@@ -637,11 +644,13 @@ async function showScan(barcode, results, collectionByBarcodePromise, quelle = "
   ]);
 
   const verworfen = currentScan.verworfen || 0;
+  const aussortiert = currentScan.aussortiert || [];
   currentScan = {
     barcode,
     results,
     quelle,
     verworfen,
+    aussortiert,
     statusData: { collection: [...byBarcode, ...byId], wishlist: wished },
   };
 
@@ -714,7 +723,11 @@ function renderNoMatch(barcode) {
           ? `Zu Barcode ${barcode} gibt es bei Discogs keine passende Veröffentlichung. ` +
             `${currentScan.verworfen} ähnliche Einträge wurden aussortiert – ihr Barcode ist ein anderer.`
           : `Zu Barcode ${barcode} kennt Discogs keine Veröffentlichung. Bei älteren Platten ohne Barcode hilft die Cover-Suche.`,
-    }) + manualHintMarkup();
+    }) +
+    (currentScan.verworfen > 0
+      ? `<p class="manual-hint"><button type="button" class="linklike" data-action="show-dropped">Die ${currentScan.verworfen} aussortierten Treffer ansehen</button></p>`
+      : "") +
+    manualHintMarkup();
 }
 
 /**
@@ -941,6 +954,12 @@ resultsEl.addEventListener("click", (e) => {
   if (action === "discard") discardResult();
   if (action === "weiter") weiterScannen("");
   if (action === "show-anyway") renderResultList();
+  if (action === "show-dropped") {
+    // Ausdrücklich gewollt: der Abgleich kann danebenliegen, etwa wenn
+    // ein Discogs-Eintrag gar keinen Barcode hinterlegt hat.
+    currentScan.results = currentScan.aussortiert;
+    renderResultList();
+  }
   if (!item) return;
   if (action === "add-collection") saveToCollection(item);
   if (action === "add-wishlist") saveToWishlist(item);

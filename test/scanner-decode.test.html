@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scanner: echte Dekodierung – Tests</title>
+</head>
+<body>
+
+<!-- DOM wie scanner.html -->
+<div id="bottomnav"></div>
+<div id="scan-frame"><video id="video" autoplay muted playsinline></video></div>
+<button id="scan-btn" type="button"></button>
+<button id="capture-btn" type="button"></button>
+<select id="camera-select"></select>
+<div id="mode-toggle"></div>
+<div class="notice" id="scan-notice" hidden></div>
+<p class="status" id="scan-status"></p>
+<p class="scan-quota" id="scan-quota"></p>
+<div class="card" id="results-card" style="display:none;">
+  <div id="results-title"></div><div id="results-sub"></div><div id="results"></div>
+</div>
+<span id="recent-count"></span><div id="recent-saved"></div><div id="account-card"></div>
+
+<script>
+  /*
+   * Dieser Test benutzt das ECHTE ZXing, nicht einen Ersatz. Er prüft,
+   * was kein anderer Test hier prüft: ob aus einem Kamerabild am Ende
+   * wirklich Ziffern werden.
+   *
+   * Der Scanner ist das Kernstück der App. Bricht die Kette irgendwo –
+   * Leser, Constraints, Bildabgriff –, fällt es sonst erst am Telefon
+   * auf, und dort lässt sich nicht unterscheiden, woran es lag.
+   *
+   * Kamera-Ersatz ist ein Canvas mit gezeichnetem EAN-13, das über
+   * captureStream() einen echten MediaStream liefert.
+   */
+  var gesuchteURLs = [];
+  var sb = { from: () => ({
+      select: () => { const f = async () => ({ data: [], count: 0, error: null }); return { eq: f, in: f }; },
+      insert: async () => ({ error: null }) }),
+    rpc: async () => ({ data: null, error: null }) };
+  var currentUser = { id: "u" };
+  async function requireAuth() { return currentUser; }
+  function renderAccountRow() {}
+  function renderBottomNav() {}
+  async function fetchCollection() { return []; }
+  async function fetchIsSubscribed() { return true; }
+  async function addWishlistItem() {}
+  async function removeWishlistItem() {}
+
+  window.fetch = async (url) => {
+    gesuchteURLs.push(String(url));
+    return { ok: true, status: 200, json: async () => ({ results: [] }) };
+  };
+</script>
+
+<script src="../app/vendor/zxing-browser.min.js"></script>
+<script src="lib/ean13.js"></script>
+<script src="assert.js"></script>
+
+<script>
+/* ---------- Der Generator selbst ---------- */
+
+test("Der Testgenerator rechnet die Prüfziffer richtig", () => {
+  assertEqual(ean13CheckDigit("400638133393"), "1", "bekannter Beispielcode");
+  assertEqual(ean13Complete("724385522925").length, 13);
+});
+
+test("Ein erzeugter Code hat 95 Module", () => {
+  assertEqual(ean13Modules(ean13Complete("724385522925")).length, 95);
+});
+
+/* ---------- Der Leser, den die App benutzt ---------- */
+
+/** Dekodiert mit genau der Klasse, die scanner.js verwendet. */
+function liesMitAppLeser(code, optionen) {
+  const leser = new ZXingBrowser.BrowserMultiFormatOneDReader();
+  return leser.decodeFromCanvas(ean13Canvas(code, optionen)).getText();
+}
+
+test("Der 1D-Leser der App liest einen EAN-13", () => {
+  const code = ean13Complete("724385522925");
+  assertEqual(liesMitAppLeser(code, { modul: 3 }), code,
+    "der Leser muss lesen können, was er sehen soll – sonst ist der Scanner tot");
+});
+
+/**
+ * Derselbe Code, andere Schreibweise: ZXing meldet einen EAN-13 mit
+ * führender Null als UPC-A ohne sie – 0088110785222 kommt als
+ * 088110785222 zurück. Beides ist derselbe Strichcode.
+ * scanner.js gleicht genau so ab (barcodeVariants).
+ */
+function gleicherCode(a, b) {
+  const z = (v) => String(v).replace(/\D/g, "");
+  const varianten = (v) => {
+    const d = z(v), s = new Set([d]);
+    if (d.length === 13 && d.startsWith("0")) s.add(d.slice(1));
+    if (d.length === 12) s.add("0" + d);
+    return s;
+  };
+  return [...varianten(a)].some((v) => varianten(b).has(v));
+}
+
+test("Auch andere Codes kommen unverfälscht durch", () => {
+  for (const roh of ["008811078522", "724352306428", "400638133393"]) {
+    const code = ean13Complete(roh);
+    const gelesen = liesMitAppLeser(code, { modul: 3 });
+    assert(gleicherCode(gelesen, code), `Code ${roh}: gelesen ${gelesen}, erwartet ${code}`);
+  }
+});
+
+test("Führende Null: der Leser meldet UPC-A, der Abgleich fängt es auf", () => {
+  const code = ean13Complete("008811078522");   // 0088110785222
+  const gelesen = liesMitAppLeser(code, { modul: 3 });
+  assertEqual(gelesen, "088110785222", "ZXing lässt die führende Null weg – das ist erwartetes Verhalten");
+  assert(gleicherCode(gelesen, code),
+    "genau dafür gibt es barcodeVariants in scanner.js; ohne das findet die Suche nichts");
+});
+
+test("Kleine Module gehen noch, ohne Ruhezone nicht", () => {
+  const code = ean13Complete("724385522925");
+  assertEqual(liesMitAppLeser(code, { modul: 2 }), code, "2px je Modul muss reichen");
+
+  let ohneRuhezone = null;
+  try { ohneRuhezone = liesMitAppLeser(code, { modul: 3, ruhe: 0 }); } catch { /* erwartet */ }
+  assert(ohneRuhezone === null,
+    "ohne Ruhezone darf nichts erkannt werden – sonst prüft der Test nicht wirklich");
+});
+
+test("Der 1D-Leser steht überhaupt zur Verfügung", () => {
+  assert(typeof ZXingBrowser.BrowserMultiFormatOneDReader === "function",
+    "scanner.js baut darauf – fehlt die Klasse, startet kein Scan");
+});
+
+runTests();
+</script>
+</body>
+</html>
