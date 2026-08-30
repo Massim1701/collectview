@@ -172,6 +172,9 @@ svg{ display:block; }
 .hero-copy{ font-size:18px; color:var(--text-muted); line-height:1.65; margin-bottom:34px; max-width:520px; }
 .hero-visual{ flex:1; display:flex; justify-content:center; }
 .hero-record{ position:relative; width:340px; height:340px; }
+.hero-photo{ position:relative; width:100%; max-width:560px; aspect-ratio:16/9; border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-frame); }
+.hero-photo::after{ content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 1px rgba(255,255,255,.08); pointer-events:none; }
+.hero-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
 .landing-section{ padding:90px 44px; }
 .landing-section-alt{ background:var(--surface); }
 .section-heading{ font-family:var(--font-display); font-style:italic; font-size:38px; text-align:center; margin:0 0 12px; }
