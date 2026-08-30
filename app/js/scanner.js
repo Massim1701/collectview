@@ -14,6 +14,7 @@ const videoEl = document.getElementById("video");
 const frameEl = document.getElementById("scan-frame");
 const scanBtn = document.getElementById("scan-btn");
 const statusEl = document.getElementById("scan-status");
+const noticeEl = document.getElementById("scan-notice");
 const resultsCard = document.getElementById("results-card");
 const resultsEl = document.getElementById("results");
 const recentEl = document.getElementById("recent-saved");
@@ -75,14 +76,53 @@ document.addEventListener("visibilitychange", () => {
 
 /* ---------- Discogs ---------- */
 
+/**
+ * Hinweis auf das Discogs-Rate-Limit (25 Anfragen pro Minute und IP).
+ * Auf Börsen und Messen teilen sich viele Besucher dieselbe WLAN-IP, das
+ * Limit ist dann schnell erreicht. Der Hinweis bleibt bewusst stehen, bis
+ * eine Suche wieder durchgeht – niemand soll ihn wegblinzeln, während er
+ * gerade die Netzwerkeinstellungen umstellt.
+ */
+function showRateLimitNotice(barcode) {
+  noticeEl.hidden = false;
+  noticeEl.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/>
+    </svg>
+    <div class="notice-body">
+      <strong>Gerade viele Scans im selben WLAN?</strong>
+      <span>Schalte auf mobiles Internet um, dann hast du dein eigenes Limit.</span>
+      <button class="btn-secondary small" type="button" data-action="retry-lookup">Erneut versuchen</button>
+    </div>`;
+  noticeEl.querySelector('[data-action="retry-lookup"]')
+    .addEventListener("click", () => lookupBarcode(barcode));
+}
+
+function hideRateLimitNotice() {
+  noticeEl.hidden = true;
+  noticeEl.innerHTML = "";
+}
+
 async function lookupBarcode(barcode) {
   setStatus("Suche bei Discogs …", { active: true, busy: true });
   try {
     const res = await fetch(
       `https://api.discogs.com/database/search?barcode=${encodeURIComponent(barcode)}&type=release`,
     );
+
+    // 429 = Rate Limit. Bewusst kein automatischer Neuversuch: das würde
+    // das Limit nur weiter belasten. Der Nutzer entscheidet, wann erneut.
+    if (res.status === 429) {
+      showRateLimitNotice(barcode);
+      setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
+      return;
+    }
+
     if (!res.ok) throw new Error(`Discogs antwortete mit ${res.status}`);
+
     const data = await res.json();
+    hideRateLimitNotice();
     renderResults(data.results || [], barcode);
     setStatus(data.results?.length ? "Treffer gefunden – zum Speichern antippen." : "");
   } catch (e) {

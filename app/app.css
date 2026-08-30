@@ -6,18 +6,9 @@
    Lade-/Leerzustände, Formularfelder.
    ===================================================================== */
 
-/* --------------------------------------------------------------
-   Abgeleitete Textfarben.
-   Die Tokens aus styles.css sind für Flächen gedacht; als Textfarbe
-   auf dem Creme-Hintergrund reichen sie nicht:
-     --accent      #FF9635 auf #FBF6EC = 2,0:1
-     --text-faint  #A69A80 auf #FBF6EC = 2,6:1   (nötig: 4,5:1)
-   Für Text deshalb abgedunkelte Varianten, gleicher Farbton.
-   Flächen (FAB, Buttons, Chips) benutzen weiter das Original.
-   -------------------------------------------------------------- */
-:root{
-  --accent-text: color-mix(in srgb, var(--accent) 62%, #000);  /* ~4,8:1 */
-}
+/* Farben kommen aus styles.css. Für Text gelten dort --accent-text und
+   --danger-ink (abgedunkelt, WCAG AA); --accent und --danger bleiben den
+   Flächen vorbehalten. */
 
 body{
   background:
@@ -71,7 +62,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .field:last-of-type{ margin-bottom:0; }
 .row{ display:flex; gap:10px; margin-top:14px; }
 .row .btn-primary, .row .btn-secondary{ flex:1; height:48px; }
-.err{ color:var(--danger-ink, var(--danger)); font-size:13px; margin-top:12px; line-height:1.5; }
+.err{ color:var(--danger-ink); font-size:13px; margin-top:12px; line-height:1.5; }
 .note{ color:var(--text-muted); font-size:13px; margin-top:12px; line-height:1.5; }
 
 .btn-primary, .btn-secondary{ transition:filter .15s ease, border-color .15s ease, transform .15s ease; }
@@ -87,8 +78,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .user-avatar{
   width:42px; height:42px; border-radius:999px; background:var(--accent-soft);
   border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  /* Initiale steht auf --accent-soft, braucht deshalb noch etwas dunkler */
-  color:color-mix(in srgb, var(--accent) 55%, #000);
+  color:var(--accent-text);
   display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; flex:0 0 auto;
 }
 .user-email{ font-weight:700; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -189,8 +179,7 @@ a.list-card:hover, .list-card[role="button"]:hover{ border-color:var(--border-st
   display:flex; justify-content:space-around; align-items:center;
 }
 /* 44px+ Touch-Ziel, auch wenn das Label klein ist */
-.navitem{ min-width:58px; min-height:46px; justify-content:center; cursor:pointer; transition:color .15s ease;
-  color:var(--text-muted); }
+.navitem{ min-width:58px; min-height:46px; justify-content:center; cursor:pointer; transition:color .15s ease; }
 .navitem:hover{ color:var(--text); }
 .navitem.active, .navitem.active:hover{ color:var(--accent-text); }
 .bottomnav .fab{ flex:0 0 auto; }
@@ -257,29 +246,40 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 
 .community-note{ text-align:center; font-size:12.5px; color:var(--text-muted); margin-top:22px; }
 
-/* --danger (#E1573C) erreicht als Text auf dem Creme-Hintergrund nur 3,5:1.
-   Für Text und gefüllte Flächen deshalb eine abgedunkelte Variante ableiten
-   (~4,6:1), ohne den Farbton des Tokens zu verlassen. */
-:root{ --danger-ink: color-mix(in srgb, var(--danger) 85%, #000); }
-
 /* Löschen: zweistufig, damit kein Fehlgriff die Platte kostet */
 .danger-zone{ margin-top:34px; border-top:1px solid var(--border); padding-top:8px; }
 /* .menu-item ist in styles.css für <div> gedacht – als <button> muss die
    Browser-Umrandung weg, der Trenner unten bleibt. */
 .menu-item{ width:100%; background:none; font-family:var(--font-body); text-align:left; cursor:pointer;
   border:none; border-bottom:1px solid var(--border); }
-.menu-item.danger{ border-bottom:none; color:var(--danger-ink, var(--danger)); }
+.menu-item.danger{ border-bottom:none; color:var(--danger-ink); }
 .menu-item.danger svg{ stroke:currentColor; }
 .confirm-box{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; }
 .confirm-box p{ margin:0 0 14px; font-size:14px; line-height:1.5; }
 .confirm-box .row{ margin-top:0; }
 .btn-danger{
-  background:var(--danger-ink, var(--danger)); color:#fff; border:none; border-radius:var(--radius-sm);
+  background:var(--danger-ink); color:#fff; border:none; border-radius:var(--radius-sm);
   font-family:var(--font-body); font-weight:700; font-size:15px; cursor:pointer;
   transition:filter .15s ease;
 }
 .btn-danger:hover{ filter:brightness(1.07); }
 .btn-danger[disabled]{ opacity:.5; pointer-events:none; }
 
-/* Akzentfarbener Text braucht die abgedunkelte Variante (siehe oben) */
-.section-title .see-all{ color:var(--accent-text); }
+/* ===== Hinweisbanner (z. B. Discogs-Rate-Limit) =====
+   Auffällig, aber nicht blockierend: die Seite bleibt bedienbar, der
+   Hinweis verschwindet erst, wenn die Ursache weg ist. */
+.notice{
+  display:flex; gap:12px; align-items:flex-start;
+  background:var(--accent-soft);
+  border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius:var(--radius-sm);
+  padding:14px 16px; margin-top:16px;
+  font-size:13.5px; line-height:1.5; color:var(--text);
+}
+/* display:flex schlägt sonst das hidden-Attribut – ohne diese Zeile
+   bleibt ein leerer Balken stehen. */
+.notice[hidden]{ display:none; }
+.notice > svg{ flex:0 0 auto; color:var(--accent-text); margin-top:1px; }
+.notice .notice-body{ min-width:0; display:flex; flex-direction:column; align-items:flex-start; }
+.notice strong{ display:block; font-weight:800; margin-bottom:2px; }
+.notice .btn-secondary{ margin-top:12px; }
