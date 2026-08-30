@@ -24,6 +24,7 @@ App + Webseite zum Katalogisieren von Schallplatten, CDs und Musik-DVDs/Blu-rays
 | `index.html` | Home-Dashboard: Kennzahlen, zuletzt hinzugefügt, Formatübersicht |
 | `collection.html` | Sammlung mit Suche, Formatfilter und Sortierung |
 | `scanner.html` | Barcode-Scan (ZXing) → Discogs-Lookup → speichern |
+| `detail.html?id=<uuid>` | Ein Tonträger: Tracklist, Hörlinks, Details, Löschen |
 
 Alle Seiten sind geschützt: ohne Session leitet `requireAuth()` auf
 `login.html?next=…` um.
@@ -42,15 +43,28 @@ supabase-js → config.js → ui.js → auth.js → db.js → <seite>.js
 | `auth.js` | Supabase-Client (`sb`), Session, `requireAuth()`, An-/Abmelden |
 | `db.js` | Abfragen auf `collection_items`, Kennzahlen, Filter, Suche, Sortierung |
 | `ui.js` | Geteilte Render-Bausteine (Cover, Listenkarte, Leerzustände, Bottom-Nav) |
-| `home.js`, `collection.js`, `scanner.js`, `login.js` | Seitenlogik |
+| `home.js`, `collection.js`, `scanner.js`, `detail.js`, `login.js` | Seitenlogik |
 
 `app/app.css` liegt als App-Layer über `wireframes/styles.css` und ergänzt nur,
 was die echten Seiten zusätzlich brauchen (responsives Shell statt Phone-Frame,
 fixierte Bottom-Nav, Lade- und Leerzustände).
 
+Dort werden außerdem `--accent-text` und `--danger-ink` abgeleitet: `--accent`
+und `--danger` erreichen als **Textfarbe** auf dem Creme-Hintergrund nur 2,0:1
+bzw. 3,5:1 und damit nicht die von WCAG AA geforderten 4,5:1. Als Flächenfarbe
+(FAB, Buttons, Chips) bleiben die Tokens unverändert im Einsatz.
+
 ## Datenquelle
 
-Discogs API (`/database/search?barcode=…`) – deckt auch Musik-DVDs/Blu-rays ab.
+Discogs API, zwei Endpoints:
+
+- `/database/search?barcode=…` – Treffersuche beim Scannen, deckt auch
+  Musik-DVDs/Blu-rays ab.
+- `/releases/<id>` – Tracklist, Label, Katalognummer, Genres und Videos für
+  die Detailseite. Ohne Token auf 25 Anfragen pro Minute begrenzt.
+
+Spotify wird bewusst nur als vorbereitete Suche verlinkt: Discogs liefert
+keine Spotify-ID, ein direkter Link wäre geraten.
 
 ## Datenbank
 
