@@ -15,12 +15,19 @@ renderBottomNav(document.getElementById("bottomnav"), "search");
 let codeReader = null;
 let scanControls = null;
 let scanning = false;
+let coverStream = null;
+
+/** "barcode" oder "cover" – steuert, welche Kamerafunktion der Scan-Button startet. */
+let mode = "barcode";
 
 const RECENT_LIMIT = 3;
 
 const videoEl = document.getElementById("video");
 const frameEl = document.getElementById("scan-frame");
 const scanBtn = document.getElementById("scan-btn");
+const captureBtn = document.getElementById("capture-btn");
+const cameraSelect = document.getElementById("camera-select");
+const modeToggle = document.getElementById("mode-toggle");
 const statusEl = document.getElementById("scan-status");
 const noticeEl = document.getElementById("scan-notice");
 const resultsCard = document.getElementById("results-card");
@@ -42,9 +49,59 @@ function setResultsHead(title, sub) {
   resultsSubEl.textContent = sub;
 }
 
+/* ---------- Modus & Kameraauswahl ----------
+   Am Rechner hängen oft mehrere Kameras dran (eingebaute Webcam + externe
+   USB-Webcam). Die Liste füllt sich erst NACH der ersten Kamerafreigabe,
+   weil Browser Gerätenamen sonst aus Datenschutzgründen leer lassen. */
+
+function setMode(next) {
+  if (scanning || coverStream) stopScan();
+  mode = next;
+  modeToggle.querySelectorAll(".segmented-item").forEach((el) => {
+    el.classList.toggle("active", el.dataset.mode === mode);
+  });
+  scanBtn.textContent = mode === "barcode" ? "Barcode-Scan starten" : "Kamera starten";
+  captureBtn.hidden = true;
+}
+
+modeToggle.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-mode]");
+  if (el) setMode(el.dataset.mode);
+});
+
+async function refreshCameraList(selectedId) {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter((d) => d.kind === "videoinput");
+    if (cams.length < 2) {
+      cameraSelect.hidden = true;
+      cameraSelect.innerHTML = "";
+      return;
+    }
+    cameraSelect.innerHTML = cams
+      .map((d, i) => `<option value="${escapeHtml(d.deviceId)}">${escapeHtml(d.label || "Kamera " + (i + 1))}</option>`)
+      .join("");
+    if (selectedId) cameraSelect.value = selectedId;
+    cameraSelect.hidden = false;
+  } catch {
+    // Kein Zugriff auf enumerateDevices (z. B. kein https) – dann bleibt es
+    // bei der Standardkamera, kein Grund den Scan abzubrechen.
+  }
+}
+
+cameraSelect.addEventListener("change", () => {
+  if (mode === "barcode" && scanning) {
+    stopScan();
+    toggleScan();
+  } else if (mode === "cover" && coverStream) {
+    startCoverCamera();
+  }
+});
+
 /* ---------- Barcode-Scan ---------- */
 
 async function toggleScan() {
+  if (mode !== "barcode") return;
   if (scanning) {
     stopScan();
     return;
@@ -58,7 +115,7 @@ async function toggleScan() {
     setStatus("Kamera wird gestartet …", { active: true, busy: true });
 
     const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
-    const deviceId = devices[devices.length - 1]?.deviceId; // meist die Rückkamera zuletzt
+    const deviceId = cameraSelect.value || devices[devices.length - 1]?.deviceId; // meist die Rückkamera zuletzt
 
     scanControls = await codeReader.decodeFromVideoDevice(deviceId, videoEl, (result) => {
       if (!result) return;
@@ -67,6 +124,7 @@ async function toggleScan() {
       stopScan();
     });
 
+    await refreshCameraList(deviceId);
     setStatus("Barcode im Rahmen positionieren …", { active: true });
   } catch (e) {
     scanning = false;
@@ -81,16 +139,129 @@ function stopScan() {
     scanControls.stop();
     scanControls = null;
   }
+  if (coverStream) {
+    coverStream.getTracks().forEach((t) => t.stop());
+    coverStream = null;
+    videoEl.srcObject = null;
+  }
   scanning = false;
   frameEl.classList.remove("live");
-  scanBtn.textContent = "Barcode-Scan starten";
+  captureBtn.hidden = true;
+  scanBtn.textContent = mode === "barcode" ? "Barcode-Scan starten" : "Kamera starten";
 }
 
 // Kamera freigeben, wenn die Seite verlassen oder in den Hintergrund geschoben wird.
 window.addEventListener("pagehide", stopScan);
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden && scanning) stopScan();
+  if (document.hidden && (scanning || coverStream)) stopScan();
 });
+
+/* ---------- Cover-Foto ---------- */
+
+async function startCoverCamera() {
+  try {
+    if (coverStream) coverStream.getTracks().forEach((t) => t.stop());
+    const deviceId = cameraSelect.value || undefined;
+    coverStream = await navigator.mediaDevices.getUserMedia({
+      video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" },
+    });
+    videoEl.srcObject = coverStream;
+    frameEl.classList.add("live");
+    scanning = true;
+    scanBtn.textContent = "Kamera stoppen";
+    captureBtn.hidden = false;
+    setStatus("Cover gut ausgeleuchtet in den Rahmen halten, dann „Foto aufnehmen“.", { active: true });
+    await refreshCameraList(deviceId);
+  } catch (e) {
+    setStatus("Kamera-Zugriff fehlgeschlagen: " + e.message);
+  }
+}
+
+function toggleCoverCamera() {
+  if (coverStream) {
+    stopScan();
+  } else {
+    startCoverCamera();
+  }
+}
+
+/** Frame aus dem Video ziehen und per Tesseract.js (läuft im Browser, kein
+    externer Dienst nötig) auf Text untersuchen – Titel/Interpret stehen
+    meist irgendwo auf dem Cover, exakt ist die Erkennung aber nicht.
+    Deshalb landet das Ergebnis editierbar in einem Suchfeld statt direkt
+    in einer Discogs-Suche. */
+async function captureCoverPhoto() {
+  if (!coverStream) return;
+  captureBtn.disabled = true;
+  setStatus("Text auf dem Cover wird gelesen …", { active: true, busy: true });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = videoEl.videoWidth;
+  canvas.height = videoEl.videoHeight;
+  canvas.getContext("2d").drawImage(videoEl, 0, 0);
+
+  let guess = "";
+  try {
+    const { data } = await Tesseract.recognize(canvas, "deu+eng");
+    guess = (data.text || "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length >= 3 && /[a-zA-ZäöüÄÖÜ]/.test(l))
+      .slice(0, 2)
+      .join(" ");
+  } catch (e) {
+    setStatus("Texterkennung fehlgeschlagen – Text von Hand eintragen.", { active: true });
+  }
+
+  captureBtn.disabled = false;
+  setStatus("");
+  renderCoverGuessForm(guess);
+}
+
+function renderCoverGuessForm(guess) {
+  resultsCard.style.display = "block";
+  setResultsHead("Cover-Foto", "Erkannter Text – bei Bedarf korrigieren, dann suchen.");
+  resultsEl.innerHTML = `
+    <form id="cover-guess-form" class="manual-form">
+      <input class="field" id="cover-guess-text" placeholder="Titel und/oder Interpret" value="${escapeHtml(guess)}">
+      <div class="scan-actions">
+        <button class="btn-primary" type="submit">Bei Discogs suchen</button>
+        <button class="btn-secondary" type="button" data-action="discard">Verwerfen</button>
+      </div>
+      <p class="err" id="scan-error" role="alert"></p>
+    </form>`;
+  document.getElementById("cover-guess-form").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const text = document.getElementById("cover-guess-text").value.trim();
+    if (text) lookupCoverText(text);
+  });
+}
+
+/** Wie lookupBarcode, aber Freitextsuche statt Barcode – barcode/collection-
+    Abgleich läuft hier nur über die discogs_id, ein Barcode ist ja unbekannt. */
+async function lookupCoverText(text) {
+  setStatus("Suche bei Discogs …", { active: true, busy: true });
+  resultsCard.style.display = "none";
+
+  try {
+    const res = await fetch(
+      `https://api.discogs.com/database/search?q=${encodeURIComponent(text)}&type=release`,
+    );
+    if (res.status === 429) {
+      showRateLimitNotice(text, lookupCoverText);
+      setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
+      return;
+    }
+    if (!res.ok) throw new Error(`Discogs antwortete mit ${res.status}`);
+
+    const data = await res.json();
+    hideRateLimitNotice();
+    const results = (data.results || []).slice(0, 8).map((r) => normalizeResult(r, null));
+    await showScan(null, results, Promise.resolve([]));
+  } catch (e) {
+    setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
+  }
+}
 
 /* ---------- Discogs ---------- */
 
@@ -101,7 +272,7 @@ document.addEventListener("visibilitychange", () => {
  * eine Suche wieder durchgeht – niemand soll ihn wegblinzeln, während er
  * gerade die Netzwerkeinstellungen umstellt.
  */
-function showRateLimitNotice(barcode) {
+function showRateLimitNotice(term, retryFn = lookupBarcode) {
   noticeEl.hidden = false;
   noticeEl.innerHTML = `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -114,7 +285,7 @@ function showRateLimitNotice(barcode) {
       <button class="btn-secondary small" type="button" data-action="retry-lookup">Erneut versuchen</button>
     </div>`;
   noticeEl.querySelector('[data-action="retry-lookup"]')
-    .addEventListener("click", () => lookupBarcode(barcode));
+    .addEventListener("click", () => retryFn(term));
 }
 
 function hideRateLimitNotice() {
@@ -219,7 +390,8 @@ async function showScan(barcode, results, collectionByBarcodePromise) {
 
 function renderResultList() {
   const { results, barcode } = currentScan;
-  setResultsHead(`${results.length} Treffer gefunden`, `Barcode ${barcode} · welche Ausgabe hast du?`);
+  const source = barcode ? `Barcode ${barcode}` : "Cover-Suche";
+  setResultsHead(`${results.length} Treffer gefunden`, `${source} · welche Ausgabe hast du?`);
 
   resultsEl.innerHTML = "";
   results.forEach((item, index) => {
@@ -250,12 +422,15 @@ function renderResultList() {
 }
 
 function renderNoMatch(barcode) {
-  setResultsHead("Keine Treffer", `Barcode ${barcode}`);
+  const source = barcode ? `Barcode ${barcode}` : "Cover-Suche";
+  setResultsHead("Keine Treffer", source);
   resultsEl.innerHTML =
     emptyState({
       iconName: "search",
       title: "Nicht gefunden",
-      text: `Zu Barcode ${barcode} kennt Discogs keine Veröffentlichung. Bei älteren Platten ohne Barcode hilft später die Cover-Erkennung.`,
+      text: barcode
+        ? `Zu Barcode ${barcode} kennt Discogs keine Veröffentlichung. Bei älteren Platten ohne Barcode hilft die Cover-Suche.`
+        : "Discogs kennt dazu nichts. Text anpassen oder manuell anlegen.",
     }) + manualHintMarkup();
 }
 
@@ -290,7 +465,7 @@ function renderResult(item) {
   const status = scanStatusFor(item, currentScan.statusData);
   const many = currentScan.results.length > 1;
 
-  setResultsHead("Treffer", many ? "Andere Ausgabe? Zurück zur Auswahl." : `Barcode ${currentScan.barcode}`);
+  setResultsHead("Treffer", many ? "Andere Ausgabe? Zurück zur Auswahl." : (currentScan.barcode ? `Barcode ${currentScan.barcode}` : "Cover-Suche"));
 
   resultsEl.innerHTML = `
     ${many ? `<button type="button" class="linklike" data-action="back-to-list">← Zurück zur Auswahl</button>` : ""}
@@ -464,7 +639,11 @@ async function init() {
   if (!user) return;
 
   renderAccountRow(document.getElementById("account-card"), user);
-  scanBtn.addEventListener("click", toggleScan);
+  scanBtn.addEventListener("click", () => {
+    if (mode === "barcode") toggleScan();
+    else toggleCoverCamera();
+  });
+  captureBtn.addEventListener("click", captureCoverPhoto);
   loadRecentlySaved();
 }
 

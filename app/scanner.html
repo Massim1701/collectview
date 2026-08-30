@@ -33,6 +33,13 @@
   .status.active{ color:var(--accent-text); font-weight:700; }
 
   .count-badge{ color:var(--text-muted); font-weight:600; font-size:13.5px; }
+
+  /* Kameraauswahl – nur sichtbar, wenn mehr als eine Kamera gefunden wurde
+     (typisch am Rechner: eingebaute Webcam + externe Webcam). */
+  #camera-select{ margin-top:10px; width:100%; }
+  #camera-select[hidden]{ display:none; }
+
+  #capture-btn[hidden]{ display:none; }
 </style>
 </head>
 <body>
@@ -56,9 +63,9 @@
       </div>
     </div>
 
-    <div class="segmented">
-      <div class="segmented-item active">Barcode</div>
-      <div class="segmented-item disabled" title="Kommt bald">Cover-Foto</div>
+    <div class="segmented" id="mode-toggle">
+      <div class="segmented-item active" data-mode="barcode">Barcode</div>
+      <div class="segmented-item" data-mode="cover">Cover-Foto</div>
     </div>
 
     <div class="scan-frame" id="scan-frame">
@@ -75,8 +82,11 @@
       </div>
     </div>
 
+    <select class="field" id="camera-select" hidden aria-label="Kamera wählen"></select>
+
     <div class="row">
       <button class="btn-primary" style="height:52px;" id="scan-btn" type="button">Barcode-Scan starten</button>
+      <button class="btn-secondary" style="height:52px;" id="capture-btn" type="button" hidden>Foto aufnehmen</button>
     </div>
     <div class="notice" id="scan-notice" role="status" aria-live="polite" hidden></div>
     <p class="status" id="scan-status" role="status" aria-live="polite"></p>
@@ -119,6 +129,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://unpkg.com/@zxing/browser@0.2.1"></script>
+<!-- Nur für den Cover-Foto-Modus geladen (siehe scanner.js): Texterkennung
+     läuft komplett im Browser, kein externer API-Key nötig. -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="./config.js"></script>
 <script src="./js/ui.js"></script>
 <script src="./js/auth.js"></script>
