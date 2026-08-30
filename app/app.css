@@ -327,6 +327,21 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .code-form .err{ flex:1 0 100%; margin:0; }
 .code-form .err:empty{ display:none; }
 
+/* Selbsttest: eine Zeile je Glied der Kette, damit "geht nicht" zu
+   einer konkreten Aussage wird. */
+.selftest-row{
+  display:flex; align-items:baseline; gap:var(--space-2);
+  padding:var(--space-2) 0; border-bottom:1px solid var(--border);
+  font-size:var(--text-xs);
+}
+.selftest-row:last-child{ border-bottom:none; }
+.selftest-mark{ flex:0 0 1.1em; font-weight:800; }
+.selftest-row.is-ok  .selftest-mark{ color:var(--accent-text); }
+.selftest-row.is-bad .selftest-mark{ color:var(--danger-ink); }
+.selftest-name{ font-weight:700; flex:0 0 auto; }
+.selftest-info{ color:var(--text-muted); overflow-wrap:anywhere; }
+.selftest-row.is-bad .selftest-info{ color:var(--danger-ink); }
+
 /* ===== Scan-Ergebnis (scanner.html) =====
    Der Treffer bekommt bewusst mehr Fläche als eine Listenzeile: hier
    wird entschieden, ob die Platte ins Regal wandert. */
