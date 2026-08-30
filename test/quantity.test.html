@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Mengenfeld – Tests</title>
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="../app/app.css">
+</head>
+<body>
+
+<main class="shell detail-shell" id="detail" aria-busy="true"></main>
+<div class="bottomnav" id="bottomnav"></div>
+
+<script>
+  /* Stubs statt auth.js/db.js – detail.js braucht nur sb, requireAuth
+     und fetchItem. Ohne ?id= in der URL rendert init() den
+     "Nicht gefunden"-Zustand; die Tests rufen render() danach selbst auf. */
+  var updates = [];
+  var nextError = null;
+
+  var sb = {
+    from(table) {
+      return {
+        update(row) {
+          return {
+            async eq(column, value) {
+              updates.push({ table, row, column, value });
+              return { error: nextError };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  async function requireAuth() { return { id: "user-1" }; }
+  async function fetchItem() { return null; }
+  async function deleteItem() {}
+
+  function resetStub() {
+    updates = [];
+    nextError = null;
+  }
+</script>
+
+<script src="../app/js/ui.js"></script>
+<script src="../app/js/detail.js"></script>
+<script src="assert.js"></script>
+
+<script>
+const zone = () => document.getElementById("quantity-zone");
+const dec = () => zone().querySelector('[data-action="qty-dec"]');
+const inc = () => zone().querySelector('[data-action="qty-inc"]');
+const value = () => zone().querySelector("#qty-value").textContent;
+
+/** Frischer Eintrag mit gegebener Anzahl, auf der Seite gerendert. */
+function showItem(quantity) {
+  resetStub();
+  const item = { id: "item-1", title: "Nevermind", artist: "Nirvana", quantity };
+  render(item, null);
+  return item;
+}
+
+/* ---------- clampQuantity ---------- */
+
+test("clampQuantity lässt gültige Werte durch", () => {
+  assertEqual(clampQuantity(1), 1);
+  assertEqual(clampQuantity(7), 7);
+  assertEqual(clampQuantity(10), 10);
+});
+
+test("clampQuantity kappt unter 1 und über 10", () => {
+  assertEqual(clampQuantity(0), 1, "0 muss auf 1");
+  assertEqual(clampQuantity(-5), 1, "negativ muss auf 1");
+  assertEqual(clampQuantity(11), 10, "11 muss auf 10");
+  assertEqual(clampQuantity(999), 10, "999 muss auf 10");
+});
+
+test("clampQuantity fängt Unbrauchbares ab", () => {
+  assertEqual(clampQuantity(null), 1);
+  assertEqual(clampQuantity(undefined), 1);
+  assertEqual(clampQuantity(""), 1);
+  assertEqual(clampQuantity("abc"), 1);
+  assertEqual(clampQuantity(3.6), 4, "wird gerundet");
+});
+
+/* ---------- Anzeige ---------- */
+
+test("Stepper zeigt die gespeicherte Anzahl", () => {
+  showItem(4);
+  assertEqual(value(), "4");
+  assertIncludes(zone().textContent, "4 Exemplare in deiner Sammlung");
+});
+
+test("Fehlende Anzahl gilt als 1", () => {
+  showItem(undefined);
+  assertEqual(value(), "1");
+  assertIncludes(zone().textContent, "Ein Exemplar");
+});
+
+test("Bei 1 ist Minus gesperrt, bei 10 Plus", () => {
+  showItem(1);
+  assert(dec().disabled, "Minus müsste bei 1 gesperrt sein");
+  assert(!inc().disabled, "Plus müsste bei 1 offen sein");
+
+  showItem(10);
+  assert(!dec().disabled, "Minus müsste bei 10 offen sein");
+  assert(inc().disabled, "Plus müsste bei 10 gesperrt sein");
+});
+
+/* ---------- Speichern ---------- */
+
+test("Plus erhöht um eins und speichert", async () => {
+  const item = showItem(2);
+  inc().click();
+  await tick();
+
+  assertEqual(updates.length, 1, "genau ein Update erwartet");
+  assertEqual(updates[0].table, "collection_items");
+  assertEqual(updates[0].row, { quantity: 3 });
+  assertEqual(updates[0].column, "id");
+  assertEqual(updates[0].value, "item-1");
+  assertEqual(value(), "3", "Anzeige nicht aktualisiert");
+  assertEqual(item.quantity, 3, "Wert am Eintrag nicht mitgeschrieben");
+});
+
+test("Minus verringert um eins und speichert", async () => {
+  showItem(5);
+  dec().click();
+  await tick();
+  assertEqual(updates[0].row, { quantity: 4 });
+  assertEqual(value(), "4");
+});
+
+test("Klick auf gesperrtes Plus bei 10 speichert nichts", async () => {
+  showItem(10);
+  inc().click();
+  await tick();
+  assertEqual(updates.length, 0, "es darf kein Update rausgehen");
+  assertEqual(value(), "10");
+});
+
+test("Klick auf gesperrtes Minus bei 1 speichert nichts", async () => {
+  showItem(1);
+  dec().click();
+  await tick();
+  assertEqual(updates.length, 0, "es darf kein Update rausgehen");
+  assertEqual(value(), "1");
+});
+
+test("Werte außerhalb 1–10 werden vor dem Speichern gekappt", async () => {
+  const item = showItem(5);
+  await setQuantity(item, 99);
+  assertEqual(updates[0].row, { quantity: 10 }, "99 muss als 10 gespeichert werden");
+  assertEqual(value(), "10");
+
+  resetStub();
+  await setQuantity(item, -3);
+  assertEqual(updates[0].row, { quantity: 1 }, "-3 muss als 1 gespeichert werden");
+  assertEqual(value(), "1");
+});
+
+test("Ein Wert, der sich nicht ändert, löst kein Update aus", async () => {
+  const item = showItem(10);
+  await setQuantity(item, 11);
+  assertEqual(updates.length, 0, "11 ist gekappt schon der aktuelle Wert");
+});
+
+test("Nach einem Fehler bleibt der alte Wert stehen", async () => {
+  const item = showItem(3);
+  nextError = { message: "Netzwerk weg" };
+  inc().click();
+  await tick();
+
+  assertEqual(value(), "3", "Anzeige müsste zurückspringen");
+  assertEqual(item.quantity, 3, "Wert am Eintrag darf sich nicht ändern");
+  assertIncludes(document.getElementById("qty-error").textContent, "Netzwerk weg");
+  assert(!inc().disabled, "Buttons müssen wieder bedienbar sein");
+});
+
+/* ---------- Badge in der Sammlungsliste ---------- */
+
+test("Badge erscheint erst ab 2 Exemplaren", () => {
+  assertEqual(qtyBadgeMarkup({ quantity: 1 }), "", "bei 1 kein Badge");
+  assertEqual(qtyBadgeMarkup({}), "", "ohne Angabe kein Badge");
+  assertEqual(qtyBadgeMarkup({ quantity: null }), "", "bei null kein Badge");
+  assertIncludes(qtyBadgeMarkup({ quantity: 3 }), "×3");
+});
+
+test("Listeneintrag trägt das Badge, ohne die Zeile umzubauen", () => {
+  const item = { id: "a", title: "Kid A", artist: "Radiohead", quantity: 2 };
+  const html = plainListRowMarkup(item);
+  assertIncludes(html, "list-card-plain", "Klasse der Textliste fehlt");
+  assertIncludes(html, "×2");
+  assertIncludes(html, "Kid A");
+  assert(!html.includes("<img"), "die Liste darf weiterhin kein Cover laden");
+  assert(!plainListRowMarkup({ id: "b", title: "OK", quantity: 1 }).includes("qty-badge"),
+    "bei 1 darf kein Badge im Markup stehen");
+});
+
+runTests();
+</script>
+</body>
+</html>

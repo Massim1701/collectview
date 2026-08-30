@@ -56,6 +56,17 @@ function listCardMarkup(item) {
 }
 
 /**
+ * "×3", wenn ein Tonträger mehrfach im Regal steht. Bei einem einzelnen
+ * Exemplar (dem Normalfall) bleibt der Platz leer – die Liste soll nicht
+ * bei jedem Eintrag eine 1 tragen.
+ */
+function qtyBadgeMarkup(item) {
+  const n = Number(item.quantity);
+  if (!Number.isFinite(n) || n <= 1) return "";
+  return `<span class="qty-badge" aria-label="${n} Exemplare">×${escapeHtml(n)}</span>`;
+}
+
+/**
  * Listeneintrag ohne Cover – reiner Text, führt zur Detailseite.
  * Für lange Listen (z. B. die Sammlungsübersicht): Cover laden erst
  * auf der Detailseite, nicht vorher für jeden Eintrag.
@@ -67,6 +78,7 @@ function plainListRowMarkup(item) {
         <div class="list-card-title">${escapeHtml(item.title)}</div>
         <div class="list-card-sub">${itemSubtitle(item)}</div>
       </div>
+      ${qtyBadgeMarkup(item)}
       <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </a>`;

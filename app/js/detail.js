@@ -132,6 +132,88 @@ function dangerMarkup() {
     </div>`;
 }
 
+/* ---------- Anzahl eigener Exemplare ---------- */
+
+const QTY_MIN = 1;
+const QTY_MAX = 10;
+
+/**
+ * Auf 1–10 begrenzen; alles Unbrauchbare (null, "", NaN) wird zu 1.
+ * Die Datenbank prüft dasselbe (`check (quantity between 1 and 10)`) –
+ * das hier ist kein Ersatz dafür, sondern verhindert nur, dass die
+ * Buttons überhaupt gegen den Check laufen.
+ */
+function clampQuantity(value) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return QTY_MIN;
+  return Math.min(QTY_MAX, Math.max(QTY_MIN, n));
+}
+
+function quantityHint(n) {
+  return n === 1 ? "Ein Exemplar" : `${n} Exemplare in deiner Sammlung`;
+}
+
+function quantityMarkup(item) {
+  const n = clampQuantity(item.quantity);
+  return `
+    <div class="qty-zone" id="quantity-zone">
+      <div class="qty-label">
+        Exemplare
+        <span class="qty-hint">${escapeHtml(quantityHint(n))}</span>
+      </div>
+      <div class="qty-stepper">
+        <button class="qty-btn" type="button" data-action="qty-dec"
+                aria-label="Ein Exemplar weniger"${n <= QTY_MIN ? " disabled" : ""}>−</button>
+        <span class="qty-value" id="qty-value" role="status" aria-live="polite">${n}</span>
+        <button class="qty-btn" type="button" data-action="qty-inc"
+                aria-label="Ein Exemplar mehr"${n >= QTY_MAX ? " disabled" : ""}>+</button>
+      </div>
+      <p class="err" id="qty-error" role="alert"></p>
+    </div>`;
+}
+
+/**
+ * Anzeige und Button-Zustände setzen. Bewusst kein erneutes innerHTML:
+ * `#qty-value` ist eine Live-Region, die beim Neuaufbau ihre Ansage
+ * verlieren würde.
+ */
+function paintQuantity(n) {
+  const zone = document.getElementById("quantity-zone");
+  if (!zone) return;
+  zone.querySelector("#qty-value").textContent = n;
+  zone.querySelector(".qty-hint").textContent = quantityHint(n);
+  zone.querySelector('[data-action="qty-dec"]').disabled = n <= QTY_MIN;
+  zone.querySelector('[data-action="qty-inc"]').disabled = n >= QTY_MAX;
+}
+
+/**
+ * Neue Anzahl speichern. Der Wert am Objekt wird mitgeschrieben, weil
+ * render() nach dem Discogs-Abruf ein zweites Mal läuft und sonst wieder
+ * den alten Stand zeichnen würde. Schlägt das Update fehl, springt die
+ * Anzeige zurück – gespeichert ist dann nichts.
+ */
+async function setQuantity(item, next) {
+  const value = clampQuantity(next);
+  const previous = clampQuantity(item.quantity);
+  if (value === previous) return;
+
+  const zone = document.getElementById("quantity-zone");
+  const errorEl = document.getElementById("qty-error");
+  errorEl.textContent = "";
+  zone.querySelectorAll("button").forEach((b) => (b.disabled = true));
+
+  const { error } = await sb.from("collection_items").update({ quantity: value }).eq("id", item.id);
+
+  if (error) {
+    errorEl.textContent = `Die Anzahl konnte nicht gespeichert werden: ${error.message}`;
+    paintQuantity(previous);
+    return;
+  }
+
+  item.quantity = value;
+  paintQuantity(value);
+}
+
 /* ---------- Löschen (zweistufig) ---------- */
 
 function askDelete(item) {
@@ -179,6 +261,7 @@ function render(item, release) {
       <h1 class="detail-title">${escapeHtml(item.title)}</h1>
       <div class="detail-artist">${escapeHtml(item.artist || "Unbekannter Interpret")}</div>
       <div class="detail-meta">${metaLine(item, release)}</div>
+      ${quantityMarkup(item)}
       ${listenMarkup(item, release)}
       ${tracklistMarkup(release)}
       ${detailsMarkup(item, release)}
@@ -192,6 +275,8 @@ function render(item, release) {
 shell.addEventListener("click", (e) => {
   const action = e.target.closest("[data-action]")?.dataset.action;
   if (!action || !currentItem) return;
+  if (action === "qty-dec") setQuantity(currentItem, clampQuantity(currentItem.quantity) - 1);
+  if (action === "qty-inc") setQuantity(currentItem, clampQuantity(currentItem.quantity) + 1);
   if (action === "ask-delete") askDelete(currentItem);
   if (action === "cancel-delete") document.getElementById("danger-zone").outerHTML = dangerMarkup();
   if (action === "confirm-delete") confirmDelete(currentItem);
