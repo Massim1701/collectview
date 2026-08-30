@@ -20,6 +20,7 @@
 <div id="mode-toggle"></div>
 <div class="notice" id="scan-notice" hidden></div>
 <p class="status" id="scan-status"></p>
+<p class="scan-quota" id="scan-quota"></p>
 <div class="card" id="results-card" style="display:none;">
   <div class="card-head-title" id="results-title"></div>
   <div class="card-head-sub" id="results-sub"></div>
@@ -32,13 +33,17 @@
 <script>
   /* Stubs statt auth.js/db.js/wishlist.js. Die Tabellen liefern, was
      `rows` für sie hergibt; `inserts` sammelt, was geschrieben wurde. */
-  var rows = { collection_items: [], wishlist_items: [] };
-  var inserts = [];
+  var rows = { collection_items: [], wishlist_items: [], scan_events: [] };
+  var inserts = [];        // alles außer scan_events
+  var scanInserts = [];    // die gezählten Scans
   var wishlistAdds = [];
   var wishlistRemoves = [];
   var insertError = null;
   var wishlistError = null;
   var fetchResponse = null;
+  var fetchCalls = 0;
+  var scanLimitReached = false;   // simuliert den Trigger aus db/scan-limit.sql
+  var subscribed = false;
 
   var sb = {
     from(table) {
@@ -48,17 +53,28 @@
             if (wishlistError && table === "wishlist_items") return { data: null, error: wishlistError };
             const list = rows[table] || [];
             const wanted = Array.isArray(value) ? value.map(String) : [String(value)];
-            return { data: list.filter((r) => wanted.includes(String(r[column]))), error: null };
+            const data = list.filter((r) => wanted.includes(String(r[column])));
+            return { data, count: data.length, error: null };
           };
           return { eq: filter, in: filter };
         },
         async insert(row) {
+          if (table === "scan_events") {
+            if (scanLimitReached) {
+              return { error: { message: "SCAN_LIMIT: keine freien Scans mehr", code: "23514" } };
+            }
+            scanInserts.push(row);
+            rows.scan_events.push(row);
+            return { error: null };
+          }
           inserts.push({ table, row });
           return { error: insertError };
         },
       };
     },
   };
+
+  async function fetchIsSubscribed() { return subscribed; }
 
   var currentUser = { id: "user-1" };
   async function requireAuth() { return currentUser; }
@@ -71,12 +87,14 @@
   }
   async function removeWishlistItem(id) { wishlistRemoves.push(id); }
 
-  window.fetch = async () => fetchResponse;
+  window.fetch = async () => { fetchCalls += 1; return fetchResponse; };
 
   function resetStub() {
-    rows = { collection_items: [], wishlist_items: [] };
-    inserts = []; wishlistAdds = []; wishlistRemoves = [];
+    rows = { collection_items: [], wishlist_items: [], scan_events: [] };
+    inserts = []; scanInserts = []; wishlistAdds = []; wishlistRemoves = [];
     insertError = null; wishlistError = null; fetchResponse = null;
+    fetchCalls = 0; scanLimitReached = false; subscribed = false;
+    scanQuota = { used: 0, subscribed: false, known: false };
   }
 
   /** Discogs-Antwort mit n Treffern nachbauen. */
@@ -90,6 +108,7 @@
 
 <script src="../app/js/ui.js"></script>
 <script src="../app/js/scan-status.js"></script>
+<script src="../app/js/scan-limit.js"></script>
 <script src="../app/js/scanner.js"></script>
 <script src="assert.js"></script>
 
@@ -383,6 +402,118 @@ test("Ohne Titel wird manuell nichts gespeichert", async () => {
   document.getElementById("manual-form").dispatchEvent(new Event("submit", { cancelable: true }));
   await tick();
   assertEqual(inserts.length, 0);
+});
+
+/* ---------- Free-Limit auf Scans ---------- */
+
+const quota = () => document.getElementById("scan-quota").textContent;
+
+test("Kontingent-Text zählt herunter", () => {
+  assertEqual(scanQuotaText(0, false), "Noch 5 von 5 freien Scans.");
+  assertEqual(scanQuotaText(4, false), "Noch 1 von 5 freien Scans.");
+  assertIncludes(scanQuotaText(5, false), "Keine freien Scans mehr");
+  assertIncludes(scanQuotaText(9, false), "Keine freien Scans mehr", "nie negativ");
+});
+
+test("Mit Abo gibt es keine Kontingent-Zeile", () => {
+  assertEqual(scanQuotaText(0, true), "");
+  assertEqual(scanQuotaText(99, true), "", "mit Abo ist die Zahl bedeutungslos");
+});
+
+test("Nur die Trigger-Meldung gilt als Limit", () => {
+  assert(isScanLimitError({ message: "SCAN_LIMIT: keine freien Scans mehr" }));
+  assert(!isScanLimitError({ message: "irgendein anderer Fehler" }));
+  assert(!isScanLimitError(null));
+});
+
+test("Jeder Scan wird vor der Suche protokolliert", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+
+  assertEqual(scanInserts.length, 1, "Scan müsste gezählt sein");
+  assertEqual(scanInserts[0].source, "barcode");
+  assertEqual(scanInserts[0].term, "111");
+  assertEqual(fetchCalls, 1, "und die Suche müsste gelaufen sein");
+});
+
+test("Cover-Suche zählt als Scan mit eigener Quelle", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupCoverText("nirvana nevermind");
+
+  assertEqual(scanInserts.length, 1);
+  assertEqual(scanInserts[0].source, "cover");
+  assertEqual(scanInserts[0].term, "nirvana nevermind");
+});
+
+test("Ist das Limit erreicht, fragt die App Discogs gar nicht erst", async () => {
+  resetStub();
+  scanLimitReached = true;
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+
+  assertEqual(fetchCalls, 0, "ohne Kontingent darf keine Anfrage rausgehen");
+  assertEqual(scanInserts.length, 0);
+  assertEqual(card().style.display, "none", "es darf kein Ergebnis erscheinen");
+  assert(!document.getElementById("scan-notice").hidden, "der Hinweis müsste stehen");
+  assertIncludes(document.getElementById("scan-notice").textContent, "Plattenregal Plus");
+});
+
+test("Auch der Cover-Weg ist bei erreichtem Limit dicht", async () => {
+  resetStub();
+  scanLimitReached = true;
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupCoverText("nirvana");
+
+  assertEqual(fetchCalls, 0);
+  assertIncludes(document.getElementById("scan-notice").textContent, "Plattenregal Plus");
+});
+
+test("Neuversuch nach einem Rate-Limit kostet keinen zweiten Scan", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111", { counted: true });
+
+  assertEqual(scanInserts.length, 0, "der Scan war schon gezählt");
+  assertEqual(fetchCalls, 1, "gesucht werden muss trotzdem");
+});
+
+test("Die Anzeige zählt nach jedem Scan herunter", async () => {
+  resetStub();
+  currentUser = { id: "user-1" };
+  await refreshScanQuota();
+  assertEqual(quota(), "Noch 5 von 5 freien Scans.");
+
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  assertEqual(quota(), "Noch 4 von 5 freien Scans.");
+
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("222");
+  assertEqual(quota(), "Noch 3 von 5 freien Scans.");
+});
+
+test("Mit Abo bleibt die Zeile leer und der Scan läuft", async () => {
+  resetStub();
+  subscribed = true;
+  await refreshScanQuota();
+  assertEqual(quota(), "", "mit Abo kein Kontingent-Hinweis");
+
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  assertEqual(fetchCalls, 1);
+  assertEqual(quota(), "", "auch nach dem Scan nicht");
+});
+
+test("Abgelehnter Scan setzt die Anzeige auf aufgebraucht", async () => {
+  resetStub();
+  await refreshScanQuota();
+  scanLimitReached = true;
+  fetchResponse = discogsAnswer([]);
+  await lookupBarcode("111");
+
+  assertIncludes(quota(), "Keine freien Scans mehr");
 });
 
 runTests();

@@ -239,9 +239,13 @@ function renderCoverGuessForm(guess) {
 
 /** Wie lookupBarcode, aber Freitextsuche statt Barcode – barcode/collection-
     Abgleich läuft hier nur über die discogs_id, ein Barcode ist ja unbekannt. */
-async function lookupCoverText(text) {
-  setStatus("Suche bei Discogs …", { active: true, busy: true });
+async function lookupCoverText(text, { counted = false } = {}) {
+  // Erst das alte Ergebnis wegräumen, dann fragen, ob gesucht werden darf:
+  // sonst steht der vorige Treffer noch da, während der Limit-Hinweis kommt.
   resultsCard.style.display = "none";
+  if (!(await allowScan("cover", text, counted))) return;
+
+  setStatus("Suche bei Discogs …", { active: true, busy: true });
 
   try {
     const res = await fetch(
@@ -285,7 +289,7 @@ function showRateLimitNotice(term, retryFn = lookupBarcode) {
       <button class="btn-secondary small" type="button" data-action="retry-lookup">Erneut versuchen</button>
     </div>`;
   noticeEl.querySelector('[data-action="retry-lookup"]')
-    .addEventListener("click", () => retryFn(term));
+    .addEventListener("click", () => retryFn(term, { counted: true }));
 }
 
 function hideRateLimitNotice() {
@@ -314,9 +318,74 @@ function normalizeResult(r, barcode) {
   };
 }
 
-async function lookupBarcode(barcode) {
-  setStatus("Suche bei Discogs …", { active: true, busy: true });
+/* ---------- Free-Limit auf Scans ---------- */
+
+/** Stand des Kontingents für die Anzeige; verbindlich ist der Trigger. */
+let scanQuota = { used: 0, subscribed: false, known: false };
+
+async function refreshScanQuota() {
+  if (!currentUser) return;
+  try {
+    const [used, subscribed] = await Promise.all([
+      fetchScanCount(currentUser.id),
+      fetchIsSubscribed(currentUser.id).catch(() => false),
+    ]);
+    scanQuota = { used, subscribed, known: true };
+  } catch {
+    // Kontingent unbekannt – dann eben ohne Anzeige. Der Trigger zählt
+    // trotzdem, hier fehlt nur der Hinweis vorher.
+    scanQuota.known = false;
+  }
+  paintScanQuota();
+}
+
+function paintScanQuota() {
+  const el = document.getElementById("scan-quota");
+  if (!el) return;
+  el.textContent = scanQuota.known ? scanQuotaText(scanQuota.used, scanQuota.subscribed) : "";
+}
+
+/**
+ * Darf gesucht werden? Der Insert in scan_events ist die Erlaubnis –
+ * lehnt der Trigger ab, kommt es gar nicht erst zur Discogs-Anfrage.
+ *
+ * `counted` ist für den Neuversuch nach einem Rate-Limit: dass Discogs
+ * bremst, ist nicht die Schuld des Nutzers und kostet keinen zweiten Scan.
+ */
+async function allowScan(source, term, counted) {
+  if (counted) return true;
+  if (!currentUser) return false;
+
+  const result = await recordScan(currentUser.id, source, term);
+
+  if (result.limitReached) {
+    noticeEl.hidden = false;
+    noticeEl.innerHTML = scanLimitNoticeMarkup();
+    setStatus("");
+    scanQuota = { ...scanQuota, used: FREE_SCAN_LIMIT, known: true };
+    paintScanQuota();
+    return false;
+  }
+
+  if (!result.ok) {
+    setStatus("Scan konnte nicht gezählt werden: " + result.message);
+    return false;
+  }
+
+  scanQuota.used += 1;
+  paintScanQuota();
+  return true;
+}
+
+/* ---------- Suche ---------- */
+
+async function lookupBarcode(barcode, { counted = false } = {}) {
+  // Erst das alte Ergebnis wegräumen, dann fragen, ob gesucht werden darf:
+  // sonst steht der vorige Treffer noch da, während der Limit-Hinweis kommt.
   resultsCard.style.display = "none";
+  if (!(await allowScan("barcode", barcode, counted))) return;
+
+  setStatus("Suche bei Discogs …", { active: true, busy: true });
 
   // Schritt 3 startet hier, nicht nach der Discogs-Antwort: der Barcode
   // steht schon fest. Fehler beim Abgleich dürfen den Scan nicht kippen.
@@ -652,6 +721,7 @@ async function init() {
   });
   captureBtn.addEventListener("click", captureCoverPhoto);
   loadRecentlySaved();
+  refreshScanQuota();
 }
 
 init();
