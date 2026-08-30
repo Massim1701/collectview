@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Lesbarkeit – Tests</title>
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="../app/app.css">
+</head>
+<body>
+
+<!-- Echte Bausteine aus ui.js, gerendert gegen die echten Stylesheets. -->
+<main class="shell">
+  <div class="stats-row">
+    <div class="stat"><div class="stat-value">128</div><div class="stat-label">Tonträger</div></div>
+  </div>
+
+  <h2 class="section-title">Zuletzt hinzugefügt <a class="see-all" href="#">Alle</a></h2>
+  <div class="rail" id="rail"></div>
+  <div id="liste"></div>
+
+  <div class="chip-row">
+    <button class="chip active" type="button">Alle<span class="chip-count">7</span></button>
+    <button class="chip" type="button">Vinyl<span class="chip-count">4</span></button>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div><div class="card-head-title">Zuletzt gespeichert</div>
+      <div class="card-head-sub"><a href="#">Ganze Sammlung ansehen</a></div></div>
+    </div>
+  </div>
+
+  <button class="menu-item" type="button">Feedback geben</button>
+</main>
+<div class="bottomnav" id="bottomnav"></div>
+
+<script src="../app/js/ui.js"></script>
+<script src="assert.js"></script>
+<script>
+const ITEM = { id:"1", discogs_id:101, title:"Nevermind", artist:"Nirvana", format:"Vinyl, LP", year:1991, cover_url:null };
+document.getElementById("rail").innerHTML = `<div class="rail-item">${coverTileMarkup(ITEM)}</div>`;
+document.getElementById("liste").innerHTML = listCardMarkup(ITEM);
+renderBottomNav(document.getElementById("bottomnav"), "home");
+
+const size = (sel) => parseFloat(getComputedStyle(document.querySelector(sel)).fontSize);
+const box  = (sel) => document.querySelector(sel).getBoundingClientRect();
+
+/* Untergrenzen. Wer sie absenkt, soll es bewusst tun und hier mitändern. */
+const MIN_TEXT = 12;      // absolute Untergrenze, nur Versalien-Labels
+const MIN_TARGET = 44;    // Touch-Ziel
+
+test("Kein sichtbarer Text unter 12px", () => {
+  const zuKlein = [];
+  document.querySelectorAll("*").forEach((el) => {
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return;
+    if (el.closest(".sr-only") || el.classList.contains("sr-only")) return;
+    const eigenerText = [...el.childNodes].filter((n) => n.nodeType === 3)
+      .map((n) => n.textContent.trim()).join("").trim();
+    if (!eigenerText) return;
+    const px = parseFloat(cs.fontSize);
+    if (px < MIN_TEXT) zuKlein.push(`${el.className || el.tagName} ${px}px`);
+  });
+  assertEqual(zuKlein, [], "zu kleiner Text gefunden");
+});
+
+test("Jedes Bedienelement ist mindestens 44x44px", () => {
+  const zuKlein = [];
+  document.querySelectorAll("a, button, select, input, [role=button]").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return;
+    if (r.width < MIN_TARGET || r.height < MIN_TARGET) {
+      zuKlein.push(`${el.className || el.tagName} ${Math.round(r.width)}x${Math.round(r.height)}`);
+    }
+  });
+  assertEqual(zuKlein, [], "zu kleines Touch-Ziel gefunden");
+});
+
+test("Sammlungsinhalt ist gut lesbar", () => {
+  assert(size(".list-card-title") >= 16, "Titel in der Liste unter 16px");
+  assert(size(".list-card-sub") >= 14, "Untertitel in der Liste unter 14px");
+  assert(size(".cover-title") >= 15, "Kacheltitel unter 15px");
+  assert(size(".cover-artist") >= 13.5, "Interpret auf der Kachel unter 13,5px");
+});
+
+test("Versalien-Labels bleiben bei mindestens 12px", () => {
+  assert(size(".stat-label") >= 12, "Kennzahl-Label zu klein");
+  assert(size(".navitem") >= 12, "Navigationslabel zu klein");
+});
+
+test("Navigationseinträge sind bequem treffbar", () => {
+  document.querySelectorAll(".navitem").forEach((el) => {
+    assert(el.getBoundingClientRect().height >= MIN_TARGET,
+      `Navigationseintrag nur ${Math.round(el.getBoundingClientRect().height)}px hoch`);
+  });
+});
+
+test("Der Alle-Link ist kein 31x17-Ziel mehr", () => {
+  const r = box(".see-all");
+  assert(r.width >= MIN_TARGET && r.height >= MIN_TARGET,
+    `Alle-Link ist ${Math.round(r.width)}x${Math.round(r.height)}`);
+});
+
+test("Buttons tragen 16px", () => {
+  assert(size(".menu-item") >= 15, "Menüeintrag unter 15px");
+});
+
+runTests();
+</script>
+</body>
+</html>
