@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Scan-Ablauf – Tests</title>
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="../app/app.css">
+</head>
+<body>
+
+<!-- DOM wie auf scanner.html, nur ohne Deko -->
+<div id="bottomnav"></div>
+<div id="scan-frame"><video id="video"></video></div>
+<button id="scan-btn" type="button"></button>
+<div class="notice" id="scan-notice" hidden></div>
+<p class="status" id="scan-status"></p>
+<div class="card" id="results-card" style="display:none;">
+  <div class="card-head-title" id="results-title"></div>
+  <div class="card-head-sub" id="results-sub"></div>
+  <div id="results"></div>
+</div>
+<span id="recent-count"></span>
+<div id="recent-saved"></div>
+<div id="account-card"></div>
+
+<script>
+  /* Stubs statt auth.js/db.js/wishlist.js. Die Tabellen liefern, was
+     `rows` für sie hergibt; `inserts` sammelt, was geschrieben wurde. */
+  var rows = { collection_items: [], wishlist_items: [] };
+  var inserts = [];
+  var wishlistAdds = [];
+  var wishlistRemoves = [];
+  var insertError = null;
+  var wishlistError = null;
+  var fetchResponse = null;
+
+  var sb = {
+    from(table) {
+      return {
+        select() {
+          const filter = async (column, value) => {
+            if (wishlistError && table === "wishlist_items") return { data: null, error: wishlistError };
+            const list = rows[table] || [];
+            const wanted = Array.isArray(value) ? value.map(String) : [String(value)];
+            return { data: list.filter((r) => wanted.includes(String(r[column]))), error: null };
+          };
+          return { eq: filter, in: filter };
+        },
+        async insert(row) {
+          inserts.push({ table, row });
+          return { error: insertError };
+        },
+      };
+    },
+  };
+
+  var currentUser = { id: "user-1" };
+  async function requireAuth() { return currentUser; }
+  function renderAccountRow() {}
+  async function fetchCollection() { return []; }
+  async function addWishlistItem(fields) {
+    if (wishlistError) throw new Error(wishlistError.message);
+    wishlistAdds.push(fields);
+    return { id: "wl-neu", ...fields };
+  }
+  async function removeWishlistItem(id) { wishlistRemoves.push(id); }
+
+  window.fetch = async () => fetchResponse;
+
+  function resetStub() {
+    rows = { collection_items: [], wishlist_items: [] };
+    inserts = []; wishlistAdds = []; wishlistRemoves = [];
+    insertError = null; wishlistError = null; fetchResponse = null;
+  }
+
+  /** Discogs-Antwort mit n Treffern nachbauen. */
+  function discogsAnswer(results) {
+    return { ok: true, status: 200, json: async () => ({ results }) };
+  }
+  function discogsResult(id, title, extra = {}) {
+    return { id, title, format: ["Vinyl", "LP"], year: "1991", country: "US", cover_image: null, ...extra };
+  }
+</script>
+
+<script src="../app/js/ui.js"></script>
+<script src="../app/js/scan-status.js"></script>
+<script src="../app/js/scanner.js"></script>
+<script src="assert.js"></script>
+
+<script>
+const out = () => document.getElementById("results");
+const head = () => document.getElementById("results-title").textContent;
+const card = () => document.getElementById("results-card");
+const btn = (action) => out().querySelector(`[data-action="${action}"]`);
+
+/* ---------- scanStatusFor: reine Logik ---------- */
+
+test("Gleiche discogs_id gilt als in der Sammlung", () => {
+  const s = scanStatusFor({ discogs_id: 42, barcode: "111" },
+    { collection: [{ id: "c1", discogs_id: 42, quantity: 2 }], wishlist: [] });
+  assert(s.inCollection, "Treffer nicht erkannt");
+  assertEqual(s.inCollection.id, "c1");
+});
+
+test("Gleicher Barcode zählt auch ohne discogs_id", () => {
+  const s = scanStatusFor({ discogs_id: 42, barcode: "111" },
+    { collection: [{ id: "c2", discogs_id: null, barcode: "111" }], wishlist: [] });
+  assert(s.inCollection, "Barcode-Treffer nicht erkannt");
+  assertEqual(s.inCollection.id, "c2");
+});
+
+test("Verschiedene IDs und Barcodes ergeben keinen Treffer", () => {
+  const s = scanStatusFor({ discogs_id: 42, barcode: "111" },
+    { collection: [{ id: "c3", discogs_id: 43, barcode: "222" }], wishlist: [] });
+  assertEqual(s.inCollection, null);
+  assertEqual(s.onWishlist, null);
+});
+
+test("null trifft nicht auf null", () => {
+  const s = scanStatusFor({ discogs_id: null, barcode: null },
+    { collection: [{ id: "c4", discogs_id: null, barcode: null }], wishlist: [] });
+  assertEqual(s.inCollection, null, "zwei Leerwerte dürfen kein Treffer sein");
+});
+
+test("Wunschliste wird über die discogs_id erkannt", () => {
+  const s = scanStatusFor({ discogs_id: 7 },
+    { collection: [], wishlist: [{ id: "w1", discogs_id: 7 }] });
+  assert(s.onWishlist, "Wunschlisten-Treffer nicht erkannt");
+});
+
+/* ---------- Hinweis ---------- */
+
+test("Hinweis nennt die Menge und verlinkt den Eintrag", () => {
+  const html = scanStatusMarkup({ inCollection: { id: "abc", quantity: 3 }, onWishlist: null });
+  assertIncludes(html, "Hast du schon (Menge: 3)");
+  assertIncludes(html, "detail.html?id=abc");
+});
+
+test("Fehlende Menge gilt im Hinweis als 1", () => {
+  assertIncludes(scanStatusMarkup({ inCollection: { id: "abc" } }), "Menge: 1");
+});
+
+test("Wunschlisten-Hinweis bietet das Verschieben an", () => {
+  const html = scanStatusMarkup({ inCollection: null, onWishlist: { id: "w1" } });
+  assertIncludes(html, "Auf deiner Wunschliste");
+  assertIncludes(html, "wishlist-to-collection");
+});
+
+test("Neuer Tonträger bekommt keinen Hinweiskasten", () => {
+  assertEqual(scanStatusMarkup({ inCollection: null, onWishlist: null }), "");
+});
+
+/* ---------- Fehlende Spalte darf den Scan nicht kippen ---------- */
+
+test("Fehlende discogs_id-Spalte in wishlist_items wird geschluckt", async () => {
+  resetStub();
+  wishlistError = { code: "42703", message: 'column "discogs_id" does not exist' };
+  assertEqual(await fetchWishlistByDiscogsIds([1, 2]), [], "42703 muss leer zurückkommen");
+});
+
+test("Ohne IDs wird gar nicht erst gefragt", async () => {
+  resetStub();
+  assertEqual(await fetchCollectionByDiscogsIds([]), []);
+  assertEqual(await fetchCollectionByBarcode(null), []);
+});
+
+/* ---------- Schritt 2: Verzweigung nach Trefferzahl ---------- */
+
+test("Ein Treffer geht direkt aufs Ergebnis", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+
+  assertEqual(head(), "Treffer");
+  assertIncludes(out().textContent, "Nevermind");
+  assert(btn("add-collection"), "Aktion 'Zur Sammlung' fehlt");
+  assert(!out().querySelector(".result-card"), "es darf keine Auswahlliste geben");
+});
+
+test("Mehrere Treffer zeigen die Auswahl", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([
+    discogsResult(1, "Nirvana - Nevermind"),
+    discogsResult(2, "Nirvana - Nevermind", { year: "2008" }),
+  ]);
+  await lookupBarcode("111");
+
+  assertEqual(head(), "2 Treffer gefunden");
+  assertEqual(out().querySelectorAll(".result-card").length, 2);
+  assert(btn("manual-open"), "'Manuell anlegen' fehlt in der Auswahl");
+});
+
+test("Aus der Auswahl führt ein Klick zum Ergebnis und zurück", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([
+    discogsResult(1, "Nirvana - Nevermind"),
+    discogsResult(2, "Pixies - Doolittle"),
+  ]);
+  await lookupBarcode("111");
+
+  out().querySelectorAll(".result-card")[1].click();
+  assertEqual(head(), "Treffer");
+  assertIncludes(out().textContent, "Doolittle");
+
+  btn("back-to-list").click();
+  assertEqual(head(), "2 Treffer gefunden");
+});
+
+test("Kein Treffer bietet das manuelle Anlegen an", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([]);
+  await lookupBarcode("999");
+
+  assertEqual(head(), "Keine Treffer");
+  assertIncludes(out().textContent, "Nicht gefunden");
+  assert(btn("manual-open"), "'Manuell anlegen' fehlt");
+});
+
+/* ---------- Schritt 3 im Ablauf ---------- */
+
+test("Bereits vorhandener Tonträger wird am Ergebnis gemeldet", async () => {
+  resetStub();
+  rows.collection_items = [{ id: "c9", discogs_id: 1, quantity: 2, barcode: "111", title: "Nevermind" }];
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+
+  assertIncludes(out().textContent, "Hast du schon (Menge: 2)");
+  assert(btn("add-collection").disabled, "'Zur Sammlung' müsste gesperrt sein");
+});
+
+test("Vorhandene Ausgabe ist schon in der Auswahlliste markiert", async () => {
+  resetStub();
+  rows.collection_items = [{ id: "c9", discogs_id: 2, quantity: 1, barcode: null }];
+  fetchResponse = discogsAnswer([
+    discogsResult(1, "Nirvana - Nevermind"),
+    discogsResult(2, "Nirvana - Nevermind", { year: "2008" }),
+  ]);
+  await lookupBarcode("111");
+
+  const chips = out().querySelectorAll(".scan-chip");
+  assertEqual(chips.length, 1, "genau eine Markierung erwartet");
+  assertIncludes(chips[0].textContent, "In der Sammlung");
+});
+
+test("Wunschlisten-Treffer erscheint am Ergebnis", async () => {
+  resetStub();
+  rows.wishlist_items = [{ id: "w1", discogs_id: 1, title: "Nevermind" }];
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+
+  assertIncludes(out().textContent, "Auf deiner Wunschliste");
+});
+
+/* ---------- Schritt 4: Aktionen ---------- */
+
+test("'Zur Sammlung' schreibt die Felder aus dem Treffer", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  btn("add-collection").click();
+  await tick();
+
+  assertEqual(inserts.length, 1);
+  assertEqual(inserts[0].table, "collection_items");
+  assertEqual(inserts[0].row.title, "Nevermind");
+  assertEqual(inserts[0].row.artist, "Nirvana");
+  assertEqual(inserts[0].row.discogs_id, 1);
+  assertEqual(inserts[0].row.barcode, "111");
+  assertEqual(inserts[0].row.year, 1991, "Jahr muss eine Zahl sein");
+  assertEqual(card().style.display, "none", "Karte müsste nach dem Speichern zu sein");
+});
+
+test("'Auf Wunschliste' legt einen Wunschlisten-Eintrag an", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  btn("add-wishlist").click();
+  await tick();
+
+  assertEqual(inserts.length, 0, "die Sammlung darf unberührt bleiben");
+  assertEqual(wishlistAdds.length, 1);
+  assertEqual(wishlistAdds[0].title, "Nevermind");
+});
+
+test("'Verwerfen' schließt die Karte, ohne zu speichern", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  btn("discard").click();
+
+  assertEqual(inserts.length, 0);
+  assertEqual(wishlistAdds.length, 0);
+  assertEqual(card().style.display, "none");
+});
+
+test("Verschieben von der Wunschliste räumt dort auf", async () => {
+  resetStub();
+  rows.wishlist_items = [{ id: "w1", discogs_id: 1, title: "Nevermind" }];
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  btn("wishlist-to-collection").click();
+  await tick();
+
+  assertEqual(inserts.length, 1, "Eintrag muss in der Sammlung landen");
+  assertEqual(wishlistRemoves, ["w1"], "Wunschlisten-Eintrag muss weg");
+});
+
+test("Free-Limit wird als Abo-Hinweis gezeigt, nicht als roher Fehler", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  insertError = { message: "collection limit reached for free plan" };
+  btn("add-collection").click();
+  await tick();
+
+  assertIncludes(document.getElementById("scan-error").textContent, "Plattenregal Plus");
+  assertEqual(card().style.display, "block", "die Karte muss offen bleiben");
+});
+
+/* ---------- Manuell anlegen ---------- */
+
+test("Manuelles Anlegen speichert den getippten Titel", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([]);
+  await lookupBarcode("999");
+  btn("manual-open").click();
+
+  document.getElementById("manual-title").value = "Unbekanntes Album";
+  document.getElementById("manual-artist").value = "Irgendwer";
+  document.getElementById("manual-form").dispatchEvent(new Event("submit", { cancelable: true }));
+  await tick();
+
+  assertEqual(inserts.length, 1);
+  assertEqual(inserts[0].row.title, "Unbekanntes Album");
+  assertEqual(inserts[0].row.discogs_id, null);
+  assertEqual(inserts[0].row.barcode, "999", "der gescannte Barcode gehört mitgespeichert");
+});
+
+test("Ohne Titel wird manuell nichts gespeichert", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([]);
+  await lookupBarcode("999");
+  btn("manual-open").click();
+
+  document.getElementById("manual-form").dispatchEvent(new Event("submit", { cancelable: true }));
+  await tick();
+  assertEqual(inserts.length, 0);
+});
+
+runTests();
+</script>
+</body>
+</html>

@@ -300,6 +300,57 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .btn-danger:hover{ filter:brightness(1.07); }
 .btn-danger[disabled]{ opacity:.5; pointer-events:none; }
 
+/* ===== Scan-Ergebnis (scanner.html) =====
+   Der Treffer bekommt bewusst mehr Fläche als eine Listenzeile: hier
+   wird entschieden, ob die Platte ins Regal wandert. */
+.scan-result{ display:flex; gap:var(--space-4); align-items:flex-start; margin-bottom:var(--space-4); }
+.scan-result .cover{ position:relative; border-radius:var(--radius-xs); flex:0 0 auto; }
+.scan-result-title{ font-family:var(--font-display); font-style:italic; font-size:var(--text-2xl); line-height:1.1; }
+.scan-result-artist{ font-size:var(--text-base); color:var(--text-muted); margin-top:2px; }
+.scan-result-meta{ font-size:var(--text-xs); color:var(--text-muted); margin-top:6px; }
+
+/* Statushinweis: schon im Regal oder auf der Wunschliste */
+.scan-status-note{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); flex-wrap:wrap;
+  border-radius:var(--radius-sm); padding:var(--space-3) var(--space-4);
+  font-size:var(--text-sm); margin-bottom:var(--space-4);
+}
+.scan-status-note strong{ font-weight:800; }
+.scan-status-note.is-owned{ background:var(--accent-soft); color:var(--accent-text); }
+.scan-status-note.is-wished{ background:var(--surface-3); color:var(--text); }
+.scan-status-note a{ color:inherit; font-weight:800; text-decoration:underline; }
+
+/* Kurzmarkierung in der Trefferliste */
+.scan-chip{
+  display:inline-block; margin-top:6px;
+  border-radius:var(--radius-pill); padding:2px 9px;
+  font-size:var(--text-2xs); font-weight:800;
+}
+.scan-chip.is-owned{ background:var(--accent-soft); color:var(--accent-text); }
+.scan-chip.is-wished{ background:var(--surface-3); color:var(--text-muted); }
+
+.scan-streaming{ display:flex; gap:var(--space-2); flex-wrap:wrap; margin-bottom:var(--space-4); }
+.scan-stream-link{
+  border:1px solid var(--border-strong); border-radius:var(--radius-pill);
+  padding:8px 14px; font-size:var(--text-xs); font-weight:700; color:var(--text); text-decoration:none;
+  min-height:var(--target); display:inline-flex; align-items:center;
+}
+.scan-stream-link:hover{ border-color:var(--accent); color:var(--accent-text); }
+
+.scan-actions{ display:flex; gap:var(--space-2); flex-wrap:wrap; }
+.scan-actions .btn-primary, .scan-actions .btn-secondary{ flex:1 1 auto; height:48px; padding:0 var(--space-4); }
+
+.manual-hint{ text-align:center; font-size:var(--text-sm); color:var(--text-muted); margin:var(--space-4) 0 0; }
+.manual-form .field{ width:100%; }
+.manual-form .scan-actions{ margin-top:var(--space-3); }
+
+/* Button, der wie ein Link aussehen soll – 44px Trefferfläche behält er. */
+.linklike{
+  background:none; border:0; padding:10px 4px; min-height:var(--target);
+  color:var(--accent-text); font-family:var(--font-body); font-size:var(--text-sm);
+  font-weight:800; cursor:pointer; text-decoration:underline;
+}
+
 /* ===== Hinweisbanner (z. B. Discogs-Rate-Limit) =====
    Auffällig, aber nicht blockierend: die Seite bleibt bedienbar, der
    Hinweis verschwindet erst, wenn die Ursache weg ist. */
