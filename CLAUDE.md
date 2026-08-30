@@ -123,6 +123,23 @@ Farbschema hat schon einmal mitten in der Arbeit gewechselt (dunkel → hell),
 und eine gleichzeitige Änderung an `app/scanner.html` hat dabei einen Refactor
 überschrieben.
 
+### Untergrenzen für Lesbarkeit
+
+Die App wird von allen Altersgruppen benutzt. `app/app.css` hebt die
+Typografie von `styles.css` deshalb an – dort ist vieles auf 10,5–13,5px
+ausgelegt, was für ältere Augen mühsam ist.
+
+| Regel | Wert |
+|---|---|
+| Fließtext und Bedienelemente | ≥ 14px, Listentitel ≥ 16px |
+| Versalien-Labels (Nav, Kennzahlen) | ≥ 12px, absolute Untergrenze |
+| Touch-Ziele | ≥ 44×44px |
+
+`test/legibility.test.html` prüft das gegen die echten Bausteine aus
+`ui.js` – wer eine Größe absenkt, ändert die Untergrenze dort bewusst mit.
+`styles.css` bleibt unangetastet, damit Wireframes und Landingpage ihre
+eigene Skala behalten.
+
 ### Flächen- und Textfarben sind verschiedene Tokens
 
 | Zweck | Token |
