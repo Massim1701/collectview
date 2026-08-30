@@ -63,6 +63,47 @@ Syntaxprüfung einzelner Dateien: `node --check app/js/<datei>.js`.
   während das Element sichtbar bleibt, weil eine Klassenregel (`display:flex`)
   das `[hidden]`-Attribut schlägt. Immer zusätzlich einen Screenshot ansehen.
 
+## Zusammenarbeit: zwei Stränge, ein Arbeitsverzeichnis
+
+An diesem Repo arbeiten zwei Claude-Sitzungen – eine an der App, eine am
+Marketing/Marktplatz. Sie teilen sich **dasselbe Arbeitsverzeichnis ohne
+Branches**. Die Lanes sind längst durchlässig: der Marktplatz liegt in
+`/app`, das Design-System wurde von beiden Seiten angefasst.
+
+Dateien, die bereits beide Seiten geändert haben:
+
+| Datei | App | Marketing |
+|---|---|---|
+| `app/scanner.html` | 4 | 4 |
+| `wireframes/styles.css` | 1 | 4 |
+| `app/index.html` | 1 | 3 |
+| `app/app.css` | 8 | 1 |
+| `README.md` | 3 | 1 |
+
+**Verbindliche Regeln – jede verhindert einen Vorfall, den es gab:**
+
+1. **Nichts unfertig liegen lassen.** Am Ende jedes Zuges committen. Ein
+   Refactor ging verloren, weil `app.js` gelöscht, aber nicht committet
+   war – die andere Sitzung schrieb `scanner.html` zurück, das die Datei
+   noch lud. Ergebnis: 404, App funktionslos.
+2. **Vor jeder Änderung an einer geteilten Datei erst `git log -5` und
+   `git status` lesen.** Nicht auf einem Stand aufbauen, der schon
+   überholt ist.
+3. **Querschnittsthemen an der Wurzel lösen, nicht im eigenen Layer.**
+   Beide Seiten haben unabhängig Kontrast-Tokens gebaut – einmal per
+   `color-mix` in `app.css`, einmal als feste Werte in `styles.css`.
+   Doppelt gelöst, eine Fassung musste wieder weg.
+4. **Tokens ändern, nicht Regeln.** Der Palettenwechsel `9d8cf10` lief
+   glatt, weil nur Farbrollen getauscht wurden und die Skalen standen.
+   So soll es laufen.
+5. **Nach einem Palettenwechsel Kontraste nachmessen.** Farben ändern
+   heißt Kontraste ändern. `./test/run.sh` prüft Größen und Touch-Ziele,
+   **nicht** Kontrast – der wird von Hand gemessen.
+
+Laufen beide Sitzungen gleichzeitig, können sie sich direkt Nachrichten
+schicken (`ListAgents` zeigt die erreichbaren Namen). Die App-Sitzung
+läuft unter `massimo-ab`.
+
 ## Architektur
 
 Zwei Ebenen, die sich Design und Datenzugriff teilen:
