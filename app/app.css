@@ -6,6 +6,19 @@
    Lade-/Leerzustände, Formularfelder.
    ===================================================================== */
 
+/* --------------------------------------------------------------
+   Abgeleitete Textfarben.
+   Die Tokens aus styles.css sind für Flächen gedacht; als Textfarbe
+   auf dem Creme-Hintergrund reichen sie nicht:
+     --accent      #FF9635 auf #FBF6EC = 2,0:1
+     --text-faint  #A69A80 auf #FBF6EC = 2,6:1   (nötig: 4,5:1)
+   Für Text deshalb abgedunkelte Varianten, gleicher Farbton.
+   Flächen (FAB, Buttons, Chips) benutzen weiter das Original.
+   -------------------------------------------------------------- */
+:root{
+  --accent-text: color-mix(in srgb, var(--accent) 62%, #000);  /* ~4,8:1 */
+}
+
 body{
   background:
     radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 45%),
@@ -58,7 +71,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .field:last-of-type{ margin-bottom:0; }
 .row{ display:flex; gap:10px; margin-top:14px; }
 .row .btn-primary, .row .btn-secondary{ flex:1; height:48px; }
-.err{ color:var(--danger); font-size:13px; margin-top:12px; line-height:1.5; }
+.err{ color:var(--danger-ink, var(--danger)); font-size:13px; margin-top:12px; line-height:1.5; }
 .note{ color:var(--text-muted); font-size:13px; margin-top:12px; line-height:1.5; }
 
 .btn-primary, .btn-secondary{ transition:filter .15s ease, border-color .15s ease, transform .15s ease; }
@@ -73,7 +86,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .user-id{ display:flex; align-items:center; gap:12px; min-width:0; }
 .user-avatar{
   width:42px; height:42px; border-radius:999px; background:var(--accent-soft);
-  border:1px solid color-mix(in srgb, var(--accent) 35%, transparent); color:var(--accent);
+  border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  /* Initiale steht auf --accent-soft, braucht deshalb noch etwas dunkler */
+  color:color-mix(in srgb, var(--accent) 55%, #000);
   display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; flex:0 0 auto;
 }
 .user-email{ font-weight:700; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -94,7 +109,7 @@ a.list-card, .list-card[role="button"]{ cursor:pointer; transition:border-color 
 a.list-card:hover, .list-card[role="button"]:hover{ border-color:var(--border-strong); transform:translateY(-1px); }
 
 /* ===== Zustände ===== */
-.empty-state{ text-align:center; padding:34px 14px; color:var(--text-faint); font-size:13.5px; line-height:1.6; }
+.empty-state{ text-align:center; padding:34px 14px; color:var(--text-muted); font-size:13.5px; line-height:1.6; }
 .empty-state svg{ margin:0 auto 10px; opacity:.6; }
 .empty-state .empty-title{ color:var(--text); font-weight:700; font-size:15px; margin-bottom:6px; }
 .empty-state .btn-primary{ height:46px; padding:0 22px; margin-top:18px; }
@@ -123,17 +138,17 @@ a.list-card:hover, .list-card[role="button"]:hover{ border-color:var(--border-st
   color:var(--text); font-family:var(--font-body); font-size:14.5px;
   padding:13px 16px 13px 0;
 }
-.search-bar input::placeholder{ color:var(--text-faint); }
+.search-bar input::placeholder{ color:var(--text-muted); }
 .search-bar{ padding-left:16px; }
 .search-bar:focus-within{ border-color:var(--border-strong); }
 .search-clear{
-  background:none; border:none; color:var(--text-faint); cursor:pointer;
+  background:none; border:none; color:var(--text-muted); cursor:pointer;
   padding:0 14px 0 4px; align-self:stretch; display:flex; align-items:center;
 }
 .search-clear:hover{ color:var(--text); }
 
 .chip{ background:none; font-family:var(--font-body); cursor:pointer; transition:border-color .15s ease, color .15s ease; }
-.chip:hover:not(.active){ border-color:var(--accent); color:var(--accent); }
+.chip:hover:not(.active){ border-color:var(--accent); color:var(--accent-text); }
 .chip .chip-count{ opacity:.65; margin-left:6px; font-variant-numeric:tabular-nums; }
 
 .toolbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:18px 0 16px; }
@@ -156,7 +171,7 @@ a.list-card:hover, .list-card[role="button"]:hover{ border-color:var(--border-st
   cursor:pointer; transition:color .15s ease;
 }
 .breakdown-row:last-child{ border-bottom:none; }
-.breakdown-row:hover{ color:var(--accent); }
+.breakdown-row:hover{ color:var(--accent-text); }
 .breakdown-row .bar{ flex:1; height:5px; border-radius:999px; background:var(--surface-2); overflow:hidden; }
 .breakdown-row .bar span{ display:block; height:100%; border-radius:999px; background:var(--accent); }
 .breakdown-row .num{ color:var(--text-muted); font-variant-numeric:tabular-nums; font-weight:600; min-width:26px; text-align:right; }
@@ -174,9 +189,10 @@ a.list-card:hover, .list-card[role="button"]:hover{ border-color:var(--border-st
   display:flex; justify-content:space-around; align-items:center;
 }
 /* 44px+ Touch-Ziel, auch wenn das Label klein ist */
-.navitem{ min-width:58px; min-height:46px; justify-content:center; cursor:pointer; transition:color .15s ease; }
-.navitem:hover{ color:var(--text-muted); }
-.navitem.active, .navitem.active:hover{ color:var(--accent); }
+.navitem{ min-width:58px; min-height:46px; justify-content:center; cursor:pointer; transition:color .15s ease;
+  color:var(--text-muted); }
+.navitem:hover{ color:var(--text); }
+.navitem.active, .navitem.active:hover{ color:var(--accent-text); }
 .bottomnav .fab{ flex:0 0 auto; }
 
 .sr-only{
@@ -241,21 +257,29 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 
 .community-note{ text-align:center; font-size:12.5px; color:var(--text-muted); margin-top:22px; }
 
+/* --danger (#E1573C) erreicht als Text auf dem Creme-Hintergrund nur 3,5:1.
+   Für Text und gefüllte Flächen deshalb eine abgedunkelte Variante ableiten
+   (~4,6:1), ohne den Farbton des Tokens zu verlassen. */
+:root{ --danger-ink: color-mix(in srgb, var(--danger) 85%, #000); }
+
 /* Löschen: zweistufig, damit kein Fehlgriff die Platte kostet */
 .danger-zone{ margin-top:34px; border-top:1px solid var(--border); padding-top:8px; }
 /* .menu-item ist in styles.css für <div> gedacht – als <button> muss die
    Browser-Umrandung weg, der Trenner unten bleibt. */
 .menu-item{ width:100%; background:none; font-family:var(--font-body); text-align:left; cursor:pointer;
   border:none; border-bottom:1px solid var(--border); }
-.menu-item.danger{ border-bottom:none; }
+.menu-item.danger{ border-bottom:none; color:var(--danger-ink, var(--danger)); }
 .menu-item.danger svg{ stroke:currentColor; }
 .confirm-box{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; }
 .confirm-box p{ margin:0 0 14px; font-size:14px; line-height:1.5; }
 .confirm-box .row{ margin-top:0; }
 .btn-danger{
-  background:var(--danger); color:#fff; border:none; border-radius:var(--radius-sm);
+  background:var(--danger-ink, var(--danger)); color:#fff; border:none; border-radius:var(--radius-sm);
   font-family:var(--font-body); font-weight:700; font-size:15px; cursor:pointer;
   transition:filter .15s ease;
 }
 .btn-danger:hover{ filter:brightness(1.07); }
 .btn-danger[disabled]{ opacity:.5; pointer-events:none; }
+
+/* Akzentfarbener Text braucht die abgedunkelte Variante (siehe oben) */
+.section-title .see-all{ color:var(--accent-text); }
