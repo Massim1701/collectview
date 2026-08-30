@@ -114,8 +114,17 @@ async function toggleScan() {
     scanBtn.textContent = "Scan stoppen";
     setStatus("Kamera wird gestartet …", { active: true, busy: true });
 
-    const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
-    const deviceId = cameraSelect.value || devices[devices.length - 1]?.deviceId; // meist die Rückkamera zuletzt
+    // Ohne ausdrückliche Wahl NICHT raten. Die alte Annahme "Rückkamera
+    // steht zuletzt" geht auf Telefonen mit mehreren Rückkameras schief:
+    // ein iPhone Pro meldet Ultraweitwinkel, Weitwinkel und Tele einzeln,
+    // und ausgerechnet das Tele kann nicht nah genug fokussieren, um
+    // einen Barcode auf einer Plattenhülle zu lesen. Vor der ersten
+    // Freigabe liefert enumerateDevices auf iOS ohnehin leere deviceIds.
+    //
+    // undefined lässt ZXing auf facingMode "environment" zurückfallen –
+    // dieselbe Wahl, die der Cover-Weg unten schon trifft. Das System
+    // gibt dabei die Hauptkamera, nicht irgendeine.
+    const deviceId = cameraSelect.value || undefined;
 
     scanControls = await codeReader.decodeFromVideoDevice(deviceId, videoEl, (result) => {
       if (!result) return;

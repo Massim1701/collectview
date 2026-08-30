@@ -89,6 +89,29 @@
 
   window.fetch = async () => { fetchCalls += 1; return fetchResponse; };
 
+  /* ZXing-Ersatz: merkt sich nur, mit welcher Kamera-ID gestartet wurde. */
+  var zxingAufrufe = [];
+  var ZXingBrowser = {
+    BrowserMultiFormatReader: function () {
+      this.decodeFromVideoDevice = async (deviceId) => {
+        zxingAufrufe.push(deviceId);
+        return { stop() {} };
+      };
+    },
+    BrowserCodeReader: {
+      listVideoInputDevices: async () => [
+        { deviceId: "front", label: "Front" },
+        { deviceId: "ultraweit", label: "Ultraweitwinkel" },
+        { deviceId: "tele", label: "Tele" },
+      ],
+    },
+  };
+  navigator.mediaDevices = navigator.mediaDevices || {};
+  navigator.mediaDevices.enumerateDevices = async () => [
+    { kind: "videoinput", deviceId: "front", label: "Front" },
+    { kind: "videoinput", deviceId: "tele", label: "Tele" },
+  ];
+
   function resetStub() {
     rows = { collection_items: [], wishlist_items: [], scan_events: [] };
     inserts = []; scanInserts = []; wishlistAdds = []; wishlistRemoves = [];
@@ -517,6 +540,36 @@ test("Abgelehnter Scan setzt die Anzeige auf aufgebraucht", async () => {
   await lookupBarcode("111");
 
   assertIncludes(quota(), "Keine freien Scans mehr");
+});
+
+/* ---------- Kamerawahl ---------- */
+
+test("Ohne eigene Wahl wird keine Kamera geraten", async () => {
+  zxingAufrufe = [];
+  document.getElementById("camera-select").innerHTML = "";
+  if (scanning) stopScan();
+
+  await toggleScan();
+  stopScan();
+
+  assertEqual(zxingAufrufe.length, 1, "ZXing müsste einmal gestartet worden sein");
+  assertEqual(zxingAufrufe[0], undefined,
+    "undefined lässt ZXing auf facingMode 'environment' zurückfallen – " +
+    "eine geratene deviceId landet auf Pro-Telefonen leicht beim Tele");
+});
+
+test("Eine ausdrücklich gewählte Kamera wird durchgereicht", async () => {
+  zxingAufrufe = [];
+  const sel = document.getElementById("camera-select");
+  sel.innerHTML = '<option value="ultraweit">Ultraweitwinkel</option>';
+  sel.value = "ultraweit";
+  if (scanning) stopScan();
+
+  await toggleScan();
+  stopScan();
+  sel.innerHTML = "";
+
+  assertEqual(zxingAufrufe[0], "ultraweit");
 });
 
 runTests();
