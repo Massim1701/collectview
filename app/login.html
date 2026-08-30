@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+<title>Anmelden – Plattenregal</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF6EC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="./app.css">
+<style>
+  .login-shell{ max-width:440px; padding-top:70px; padding-bottom:60px; }
+  .login-intro{ text-align:center; margin-bottom:34px; }
+  .login-intro .brand{ font-family:var(--font-display); font-style:italic; font-size:34px; }
+  .login-intro p{ color:var(--text-muted); font-size:14.5px; line-height:1.6; margin:10px 0 0; }
+</style>
+</head>
+<body>
+
+<main class="shell login-shell">
+
+  <div class="login-intro">
+    <div class="brand">Plattenregal</div>
+    <p>Melde dich an, um deine Sammlung zu scannen und überall wiederzufinden.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="icon-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+      </div>
+      <div>
+        <div class="card-head-title">Anmelden</div>
+        <div class="card-head-sub">Oder in wenigen Sekunden ein Konto anlegen</div>
+      </div>
+    </div>
+
+    <form id="login-form" novalidate>
+      <label class="sr-only" for="email">E-Mail-Adresse</label>
+      <input class="field" id="email" name="email" type="email" autocomplete="email" required placeholder="E-Mail-Adresse">
+
+      <label class="sr-only" for="password">Passwort</label>
+      <input class="field" id="password" name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Passwort (min. 6 Zeichen)">
+
+      <div class="row">
+        <button class="btn-primary" type="submit" data-action="sign-in">Anmelden</button>
+        <button class="btn-secondary" type="button" data-action="sign-up">Registrieren</button>
+      </div>
+    </form>
+
+    <p class="err" id="auth-error" role="alert" aria-live="assertive"></p>
+    <p class="note" id="auth-note" role="status" aria-live="polite"></p>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="./config.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+<title>Home – Plattenregal</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF6EC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="./app.css">
+<style>
+  .stat-value.is-loading{ color:var(--text-faint); }
+  .rail{ margin-bottom:8px; }
+  .rail .rail-item{ flex:0 0 118px; }
+  #konto{ scroll-margin-top:24px; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+
+<main class="shell">
+
+  <div class="topbar" style="padding:0; margin-bottom:26px;">
+    <div class="brand">Plattenregal</div>
+    <a class="avatar" href="#konto" aria-label="Zum Konto">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.8-4 5-6 8-6s6.2 2 8 6"/></svg>
+    </a>
+  </div>
+
+  <div id="inhalt">
+    <div class="eyebrow">Schön, dich zu sehen</div>
+    <h1 class="page-title">Deine Sammlung</h1>
+
+    <div class="stats-row" id="stats" aria-live="polite">
+      <div class="stat"><div class="stat-value is-loading" id="stat-total">–</div><div class="stat-label">Tonträger</div></div>
+      <div class="stat"><div class="stat-value is-loading" id="stat-artists">–</div><div class="stat-label">Interpreten</div></div>
+      <div class="stat"><div class="stat-value is-loading" id="stat-formats">–</div><div class="stat-label">Formate</div></div>
+    </div>
+
+    <a href="scanner.html">
+      <button class="btn-primary scan-cta" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2"/><path d="M4 16v2a2 2 0 0 0 2 2h2"/><path d="M20 8V6a2 2 0 0 0-2-2h-2"/><path d="M20 16v2a2 2 0 0 1-2 2h-2"/><rect x="7" y="8" width="10" height="8" rx="1"/></svg>
+        Tonträger scannen
+      </button>
+    </a>
+
+    <section aria-labelledby="titel-zuletzt">
+      <h2 class="section-title" id="titel-zuletzt">
+        Zuletzt hinzugefügt
+        <a class="see-all" href="collection.html">Alle</a>
+      </h2>
+      <div class="rail" id="recent"></div>
+    </section>
+
+    <section aria-labelledby="titel-formate" id="formate-section" hidden>
+      <h2 class="section-title" id="titel-formate">Nach Format</h2>
+      <div class="breakdown" id="breakdown"></div>
+    </section>
+
+    <section aria-labelledby="titel-konto" id="konto" style="margin-top:34px;">
+      <h2 class="section-title" id="titel-konto">Konto</h2>
+      <div class="card" id="account-card" style="margin-bottom:0;"></div>
+    </section>
+  </div>
+
+</main>
+
+<div class="bottomnav" id="bottomnav"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="./config.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/db.js"></script>
+<script src="./js/home.js"></script>
+</body>
+</html>
