@@ -82,12 +82,14 @@ async function renderAccountRow(container, user) {
           <div class="user-label">${escapeHtml(user.email)}</div>
         </div>
       </div>
-      <div style="display:flex; gap:8px; flex:0 0 auto;">
-        <button class="btn-secondary small" type="button" data-action="edit-name">${displayName ? "Ändern" : "Festlegen"}</button>
-        <button class="btn-secondary small" type="button" data-action="sign-out">Abmelden</button>
+      <div style="display:flex; gap:8px; flex:0 0 auto; align-items:center;">
+        <span id="lang-switcher-slot"></span>
+        <button class="btn-secondary small" type="button" data-action="edit-name">${displayName ? escapeHtml(t("account_change_username")) : escapeHtml(t("account_set_username"))}</button>
+        <button class="btn-secondary small" type="button" data-action="sign-out">${escapeHtml(t("account_logout"))}</button>
       </div>
     </div>`;
 
+  renderLangSwitcher(container.querySelector("#lang-switcher-slot"));
   container.querySelector('[data-action="sign-out"]').addEventListener("click", signOut);
   container.querySelector('[data-action="edit-name"]').addEventListener("click", async () => {
     const input = prompt("Benutzername (3–20 Zeichen: Buchstaben, Ziffern, _ oder -)\nSichtbar für andere Nutzer, nie deine E-Mail:", displayName || "");

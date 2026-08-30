@@ -45,9 +45,11 @@ function renderChips() {
   }).join("");
 }
 
+const SORT_I18N_KEYS = { title: "collection_sort_title", artist: "collection_sort_artist" };
+
 function renderSort() {
   sortEl.innerHTML = Object.entries(SORTERS)
-    .map(([key, s]) => `<option value="${key}"${key === state.sort ? " selected" : ""}>${escapeHtml(s.label)}</option>`)
+    .map(([key, s]) => `<option value="${key}"${key === state.sort ? " selected" : ""}>${escapeHtml(SORT_I18N_KEYS[key] ? t(SORT_I18N_KEYS[key]) : s.label)}</option>`)
     .join("");
 }
 
@@ -65,7 +67,7 @@ function renderGrid() {
     countEl.textContent = "";
     messageEl.innerHTML = emptyState({
       iconName: "scan",
-      title: "Deine Sammlung ist noch leer",
+      title: t("collection_empty"),
       text: "Scanne den Barcode deiner ersten Platte oder CD – Titel, Interpret und Cover kommen automatisch von Discogs.",
       action: { href: "scanner.html", label: "Jetzt scannen" },
     });

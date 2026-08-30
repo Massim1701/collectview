@@ -28,10 +28,10 @@
 
   <a href="index.html" style="display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-weight:700; font-size:13.5px; margin:30px 0 18px;">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    Home
+    <span data-i18n="nav_home">Home</span>
   </a>
 
-  <h1 class="page-title" style="font-size:28px; margin:0 0 20px;">Wunschliste</h1>
+  <h1 class="page-title" style="font-size:28px; margin:0 0 20px;" data-i18n="wishlist_title">Wunschliste</h1>
 
   <section aria-labelledby="titel-benachrichtigungen" style="margin-bottom:30px;">
     <h2 class="section-title" id="titel-benachrichtigungen">Benachrichtigungen</h2>
@@ -63,6 +63,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="./config.js"></script>
+<script src="./js/i18n.js"></script>
 <script src="./js/ui.js"></script>
 <script src="./js/auth.js"></script>
 <script src="./js/db.js"></script>

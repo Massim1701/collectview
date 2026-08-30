@@ -32,6 +32,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="./config.js"></script>
+<script src="./js/i18n.js"></script>
 <script src="./js/ui.js"></script>
 <script src="./js/auth.js"></script>
 <script src="./js/db.js"></script>
@@ -77,35 +78,44 @@
     <h1 class="page-title" style="font-size:26px; margin:0;">${escapeHtml(listing.title)}</h1>
     <div style="color:var(--text-muted); margin-top:4px;">${[listing.artist, listing.format, listing.year].filter(Boolean).map(escapeHtml).join(" · ")}</div>
     <div class="ml-price">${listingBadge(listing).text}</div>
-    ${listing.description ? `<p style="line-height:1.6; margin-bottom:22px;">${escapeHtml(listing.description)}</p>` : ""}
+    ${listing.description ? `
+      <div id="listing-desc" style="margin-bottom:22px;">
+        <p style="line-height:1.6; margin:0 0 6px;">${escapeHtml(listing.description)}</p>
+        <button type="button" class="linklike" id="translate-desc" data-i18n="marketplace_translate">Übersetzen</button>
+      </div>` : ""}
 
     ${isOwner ? `
       <div class="card">
         <div class="section-title">Dein Angebot</div>
         <div class="row" style="display:flex; gap:10px;">
-          ${listing.status === "active" ? `<button class="btn-primary" id="mark-sold" style="flex:1;height:46px;">${listing.kind === "gesucht" ? "Als gefunden markieren" : "Als verkauft markieren"}</button>` : ""}
-          ${listing.status !== "removed" ? `<button class="btn-secondary" id="remove-listing" style="flex:1;height:46px;">Entfernen</button>` : ""}
+          ${listing.status === "active" ? `<button class="btn-primary" id="mark-sold" style="flex:1;height:46px;">${listing.kind === "gesucht" ? escapeHtml(t("marketplace_found")) : escapeHtml(t("marketplace_sold"))}</button>` : ""}
+          ${listing.status !== "removed" ? `<button class="btn-secondary" id="remove-listing" style="flex:1;height:46px;" data-i18n="detail_remove">Entfernen</button>` : ""}
         </div>
       </div>
       <div class="card" id="messages-card">
-        <div class="section-title">Nachrichten von Interessenten</div>
+        <div class="section-title" data-i18n="marketplace_messages">Nachrichten von Interessenten</div>
         <div id="messages"></div>
       </div>
     ` : listing.status === "active" ? (subscribed ? `
       <div class="card">
         <div class="section-title">Interesse?</div>
         <textarea class="field" id="msg-text" rows="3" placeholder="Deine Nachricht an den Verkäufer …" style="margin-bottom:10px; resize:vertical;"></textarea>
-        <button class="btn-primary" id="send-msg" style="width:100%; height:46px;">Nachricht senden</button>
+        <button class="btn-primary" id="send-msg" style="width:100%; height:46px;" data-i18n="marketplace_contact">Nachricht senden</button>
         <div class="err" id="msg-error" style="margin-top:8px;"></div>
         <div id="sent-note" class="muted" style="margin-top:10px; display:none;">Nachricht gesendet.</div>
       </div>
     ` : `
       <div class="card" style="text-align:center;">
-        <p class="muted" style="margin:0 0 14px;">Nachrichten an Verkäufer:innen gibt es mit Plattenregal Plus.</p>
+        <p class="muted" style="margin:0 0 14px;" data-i18n="marketplace_plus_required">Nachrichten an Verkäufer:innen gibt es mit Plattenregal Plus.</p>
         <a class="btn-primary" href="../wireframes/pricing.html" style="display:inline-flex; align-items:center; height:44px; padding:0 20px;">Zu den Preisen</a>
       </div>
     `) : ""}
   `;
+
+  applyI18n(content);
+
+  const descBtn = document.getElementById("translate-desc");
+  if (descBtn) wireTranslateToggle(descBtn, document.getElementById("listing-desc"), () => listing.description);
 
   if (isOwner) {
     const soldBtn = document.getElementById("mark-sold");
@@ -127,13 +137,21 @@
       const messages = await fetchListingMessages(id);
       const names = await fetchDisplayNames(messages.map((m) => m.sender_id));
       messagesEl.innerHTML = messages.length
-        ? messages.map((m) => `
-            <div class="msg">
+        ? messages.map((m, i) => `
+            <div class="msg" id="msg-${i}">
               <div class="msg-meta" style="margin-top:0; margin-bottom:2px; font-weight:700;">${escapeHtml(names[m.sender_id] || "Unbekannter Nutzer")}</div>
-              <div>${escapeHtml(m.body)}</div>
-              <div class="msg-meta">${new Date(m.created_at).toLocaleString("de-DE")}</div>
+              <div class="msg-body" id="msg-body-${i}">${escapeHtml(m.body)}</div>
+              <div class="msg-meta">${new Date(m.created_at).toLocaleString("de-DE")}
+                · <button type="button" class="linklike" data-translate-msg="${i}" data-i18n="marketplace_translate" style="font-size:11.5px;">Übersetzen</button>
+              </div>
             </div>`).join("")
         : `<div class="muted">Noch keine Nachrichten.</div>`;
+
+      messages.forEach((m, i) => {
+        const btn = messagesEl.querySelector(`[data-translate-msg="${i}"]`);
+        const body = document.getElementById(`msg-body-${i}`);
+        if (btn && body) wireTranslateToggle(btn, body, () => m.body);
+      });
     } catch (e) {
       messagesEl.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
     }

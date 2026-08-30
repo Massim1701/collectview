@@ -142,7 +142,7 @@ function errorState(message) {
   return `
     <div class="empty-state">
       ${icon("alert")}
-      <div class="empty-title">Da ist etwas schiefgelaufen</div>
+      <div class="empty-title">${escapeHtml(t("common_error_title"))}</div>
       <div>${escapeHtml(message)}</div>
     </div>`;
 }
@@ -165,16 +165,16 @@ function renderBottomNav(container, active) {
 
   container.innerHTML = `
     <nav class="bottomnav-inner" aria-label="Hauptnavigation">
-      ${item("home", "index.html", "Home", '<path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/>')}
-      ${item("collection", "collection.html", "Sammlung", ICONS.grid)}
+      ${item("home", "index.html", t("nav_home"), '<path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/>')}
+      ${item("collection", "collection.html", t("nav_collection"), ICONS.grid)}
       <a class="fab" href="scanner.html">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="7" y="8" width="10" height="8" rx="1"/><path d="M4 8V6a2 2 0 0 1 2-2h2M20 8V6a2 2 0 0 0-2-2h-2"/>
         </svg>
-        <span class="sr-only">Tonträger scannen</span>
+        <span class="sr-only">${escapeHtml(t("nav_scan_sr"))}</span>
       </a>
-      ${item("search", "collection.html?focus=suche", "Suche", ICONS.search)}
-      ${item("account", "index.html#konto", "Konto", '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.8-4 5-6 8-6s6.2 2 8 6"/>')}
+      ${item("search", "collection.html?focus=suche", t("nav_search"), ICONS.search)}
+      ${item("account", "index.html#konto", t("nav_account"), '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.8-4 5-6 8-6s6.2 2 8 6"/>')}
     </nav>`;
 }
