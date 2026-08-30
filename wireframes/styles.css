@@ -1,23 +1,24 @@
 /* ===== Design tokens ===== */
 :root{
-  --bg:#171512;
-  --page-bg:#EDE7DA;
-  --surface:#211E19;
-  --surface-2:#2A251E;
-  --surface-3:#342D23;
-  --border:rgba(255,255,255,.09);
-  --border-strong:rgba(255,255,255,.18);
-  --text:#F6F1E7;
-  --text-muted:#AFA593;
-  --text-faint:#7C7365;
-  --accent:#E4A83B;
-  --accent-ink:#1B1712;
-  --accent-soft:rgba(228,168,59,.14);
-  --danger:#E17A5C;
+  --bg:#FBF6EC;
+  --page-bg:#F1EADA;
+  --surface:#FFFFFF;
+  --surface-2:#F5EFE1;
+  --surface-3:#ECE3CF;
+  --border:rgba(40,28,10,.10);
+  --border-strong:rgba(40,28,10,.20);
+  --text:#231C10;
+  --text-muted:#746A54;
+  --text-faint:#A69A80;
+  --accent:#FF9635;
+  --accent-2:#FF5F7E;
+  --accent-ink:#241505;
+  --accent-soft:rgba(255,150,53,.16);
+  --danger:#E1573C;
   --radius-lg:32px;
   --radius-md:18px;
   --radius-sm:13px;
-  --shadow-frame:0 40px 70px -24px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.5);
+  --shadow-frame:0 30px 60px -24px rgba(120,86,30,.28), 0 0 0 1px rgba(40,28,10,.06);
   --font-display:'Instrument Serif', Georgia, 'Times New Roman', serif;
   --font-body:'Manrope', -apple-system, 'Segoe UI', sans-serif;
 }
@@ -32,7 +33,8 @@ svg{ display:block; }
 .page-shell{
   min-height:100vh; display:flex; align-items:center; justify-content:center;
   background:
-    radial-gradient(circle at 15% 10%, rgba(228,168,59,.08), transparent 45%),
+    radial-gradient(circle at 15% 10%, rgba(255,150,53,.14), transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(255,95,126,.10), transparent 50%),
     var(--page-bg);
   padding:70px 20px;
 }
@@ -103,7 +105,7 @@ svg{ display:block; }
 .navitem{ display:flex; flex-direction:column; align-items:center; gap:5px; color:var(--text-faint); font-size:10.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
 .navitem.active{ color:var(--accent); }
 .navitem svg{ stroke:currentColor; }
-.fab{ width:58px; height:58px; border-radius:999px; background:var(--accent); display:flex; align-items:center; justify-content:center; margin-top:-34px; border:5px solid var(--bg); box-shadow:0 10px 22px -6px rgba(228,168,59,.55); }
+.fab{ width:58px; height:58px; border-radius:999px; background:var(--accent); display:flex; align-items:center; justify-content:center; margin-top:-34px; border:5px solid var(--bg); box-shadow:0 10px 22px -6px rgba(255,150,53,.45); }
 .fab svg{ stroke:var(--accent-ink); }
 
 /* ===== Chips / search ===== */
@@ -155,7 +157,7 @@ svg{ display:block; }
 .gallery-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:20px; margin-top:48px; }
 .gallery-card{ background:var(--surface); border:1px solid var(--border); border-radius:22px; padding:26px; transition:transform .15s ease, border-color .15s ease; }
 .gallery-card:hover{ transform:translateY(-3px); border-color:var(--border-strong); }
-.gallery-tag{ display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); border:1px solid rgba(228,168,59,.35); background:var(--accent-soft); border-radius:999px; padding:4px 11px; margin-bottom:14px; }
+.gallery-tag{ display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); border:1px solid rgba(255,150,53,.35); background:var(--accent-soft); border-radius:999px; padding:4px 11px; margin-bottom:14px; }
 .gallery-name{ font-size:19px; font-weight:800; }
 .gallery-arrow{ margin-top:16px; color:var(--text-faint); }
 
