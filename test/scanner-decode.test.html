@@ -59,12 +59,11 @@
   /* Nur scanHints() wird gebraucht; scanner.js selbst zieht das ganze
      Seiten-DOM nach sich. Die Funktion wird daher hier gespiegelt –
      und der Test unten prüft, dass beide Fassungen übereinstimmen. */
-  const HINT_POSSIBLE_FORMATS = 2, HINT_TRY_HARDER = 3;
+  const HINT_POSSIBLE_FORMATS = 2;
   function scanHints() {
     const F = ZXingBrowser.BarcodeFormat;
     const hints = new Map();
     hints.set(HINT_POSSIBLE_FORMATS, [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E]);
-    hints.set(HINT_TRY_HARDER, true);
     return hints;
   }
 </script>
@@ -184,7 +183,7 @@ test("Die Hinweis-Schlüssel stimmen noch mit der Bibliothek überein", () => {
   // sagt, warum.
   const hints = scanHints();
   assertEqual(hints.get(HINT_POSSIBLE_FORMATS).length, 4);
-  assertEqual(hints.get(HINT_TRY_HARDER), true);
+  assertEqual(hints.size, 1, "TRY_HARDER darf nicht zurückkommen – es lässt jedes Bild gedreht durchrechnen");
   assert(hints.get(HINT_POSSIBLE_FORMATS).every((f) => typeof f === "number"),
     "BarcodeFormat muss Zahlen liefern, sonst ist der Hinweis wirkungslos");
 });

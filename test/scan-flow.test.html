@@ -881,14 +881,14 @@ test("Der Scan startet in hoher Auflösung, sonst erzwingt er Nahaufnahmen", asy
   stopScan();
 
   const v = zxingAufrufe[0].video;
-  assertEqual(v.width, { ideal: 1920 },
+  assertEqual(v.width, { ideal: 1280 },
     "bei 640px muss der Code fast das Bild füllen – näher, als die Kamera scharf stellt");
-  assertEqual(v.height, { ideal: 1080 });
+  assertEqual(v.height, { ideal: 720 });
 });
 
 test("Der Cover-Weg nimmt dieselben Constraints", async () => {
   const c = videoConstraints();
-  assertEqual(c.width, { ideal: 1920 }, "beide Wege brauchen dieselbe Kamera und dieselbe Auflösung");
+  assertEqual(c.width, { ideal: 1280 }, "beide Wege brauchen dieselbe Kamera und dieselbe Auflösung");
 });
 
 runTests();

@@ -85,13 +85,18 @@ modeToggle.addEventListener("click", (e) => {
  * iPhone am Ende, sie stellt erst ab etwa 10 cm scharf. Ergebnis:
  * nah genug zum Auflösen heißt zu nah zum Fokussieren.
  *
- * Mit 1920px Breite reicht ein Abstand von 20–30 cm. Das liegt bequem
- * im Schärfebereich, und der Scan gelingt, ohne dass man die Hülle
- * an die Linse hält.
+ * Mit 1280px Breite reicht ein Abstand von 20–30 cm: füllt der Code ein
+ * Drittel des Bildes, fallen noch rund 4 Pixel auf ein Modul. Das liegt
+ * bequem im Schärfebereich, ohne dass man die Hülle an die Linse hält.
+ *
+ * Nicht mehr 1920: der Leser rechnet jedes Bild vollständig durch, und
+ * 1080p kostet gut das Doppelte, ohne beim Erkennen zu helfen. Auf dem
+ * Telefon ging dabei so viel Zeit auf dem Hauptthread verloren, dass das
+ * Vorschaubild stockte.
  */
 const KAMERA_IDEAL = {
-  width: { ideal: 1920 },
-  height: { ideal: 1080 },
+  width: { ideal: 1280 },
+  height: { ideal: 720 },
   // Von Safari teils ignoriert; unbekannte Felder stören dort nicht.
   focusMode: "continuous",
 };
@@ -169,7 +174,7 @@ async function toggleScan() {
   }
 
   try {
-    codeReader = new ZXingBrowser.BrowserMultiFormatOneDReader(scanHints());
+    codeReader = makeCodeReader();
     frameEl.classList.add("live");
     scanning = true;
     scanBtn.textContent = "Scan stoppen";
@@ -400,15 +405,29 @@ const HINT_TRY_HARDER = 3;
  * EAN-13, EAN-8, UPC-A und UPC-E decken jeden Handelsartikel ab. Alles
  * andere kann auf einer Platte oder CD nicht der gesuchte Code sein.
  *
- * TRY_HARDER kostet etwas Rechenzeit pro Bild, findet den Code dafür
- * auch schräg gehalten – das ist die Sorte Aufwand, die sich hier lohnt.
+ * TRY_HARDER wird bewusst NICHT gesetzt. Es lässt ZXing jedes Bild
+ * zusätzlich gedreht durchrechnen – auf dem Telefon je Versuch ein
+ * schwerer Brocken auf demselben Thread, der auch das Vorschaubild
+ * zeichnet. Die Kamera wirkte damit, als ginge sie gar nicht an.
  */
 function scanHints() {
   const F = ZXingBrowser.BarcodeFormat;
   const hints = new Map();
   hints.set(HINT_POSSIBLE_FORMATS, [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E]);
-  hints.set(HINT_TRY_HARDER, true);
   return hints;
+}
+
+/**
+ * Leser bauen. Schlägt das Einschränken aus irgendeinem Grund fehl,
+ * lieber ohne Vorgabe weiterscannen als gar nicht: eine Verfeinerung
+ * darf das Kernstück der App nie lahmlegen.
+ */
+function makeCodeReader() {
+  try {
+    return new ZXingBrowser.BrowserMultiFormatOneDReader(scanHints(), { delayBetweenScanAttempts: 200 });
+  } catch (e) {
+    return new ZXingBrowser.BrowserMultiFormatOneDReader();
+  }
 }
 
 /* ---------- Barcode-Abgleich ---------- */
