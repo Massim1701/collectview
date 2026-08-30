@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Das Produkt heißt durchgängig **Plattenregal** – Markenschriftzug, Seitentitel
+und Doku. Der Name ist ein Arbeitstitel und kann später ersetzt werden; er
+gehört deshalb nicht in Bezeichner, Tabellennamen oder Dateipfade.
+
 Sprache im Projekt: **Deutsch** – Oberflächentexte, Kommentare und Commit-Messages.
 
 ## Befehle
