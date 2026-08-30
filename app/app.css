@@ -251,7 +251,8 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 /* .menu-item ist in styles.css für <div> gedacht – als <button> muss die
    Browser-Umrandung weg, der Trenner unten bleibt. */
 .menu-item{ width:100%; background:none; font-family:var(--font-body); text-align:left; cursor:pointer;
-  border:none; border-bottom:1px solid var(--border); }
+  border:none; border-bottom:1px solid var(--border);
+  color:inherit; }  /* <button> erbt color nicht – sonst UA-Schwarz */
 .menu-item.danger{ border-bottom:none; color:var(--danger-ink); }
 .menu-item.danger svg{ stroke:currentColor; }
 .confirm-box{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; }
