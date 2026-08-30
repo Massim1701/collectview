@@ -217,10 +217,10 @@ a.list-card:hover, .list-card[role="button"]:hover{ border-color:var(--border-st
 .detail-back{
   position:absolute; top:18px; left:18px; z-index:2;
   width:44px; height:44px; border-radius:999px;
-  background:rgba(255,255,255,.86); color:#231C10;
+  background:rgba(255,255,255,.86); color:#1C1C22;
   -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
   display:flex; align-items:center; justify-content:center;
-  box-shadow:0 4px 14px -4px rgba(40,28,10,.35);
+  box-shadow:0 4px 14px -4px rgba(20,20,30,.30);
   transition:transform .15s ease;
 }
 .detail-back:hover{ transform:translateX(-2px); }

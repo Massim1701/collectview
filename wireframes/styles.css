@@ -17,24 +17,24 @@
 /* ===== Tokens ===== */
 :root{
   /* Farbe – Rollen, nicht Werte. Der Dark-Block unten tauscht nur diese. */
-  --bg:#FBF6EC;
-  --page-bg:#F1EADA;
+  --bg:#FFFFFF;
+  --page-bg:#F5F5F7;
   --surface:#FFFFFF;
-  --surface-2:#F5EFE1;
-  --surface-3:#ECE3CF;
-  --border:rgba(40,28,10,.10);
-  --border-strong:rgba(40,28,10,.20);
-  --text:#231C10;
-  --text-muted:#6B6150;
-  --text-faint:#8A7F6B;
-  --accent:#FF9635;
-  --accent-2:#FF5F7E;
-  --accent-ink:#241505;
-  --accent-soft:rgba(255,150,53,.16);
-  --accent-text:#A6530F;
-  --danger:#E1573C;
-  --danger-ink:#B33A24;
-  --danger-soft:rgba(225,87,60,.12);
+  --surface-2:#F7F7F9;
+  --surface-3:#EDEDF1;
+  --border:rgba(20,20,30,.08);
+  --border-strong:rgba(20,20,30,.16);
+  --text:#1C1C22;
+  --text-muted:#6B6B76;
+  --text-faint:#9C9CA6;
+  --accent:#FF6A3D;
+  --accent-2:#FF4F81;
+  --accent-ink:#2A1006;
+  --accent-soft:rgba(255,106,61,.14);
+  --accent-text:#C1400D;
+  --danger:#E2412C;
+  --danger-ink:#A82E1C;
+  --danger-soft:rgba(226,65,44,.12);
 
   /* Typo-Skala – 16px als Anker, Verhältnis ~1.22 */
   --text-2xs:12px;   /* nur Versalien-Labels */
@@ -65,10 +65,10 @@
   --radius-pill:999px;
 
   /* Elevation – drei Stufen statt einer */
-  --shadow-sm:0 1px 2px rgba(40,28,10,.05), 0 1px 3px rgba(40,28,10,.06);
-  --shadow-md:0 4px 10px -4px rgba(40,28,10,.14), 0 2px 4px rgba(40,28,10,.05);
-  --shadow-lg:0 18px 36px -18px rgba(40,28,10,.28), 0 4px 10px rgba(40,28,10,.06);
-  --shadow-frame:0 30px 60px -24px rgba(120,86,30,.28), 0 0 0 1px rgba(40,28,10,.06);
+  --shadow-sm:0 1px 2px rgba(20,20,30,.05), 0 1px 3px rgba(20,20,30,.06);
+  --shadow-md:0 4px 10px -4px rgba(20,20,30,.13), 0 2px 4px rgba(20,20,30,.05);
+  --shadow-lg:0 18px 36px -18px rgba(20,20,30,.20), 0 4px 10px rgba(20,20,30,.06);
+  --shadow-frame:0 30px 60px -24px rgba(20,20,30,.22), 0 0 0 1px rgba(20,20,30,.06);
 
   /* Bewegung */
   --dur-fast:150ms;
@@ -87,23 +87,23 @@
    Automatisch nach Systemeinstellung, per data-theme übersteuerbar. */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#17140F;
-    --page-bg:#100E0A;
-    --surface:#211D16;
-    --surface-2:#2A251C;
-    --surface-3:#342E23;
+    --bg:#121214;
+    --page-bg:#0B0B0D;
+    --surface:#1C1C20;
+    --surface-2:#232327;
+    --surface-3:#2C2C31;
     --border:rgba(255,255,255,.10);
     --border-strong:rgba(255,255,255,.20);
-    --text:#F6F1E7;
-    --text-muted:#B8AE9B;
-    --text-faint:#8E8574;
-    --accent:#FFA34D;
-    --accent-ink:#1B1207;
-    --accent-soft:rgba(255,163,77,.18);
-    --accent-text:#FFB870;
-    --danger:#E9765C;
-    --danger-ink:#FF9E86;
-    --danger-soft:rgba(233,118,92,.16);
+    --text:#F2F2F5;
+    --text-muted:#B3B3BC;
+    --text-faint:#84848D;
+    --accent:#FF8F5E;
+    --accent-ink:#1B0D06;
+    --accent-soft:rgba(255,143,94,.18);
+    --accent-text:#FFAB80;
+    --danger:#EB6552;
+    --danger-ink:#FF9686;
+    --danger-soft:rgba(235,101,82,.16);
     --shadow-sm:0 1px 2px rgba(0,0,0,.4);
     --shadow-md:0 4px 10px -4px rgba(0,0,0,.5);
     --shadow-lg:0 18px 36px -18px rgba(0,0,0,.65);
@@ -111,11 +111,11 @@
   }
 }
 :root[data-theme="dark"]{
-  --bg:#17140F; --page-bg:#100E0A; --surface:#211D16; --surface-2:#2A251C; --surface-3:#342E23;
+  --bg:#121214; --page-bg:#0B0B0D; --surface:#1C1C20; --surface-2:#232327; --surface-3:#2C2C31;
   --border:rgba(255,255,255,.10); --border-strong:rgba(255,255,255,.20);
-  --text:#F6F1E7; --text-muted:#B8AE9B; --text-faint:#8E8574;
-  --accent:#FFA34D; --accent-ink:#1B1207; --accent-soft:rgba(255,163,77,.18); --accent-text:#FFB870;
-  --danger:#E9765C; --danger-ink:#FF9E86; --danger-soft:rgba(233,118,92,.16);
+  --text:#F2F2F5; --text-muted:#B3B3BC; --text-faint:#84848D;
+  --accent:#FF8F5E; --accent-ink:#1B0D06; --accent-soft:rgba(255,143,94,.18); --accent-text:#FFAB80;
+  --danger:#EB6552; --danger-ink:#FF9686; --danger-soft:rgba(235,101,82,.16);
   --shadow-sm:0 1px 2px rgba(0,0,0,.4);
   --shadow-md:0 4px 10px -4px rgba(0,0,0,.5);
   --shadow-lg:0 18px 36px -18px rgba(0,0,0,.65);
