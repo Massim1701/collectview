@@ -575,15 +575,30 @@ function eanPruefzifferStimmt(ziffern) {
 }
 
 /**
- * Eingetippten Code prüfen. Gibt { code } zurück oder { fehler }.
- * Eine falsche Prüfziffer ist ein Hinweis, keine Sperre: manche Codes
- * sind schlicht falsch gedruckt, und suchen darf man trotzdem.
+ * Eingabe deuten: Ziffern sind ein Barcode, alles andere ein Suchtext.
+ *
+ * Der Barcode ist der schnellere Weg, aber er trägt nicht immer. Bei
+ * Depeche Modes "Speak & Spell" führt der aufgedruckte Code bei Discogs
+ * zu 315 fremden Platten, und alles vor etwa 1980 hat überhaupt keinen
+ * Barcode. Für beide Fälle braucht es die Suche nach Interpret und
+ * Titel – im selben Feld, damit man nicht erst überlegen muss, welches
+ * das richtige ist.
+ *
+ * Gibt { code } oder { text } zurück, sonst { fehler }.
  */
 function pruefeEingabe(eingabe) {
-  const z = normalizeBarcode(eingabe);
-  if (z.length === 0) return { fehler: "Bitte die Ziffern unter dem Strichcode eintippen." };
+  const roh = String(eingabe || "").trim();
+  if (roh === "") return { fehler: "Barcode eintippen oder nach Interpret und Titel suchen." };
+
+  // Enthält es Buchstaben, ist es kein Barcode – dann Textsuche.
+  if (/[^\d\s\-]/.test(roh)) {
+    if (roh.length < 3) return { fehler: "Für die Suche bitte mindestens drei Zeichen." };
+    return { text: roh };
+  }
+
+  const z = normalizeBarcode(roh);
   if (![8, 12, 13].includes(z.length)) {
-    return { fehler: `Ein Barcode hat 8, 12 oder 13 Ziffern – das waren ${z.length}.` };
+    return { fehler: `Ein Barcode hat 8, 12 oder 13 Ziffern – das waren ${z.length}. Für eine Titelsuche Buchstaben eingeben.` };
   }
   return { code: z, warnung: eanPruefzifferStimmt(z) ? "" : "Die Prüfziffer passt nicht. Vertippt? Gesucht wird trotzdem." };
 }
@@ -592,9 +607,11 @@ if (codeInput) {
   // Mitzählen beim Tippen: der Fehler war zuletzt eine ausgelassene
   // Ziffer, und den sieht man an einer Zahlenreihe nicht.
   codeInput.addEventListener("input", () => {
-    const n = normalizeBarcode(codeInput.value).length;
     const fehlerEl = document.getElementById("code-error");
-    if (n === 0) { fehlerEl.textContent = ""; return; }
+    const roh = codeInput.value.trim();
+    // Bei Buchstaben ist es eine Titelsuche – da gibt es nichts zu zählen.
+    if (roh === "" || /[^\d\s\-]/.test(roh)) { fehlerEl.textContent = ""; return; }
+    const n = normalizeBarcode(roh).length;
     fehlerEl.textContent = [8, 12, 13].includes(n)
       ? `${n} Ziffern – passt.`
       : `${n} Ziffern – ein Barcode hat 8, 12 oder 13.`;
@@ -605,15 +622,16 @@ if (codeForm) {
   codeForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const fehlerEl = document.getElementById("code-error");
-    const { code, fehler, warnung } = pruefeEingabe(codeInput.value);
+    const { code, text, fehler, warnung } = pruefeEingabe(codeInput.value);
     fehlerEl.textContent = fehler || warnung || "";
-    if (!code) return;
+    if (!code && !text) return;
 
     // Läuft durch denselben Weg wie ein Scan: Kontingent, Katalog,
-    // Discogs, Abgleich. Nur die Ziffern kommen woanders her.
+    // Discogs, Abgleich. Nur die Eingabe kommt woanders her.
     if (scanning) stopScan();
     codeInput.blur();
-    lookupBarcode(code);
+    if (code) lookupBarcode(code);
+    else lookupCoverText(text);
   });
 }
 

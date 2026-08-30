@@ -101,7 +101,8 @@
   }
   async function removeWishlistItem(id) { wishlistRemoves.push(id); }
 
-  window.fetch = async () => { fetchCalls += 1; return fetchResponse; };
+  var gesuchtePfade = [];
+  window.fetch = async (url) => { fetchCalls += 1; gesuchtePfade.push(String(url)); return fetchResponse; };
 
   /* ZXing-Ersatz: merkt sich nur, mit welcher Kamera-ID gestartet wurde. */
   var zxingAufrufe = [];
@@ -133,7 +134,7 @@
     rows = { collection_items: [], wishlist_items: [], scan_events: [], releases: [] };
     inserts = []; scanInserts = []; wishlistAdds = []; wishlistRemoves = []; rpcAufrufe = [];
     insertError = null; wishlistError = null; fetchResponse = null;
-    fetchCalls = 0; scanLimitReached = false; scanTabelleFehlt = false; subscribed = false;
+    fetchCalls = 0; gesuchtePfade = []; scanLimitReached = false; scanTabelleFehlt = false; subscribed = false;
     scanQuota = { used: 0, subscribed: false, known: false };
   }
 
@@ -554,6 +555,34 @@ test("Eine falsche Prüfziffer warnt, blockiert aber nicht", () => {
   const r = pruefeEingabe("724385522926");
   assertEqual(r.code, "724385522926", "gesucht wird trotzdem – Codes sind manchmal falsch gedruckt");
   assertIncludes(r.warnung, "Prüfziffer");
+});
+
+test("Buchstaben bedeuten Titelsuche, Ziffern einen Barcode", () => {
+  assertEqual(pruefeEingabe("724385522925").code, "724385522925");
+  assertEqual(pruefeEingabe("Depeche Mode Speak and Spell").text, "Depeche Mode Speak and Spell");
+  assertEqual(pruefeEingabe("7 24385 52292 5").code, "724385522925", "Gruppen bleiben ein Barcode");
+  assertIncludes(pruefeEingabe("ab").fehler, "drei Zeichen");
+  assertIncludes(pruefeEingabe("").fehler, "Interpret");
+});
+
+test("Eine Ziffernfolge falscher Länge weist auf die Titelsuche hin", () => {
+  const r = pruefeEingabe("72435206428");
+  assertIncludes(r.fehler, "das waren 11");
+  assertIncludes(r.fehler, "Titelsuche", "der Nutzer soll den anderen Weg sehen");
+});
+
+test("Eine Titelsuche fragt Discogs nach Text, nicht nach Barcode", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([discogsResult(1, "Depeche Mode - Speak & Spell")]);
+
+  tippe("Depeche Mode Speak and Spell");
+  await tick(60);
+
+  const url = gesuchtePfade.find((u) => u.includes("api.discogs.com"));
+  assert(url && url.includes("q="), "die Titelsuche geht über q=, nicht über barcode=");
+  assert(!url.includes("barcode="), "sonst greift der Barcode-Abgleich und wirft alles weg");
+  assertEqual(head(), "Treffer");
 });
 
 test("Ein eingetippter Code läuft durch dieselbe Suche wie ein Scan", async () => {
