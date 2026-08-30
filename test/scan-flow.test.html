@@ -455,6 +455,74 @@ test("Ohne Tabelle gibt es keinen Zählerstand", async () => {
   assertEqual(await fetchScanCount("user-1"), null, "null heißt unbekannt, nicht null Scans");
 });
 
+/* ---------- Kameraliste ---------- */
+
+const kam = (id, label) => ({ kind: "videoinput", deviceId: id, label });
+
+test("Frontkamera und Exoten fliegen aus der Liste", () => {
+  const gefiltert = nurRueckkameras([
+    kam("f", "Front Camera"),
+    kam("t", "Back Telephoto Camera"),
+    kam("d", "Back Dual Wide Camera"),
+    kam("u", "Back Ultra Wide Camera"),
+  ]);
+  assert(!gefiltert.some((d) => d.deviceId === "f"), "wer die Frontkamera wählt, filmt sich selbst");
+  assertEqual(gefiltert[0].deviceId, "d", "Dual Wide zuerst – die hat in der Praxis funktioniert");
+});
+
+test("Ohne Bezeichnungen bleibt die Liste unangetastet", () => {
+  // Vor der ersten Freigabe liefert iOS keine Namen.
+  const ohne = [kam("a", ""), kam("b", "")];
+  assertEqual(nurRueckkameras(ohne).length, 2, "sonst wäre die Liste leer");
+});
+
+test("Gibt es keine Rückkamera, bleibt wenigstens etwas übrig", () => {
+  const nurFront = [kam("f", "Front Camera")];
+  assertEqual(nurRueckkameras(nurFront).length, 1, "lieber die Frontkamera als gar keine");
+});
+
+test("Die gewählte Kamera wird gemerkt und wiederverwendet", () => {
+  merkeKamera("d");
+  assertEqual(gemerkteKamera(), "d");
+  document.getElementById("camera-select").innerHTML = "";
+  assertEqual(videoConstraints().deviceId, { exact: "d" },
+    "eine feste Kamera ist stabiler als facingMode");
+  merkeKamera("");
+});
+
+/* ---------- Lesungen absichern ---------- */
+
+test("Eine einzelne Lesung wird noch nicht angenommen", () => {
+  letzteLesung = null;
+  assertEqual(pruefeLesung("724385522925"), null, "erst bestätigen lassen");
+});
+
+test("Zweimal derselbe Code wird angenommen", () => {
+  letzteLesung = null;
+  pruefeLesung("724385522925");
+  assertEqual(pruefeLesung("724385522925"), "724385522925");
+});
+
+test("Zwei verschiedene Lesungen bestätigen sich nicht", () => {
+  letzteLesung = null;
+  pruefeLesung("724385522925");
+  assertEqual(pruefeLesung("4601294548122"), null, "der zweite ersetzt nur den Kandidaten");
+});
+
+test("Eine falsche Prüfziffer wird sofort verworfen", () => {
+  letzteLesung = null;
+  assertEqual(pruefeLesung("724385522926"), null);
+  assertEqual(letzteLesung, null, "gar nicht erst als Kandidat merken");
+});
+
+test("Der echte Fehlgriff vom Gerät käme nicht mehr durch", () => {
+  // 4601294548122 hatte eine gültige Prüfziffer und war trotzdem falsch.
+  // Einmal gelesen reicht seitdem nicht mehr.
+  letzteLesung = null;
+  assertEqual(pruefeLesung("4601294548122"), null);
+  assertEqual(pruefeLesung("724385522925"), null, "ein anderer Code setzt nur neu an");
+});
+
 /* ---------- Barcode von Hand ---------- */
 
 const codeFehler = () => document.getElementById("code-error").textContent;
@@ -904,6 +972,7 @@ test("Abgelehnter Scan setzt die Anzeige auf aufgebraucht", async () => {
 
 test("Ohne eigene Wahl wird keine Kamera geraten", async () => {
   zxingAufrufe = [];
+  merkeKamera("");                                   // auch nichts Gemerktes
   document.getElementById("camera-select").innerHTML = "";
   if (scanning) stopScan();
 
@@ -952,6 +1021,7 @@ test("Der Cover-Weg nimmt dieselben Constraints", async () => {
 });
 
 test("Die Constraints fassen die Kamera nicht mehr an als nötig", () => {
+  merkeKamera("");
   document.getElementById("camera-select").innerHTML = "";   // ohne eigene Wahl
   const c = videoConstraints();
   assert(!("focusMode" in c),

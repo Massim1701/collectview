@@ -107,8 +107,12 @@ const KAMERA_IDEAL = {
 
 /** Ausdrücklich gewählte Kamera, sonst die Rückkamera des Systems. */
 function videoConstraints() {
-  return cameraSelect.value
-    ? { deviceId: { exact: cameraSelect.value }, ...KAMERA_IDEAL }
+  // Eine fest gewählte Kamera ist stabiler als facingMode: dabei
+  // entscheidet iOS selbst und liefert unter Umständen ein virtuelles
+  // Mehrfach-Gerät, das beim Zoomen die Linse wechselt.
+  const id = cameraSelect.value || gemerkteKamera();
+  return id
+    ? { deviceId: { exact: id }, ...KAMERA_IDEAL }
     : { facingMode: { ideal: "environment" }, ...KAMERA_IDEAL };
 }
 
@@ -143,20 +147,69 @@ function kameraFeinschliff() {
     .filter(Boolean).join(" · ");
 }
 
+/** Gemerkte Kamera; überlebt den Neustart der App. */
+const KAMERA_SPEICHER = "pr_kamera";
+
+function gemerkteKamera() {
+  try { return localStorage.getItem(KAMERA_SPEICHER) || ""; } catch { return ""; }
+}
+function merkeKamera(id) {
+  try { id ? localStorage.setItem(KAMERA_SPEICHER, id) : localStorage.removeItem(KAMERA_SPEICHER); } catch { /* egal */ }
+}
+
+/**
+ * Nur Rückkameras, und die Dual Wide zuerst.
+ *
+ * Ein Telefon meldet Front-, Ultraweitwinkel-, Tele- und mehrere
+ * zusammengesetzte Kameras. Zum Scannen einer Plattenhülle taugt davon
+ * genau eine Sorte, und in der Praxis hat die "Back Dual Wide Camera"
+ * am zuverlässigsten funktioniert. Der Rest steht nur im Weg – wer aus
+ * Versehen die Frontkamera wählt, filmt sich selbst.
+ *
+ * Vor der ersten Freigabe liefert iOS keine Bezeichnungen. Dann bleibt
+ * die Liste ungefiltert, sonst wäre sie leer.
+ */
+function nurRueckkameras(cams) {
+  const mitNamen = cams.filter((d) => (d.label || "").trim() !== "");
+  if (mitNamen.length === 0) return cams;
+
+  const rueck = mitNamen.filter((d) => /back|rück|rear/i.test(d.label));
+  const auswahl = rueck.length > 0 ? rueck : mitNamen;
+
+  // Dual Wide nach vorn, danach die einfache Rückkamera, dann der Rest.
+  const rang = (d) => {
+    const l = d.label.toLowerCase();
+    if (l.includes("dual wide")) return 0;
+    if (l.includes("triple") || l.includes("dual")) return 1;
+    if (l.includes("ultra") || l.includes("tele")) return 3;
+    return 2;
+  };
+  return [...auswahl].sort((a, b) => rang(a) - rang(b));
+}
+
 async function refreshCameraList(selectedId) {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
-    const cams = devices.filter((d) => d.kind === "videoinput");
-    if (cams.length < 2) {
+    const cams = nurRueckkameras(devices.filter((d) => d.kind === "videoinput"));
+    if (cams.length === 0) {
       cameraSelect.hidden = true;
       cameraSelect.innerHTML = "";
       return;
     }
+
     cameraSelect.innerHTML = cams
       .map((d, i) => `<option value="${escapeHtml(d.deviceId)}">${escapeHtml(d.label || "Kamera " + (i + 1))}</option>`)
       .join("");
-    if (selectedId) cameraSelect.value = selectedId;
-    cameraSelect.hidden = false;
+
+    // Reihenfolge: was gerade läuft, sonst das Gemerkte, sonst die
+    // erste – und die ist nach der Sortierung oben die Dual Wide.
+    const gemerkt = gemerkteKamera();
+    const wunsch = [selectedId, gemerkt].find((id) => id && cams.some((c) => c.deviceId === id));
+    cameraSelect.value = wunsch || cams[0].deviceId;
+    merkeKamera(cameraSelect.value);
+
+    // Bei nur einer Kamera gibt es nichts zu wählen – dann weg damit.
+    cameraSelect.hidden = cams.length < 2;
   } catch {
     // Kein Zugriff auf enumerateDevices (z. B. kein https) – dann bleibt es
     // bei der Standardkamera, kein Grund den Scan abzubrechen.
@@ -164,6 +217,7 @@ async function refreshCameraList(selectedId) {
 }
 
 cameraSelect.addEventListener("change", () => {
+  merkeKamera(cameraSelect.value);
   if (mode === "barcode" && scanning) {
     stopScan();
     toggleScan();
@@ -198,10 +252,13 @@ async function toggleScan() {
     // undefined lässt ZXing auf facingMode "environment" zurückfallen –
     // dieselbe Wahl, die der Cover-Weg unten schon trifft. Das System
     // gibt dabei die Hauptkamera, nicht irgendeine.
+    letzteLesung = null;
     scanControls = await codeReader.decodeFromConstraints({ video: videoConstraints() }, videoEl, (result) => {
       if (!result) return;
-      setStatus("Erkannt: " + result.getText());
-      lookupBarcode(result.getText());
+      const gelesen = pruefeLesung(result.getText());
+      if (!gelesen) return;
+      setStatus("Erkannt: " + gelesen);
+      lookupBarcode(gelesen);
       stopScan();
     });
 
@@ -217,6 +274,7 @@ async function toggleScan() {
 }
 
 function stopScan() {
+  letzteLesung = null;
   if (scanControls) {
     scanControls.stop();
     scanControls = null;
@@ -452,6 +510,47 @@ function makeCodeReader() {
   }
 }
 
+/* ---------- Lesungen absichern ---------- */
+
+/** Zuletzt gelesener Code, der noch auf seine Bestätigung wartet. */
+let letzteLesung = null;
+
+/**
+ * Eine einzelne Lesung genügt nicht.
+ *
+ * Belegt an einem echten Fall: auf einer Hülle mit aufgedrucktem
+ * 724352306428 kam 4601294548122 heraus – 13 Ziffern, Prüfziffer
+ * korrekt, russischer Präfix. Die Prüfziffer allein fängt so etwas
+ * nicht ab: sie hat nur zehn mögliche Werte, jede zehnte Fehllesung
+ * besteht sie zufällig.
+ *
+ * Zwei aufeinanderfolgende gleiche Lesungen sind dagegen praktisch
+ * nicht zufällig zu haben. Bei 200 ms zwischen den Versuchen kostet das
+ * eine Fünftelsekunde – deutlich weniger, als eine falsche Platte in der
+ * Sammlung später kostet.
+ *
+ * Gibt den bestätigten Code zurück oder null, solange noch nicht.
+ */
+function pruefeLesung(roh) {
+  const code = normalizeBarcode(roh);
+
+  // Was die Prüfziffer nicht besteht, ist sicher falsch – gar nicht erst
+  // als Kandidat merken.
+  if (!eanPruefzifferStimmt(code)) {
+    letzteLesung = null;
+    return null;
+  }
+
+  if (code !== letzteLesung) {
+    letzteLesung = code;
+    setStatus("Code gefunden, wird bestätigt …", { active: true, busy: true });
+    return null;
+  }
+
+  letzteLesung = null;
+  return code;
+}
+
 /* ---------- Barcode von Hand ---------- */
 
 /**
@@ -487,6 +586,19 @@ function pruefeEingabe(eingabe) {
     return { fehler: `Ein Barcode hat 8, 12 oder 13 Ziffern – das waren ${z.length}.` };
   }
   return { code: z, warnung: eanPruefzifferStimmt(z) ? "" : "Die Prüfziffer passt nicht. Vertippt? Gesucht wird trotzdem." };
+}
+
+if (codeInput) {
+  // Mitzählen beim Tippen: der Fehler war zuletzt eine ausgelassene
+  // Ziffer, und den sieht man an einer Zahlenreihe nicht.
+  codeInput.addEventListener("input", () => {
+    const n = normalizeBarcode(codeInput.value).length;
+    const fehlerEl = document.getElementById("code-error");
+    if (n === 0) { fehlerEl.textContent = ""; return; }
+    fehlerEl.textContent = [8, 12, 13].includes(n)
+      ? `${n} Ziffern – passt.`
+      : `${n} Ziffern – ein Barcode hat 8, 12 oder 13.`;
+  });
 }
 
 if (codeForm) {
