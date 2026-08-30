@@ -33,7 +33,8 @@
 <script>
   /* Stubs statt auth.js/db.js/wishlist.js. Die Tabellen liefern, was
      `rows` für sie hergibt; `inserts` sammelt, was geschrieben wurde. */
-  var rows = { collection_items: [], wishlist_items: [], scan_events: [] };
+  var rows = { collection_items: [], wishlist_items: [], scan_events: [], releases: [] };
+  var rpcAufrufe = [];
   var inserts = [];        // alles außer scan_events
   var scanInserts = [];    // die gezählten Scans
   var wishlistAdds = [];
@@ -76,6 +77,11 @@
 
   async function fetchIsSubscribed() { return subscribed; }
 
+  sb.rpc = async (name, args) => {
+    rpcAufrufe.push({ name, args });
+    return { data: "release-" + (args?.daten?.discogs_id ?? "x"), error: null };
+  };
+
   var currentUser = { id: "user-1" };
   async function requireAuth() { return currentUser; }
   function renderAccountRow() {}
@@ -113,8 +119,8 @@
   ];
 
   function resetStub() {
-    rows = { collection_items: [], wishlist_items: [], scan_events: [] };
-    inserts = []; scanInserts = []; wishlistAdds = []; wishlistRemoves = [];
+    rows = { collection_items: [], wishlist_items: [], scan_events: [], releases: [] };
+    inserts = []; scanInserts = []; wishlistAdds = []; wishlistRemoves = []; rpcAufrufe = [];
     insertError = null; wishlistError = null; fetchResponse = null;
     fetchCalls = 0; scanLimitReached = false; subscribed = false;
     scanQuota = { used: 0, subscribed: false, known: false };
@@ -133,6 +139,7 @@
      6be7693 t(), sonst wirft die aufrufende Datei beim Laden. -->
 <script src="../app/js/i18n.js"></script>
 <script src="../app/js/ui.js"></script>
+<script src="../app/js/releases.js"></script>
 <script src="../app/js/scan-status.js"></script>
 <script src="../app/js/scan-limit.js"></script>
 <script src="../app/js/scanner.js"></script>
@@ -365,15 +372,96 @@ test("Ein gemerkter Tonträger wird beim nächsten Scan wiedererkannt", async ()
   assert(btn("wishlist-to-collection"), "Verschieben müsste angeboten werden");
 });
 
-test("'Verwerfen' schließt die Karte, ohne zu speichern", async () => {
+test("'Weiter scannen' schließt die Karte, ohne zu speichern, und macht die Kamera wieder an", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  zxingAufrufe = [];
+
+  btn("weiter").click();
+  await tick();
+
+  assertEqual(inserts.length, 0, "nichts gespeichert");
+  assertEqual(wishlistAdds.length, 0);
+  assertEqual(card().style.display, "none");
+  assertEqual(zxingAufrufe.length, 1, "die Kamera müsste wieder laufen");
+  stopScan();
+});
+
+test("Nach dem Speichern geht es direkt weiter", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  zxingAufrufe = [];
+
+  btn("add-collection").click();
+  await tick();
+
+  assertEqual(inserts.length, 1, "gespeichert");
+  assertEqual(card().style.display, "none");
+  assertEqual(zxingAufrufe.length, 1,
+    "wer ein Regal erfasst, scannt die nächste Platte, nicht den Startknopf");
+  stopScan();
+});
+
+/* ---------- Gemeinsamer Katalog ---------- */
+
+test("Ist die Platte im Katalog, wird Discogs gar nicht gefragt", async () => {
+  resetStub();
+  rows.releases = [{
+    id: "rel-1", discogs_id: 1, title: "Nevermind", artist: "Nirvana",
+    format: "Vinyl, LP", year: 1991, country: "US", barcode: "111", cover_url: null,
+  }];
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+
+  await lookupBarcode("111");
+
+  assertEqual(fetchCalls, 0, "der Katalog spart die Discogs-Anfrage – genau dafür ist er da");
+  assertIncludes(out().textContent, "Nevermind");
+});
+
+test("Ohne Katalogtreffer läuft der Weg über Discogs wie bisher", async () => {
   resetStub();
   fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
   await lookupBarcode("111");
-  btn("discard").click();
+  assertEqual(fetchCalls, 1);
+});
 
-  assertEqual(inserts.length, 0);
-  assertEqual(wishlistAdds.length, 0);
-  assertEqual(card().style.display, "none");
+test("Beim Speichern entsteht ein Katalogeintrag und die Verknüpfung", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  btn("add-collection").click();
+  await tick();
+
+  assertEqual(rpcAufrufe.length, 1, "upsert_release müsste gerufen werden");
+  assertEqual(rpcAufrufe[0].name, "upsert_release");
+  assertEqual(rpcAufrufe[0].args.daten.discogs_id, 1);
+  assertEqual(inserts[0].row.release_id, "release-1", "die Verknüpfung fehlt");
+  stopScan();
+});
+
+test("Ein Katalogtreffer wird nicht noch einmal geschrieben", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  rows.releases = [{ id: "rel-1", discogs_id: 1, title: "Nevermind", artist: "Nirvana", barcode: "111" }];
+  await lookupBarcode("111");
+  btn("add-collection").click();
+  await tick();
+
+  assertEqual(rpcAufrufe.length, 0, "der Eintrag stand schon, kein zweiter Schreibvorgang");
+  assertEqual(inserts[0].row.release_id, "rel-1");
+  stopScan();
+});
+
+test("Ohne discogs_id gibt es keinen Katalogeintrag", async () => {
+  resetStub();
+  assertEqual(await upsertRelease({ title: "Handarbeit" }), null,
+    "von Hand angelegte Einträge haben keinen stabilen Schlüssel");
+  assertEqual(rpcAufrufe.length, 0);
 });
 
 test("Verschieben von der Wunschliste räumt dort auf", async () => {

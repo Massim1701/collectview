@@ -466,6 +466,17 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
   // steht schon fest. Fehler beim Abgleich dürfen den Scan nicht kippen.
   const collectionByBarcode = fetchCollectionByBarcode(barcode).catch(() => []);
 
+  // Zuerst der gemeinsame Katalog. Kennt ihn schon jemand, ist die Platte
+  // sofort da und Discogs bleibt ungefragt – genau dafür gibt es ihn.
+  // Auf einer Plattenbörse, wo sich viele dieselbe WLAN-IP und damit
+  // dasselbe 25-pro-Minute-Limit teilen, ist das der Unterschied.
+  const ausKatalog = await fetchReleasesByBarcode(barcode).catch(() => []);
+  if (ausKatalog.length > 0) {
+    hideRateLimitNotice();
+    await showScan(barcode, ausKatalog.map((r) => releaseToItem(r, barcode)), collectionByBarcode, "Katalog");
+    return;
+  }
+
   try {
     const res = await fetch(
       `https://api.discogs.com/database/search?barcode=${encodeURIComponent(barcode)}&type=release`,
@@ -495,7 +506,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
  * Trefferzahl entscheidet über die Ansicht: einer geht direkt aufs
  * Ergebnis, mehrere in die Auswahl, keiner in den Hinweis.
  */
-async function showScan(barcode, results, collectionByBarcodePromise) {
+async function showScan(barcode, results, collectionByBarcodePromise, quelle = "Discogs") {
   const ids = results.map((r) => r.discogs_id);
 
   // Die restlichen Statusdaten hängen an der discogs_id und können erst
@@ -509,6 +520,7 @@ async function showScan(barcode, results, collectionByBarcodePromise) {
   currentScan = {
     barcode,
     results,
+    quelle,
     statusData: { collection: [...byBarcode, ...byId], wishlist: wished },
   };
 
@@ -628,7 +640,7 @@ function renderResult(item) {
         ${status.inCollection ? "Schon in der Sammlung" : "Zur Sammlung"}
       </button>
       <button class="btn-secondary" type="button" data-action="add-wishlist"${status.inCollection || status.onWishlist ? " disabled" : ""}>Auf Wunschliste</button>
-      <button class="btn-secondary" type="button" data-action="discard">Verwerfen</button>
+      <button class="btn-secondary" type="button" data-action="weiter">Weiter scannen</button>
     </div>
     <p class="err" id="scan-error" role="alert"></p>`;
 }
@@ -683,8 +695,14 @@ async function saveToCollection(item) {
   if (!currentUser) return;
   scanError("");
 
+  // Erst in den gemeinsamen Katalog, dann verknüpfen. Schlägt das fehl,
+  // wird trotzdem gespeichert – ein fehlender Katalogeintrag darf
+  // niemanden daran hindern, seine Platte einzutragen.
+  const releaseId = item.release_id || (await upsertRelease(item));
+
   const { error } = await sb.from("collection_items").insert({
     user_id: currentUser.id,
+    release_id: releaseId,
     discogs_id: item.discogs_id,
     title: item.title,
     artist: item.artist,
@@ -702,9 +720,23 @@ async function saveToCollection(item) {
     return;
   }
 
-  resultsCard.style.display = "none";
-  setStatus(`„${item.title}“ ist in deiner Sammlung.`, { active: true });
   loadRecentlySaved();
+  // Direkt weiter: wer ein Regal erfasst, scannt die nächste Platte,
+  // nicht den Startknopf.
+  weiterScannen(`„${item.title}“ ist in deiner Sammlung.`);
+}
+
+/**
+ * Ergebnis wegräumen und die Kamera wieder anwerfen. Der Barcode-Scan
+ * hält nach jedem Treffer an (sonst liefe die Erkennung endlos weiter);
+ * fürs Erfassen eines ganzen Regals muss der Weg zurück in den Sucher
+ * aber ein Knopfdruck sein, nicht drei.
+ */
+function weiterScannen(meldung) {
+  resultsCard.style.display = "none";
+  currentScan.selected = null;
+  if (meldung) setStatus(meldung, { active: true });
+  if (!scanning) toggleScan();
 }
 
 async function saveToWishlist(item) {
@@ -725,8 +757,7 @@ async function saveToWishlist(item) {
       cover_url: item.cover_url,
       barcode: item.barcode,
     });
-    resultsCard.style.display = "none";
-    setStatus(`„${item.title}“ steht auf deiner Wunschliste.`, { active: true });
+    weiterScannen(`„${item.title}“ steht auf deiner Wunschliste.`);
   } catch (e) {
     scanError("Konnte nicht gemerkt werden: " + e.message);
   }
@@ -755,6 +786,7 @@ resultsEl.addEventListener("click", (e) => {
   if (action === "manual-open") renderManualForm();
   if (action === "back-to-list") renderResultList();
   if (action === "discard") discardResult();
+  if (action === "weiter") weiterScannen("");
   if (!item) return;
   if (action === "add-collection") saveToCollection(item);
   if (action === "add-wishlist") saveToWishlist(item);
