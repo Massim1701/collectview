@@ -10,8 +10,9 @@ Sprache im Projekt: **Deutsch** – Oberflächentexte, Kommentare und Commit-Mes
 
 ## Befehle
 
-**Es gibt keinen Build-Schritt und keinen Paketmanager.** Kein `package.json`,
-keine Abhängigkeiten – die Seiten laufen direkt im Browser.
+**Die Web-App hat weiterhin keinen Build-Schritt.** `app/` und
+`wireframes/` laufen unverändert direkt im Browser – kein Bundler, kein
+Transpiler, keine Laufzeit-Abhängigkeiten aus npm.
 
 ```bash
 python3 -m http.server 8000        # http://localhost:8000/app/login.html
@@ -19,6 +20,24 @@ python3 -m http.server 8000        # http://localhost:8000/app/login.html
 
 Ein echter Webserver ist Pflicht: Kamera-Zugriff (ZXing) und Supabase
 funktionieren nicht über `file://`.
+
+**Seit der nativen Verpackung gibt es aber ein `package.json`** – und
+zwar ausschließlich für Capacitor, das aus derselben Web-App eine
+iOS-/Android-App macht. Wer nur an der Web-App arbeitet, braucht davon
+nichts: kein `npm install`, keine der Regeln unten.
+
+```bash
+npm run build                      # kopiert app/ + wireframes/ nach www/
+npm run ios                        # build + cap sync + Xcode öffnen
+```
+
+`www/` und `ios/App/App/public/` sind **erzeugt**, nicht gepflegt – dort
+nie von Hand ändern, das nächste `npm run build` überschreibt es. Geändert
+wird immer in `app/` bzw. `wireframes/`.
+
+`scripts/build-www.sh` ist ein Kopiervorgang, kein Build im üblichen Sinn:
+`app/` und `wireframes/` müssen beide mit, weil `app/*.html` auf
+`../wireframes/styles.css` und `../wireframes/pricing.html` verweist.
 
 ### Tests
 

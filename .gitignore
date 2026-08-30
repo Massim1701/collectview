@@ -4,3 +4,7 @@ dist/
 .env
 .env.local
 *.log
+
+# Capacitor: aus app/ + wireframes/ gebaut, nicht von Hand gepflegt.
+# Alles unter ios/ regelt ios/.gitignore selbst.
+www/

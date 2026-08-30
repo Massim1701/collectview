@@ -1,0 +1,19 @@
+{
+  "name": "plattenregal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plattenregal – native Verpackung der Web-App für iOS und Android",
+  "scripts": {
+    "build": "./scripts/build-www.sh",
+    "sync": "./scripts/build-www.sh && cap sync",
+    "ios": "./scripts/build-www.sh && cap sync ios && cap open ios",
+    "test": "./test/run.sh"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.0"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0"
+  }
+}

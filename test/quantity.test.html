@@ -43,6 +43,9 @@
   }
 </script>
 
+<!-- i18n.js vor ui.js: renderBottomNav() und errorState() rufen seit
+     6be7693 t(), sonst wirft die aufrufende Datei beim Laden. -->
+<script src="../app/js/i18n.js"></script>
 <script src="../app/js/ui.js"></script>
 <script src="../app/js/detail.js"></script>
 <script src="assert.js"></script>

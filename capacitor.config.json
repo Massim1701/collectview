@@ -1,0 +1,11 @@
+{
+  "appId": "online.driftware.plattenregal",
+  "appName": "Plattenregal",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always"
+  },
+  "server": {
+    "iosScheme": "capacitor"
+  }
+}
