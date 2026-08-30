@@ -93,8 +93,8 @@
   var zxingAufrufe = [];
   var ZXingBrowser = {
     BrowserMultiFormatReader: function () {
-      this.decodeFromVideoDevice = async (deviceId) => {
-        zxingAufrufe.push(deviceId);
+      this.decodeFromConstraints = async (constraints) => {
+        zxingAufrufe.push(constraints);
         return { stop() {} };
       };
     },
@@ -553,9 +553,9 @@ test("Ohne eigene Wahl wird keine Kamera geraten", async () => {
   stopScan();
 
   assertEqual(zxingAufrufe.length, 1, "ZXing müsste einmal gestartet worden sein");
-  assertEqual(zxingAufrufe[0], undefined,
-    "undefined lässt ZXing auf facingMode 'environment' zurückfallen – " +
+  assertEqual(zxingAufrufe[0].video.facingMode, { ideal: "environment" },
     "eine geratene deviceId landet auf Pro-Telefonen leicht beim Tele");
+  assert(zxingAufrufe[0].video.deviceId === undefined, "ohne Wahl keine feste deviceId");
 });
 
 test("Eine ausdrücklich gewählte Kamera wird durchgereicht", async () => {
@@ -569,7 +569,28 @@ test("Eine ausdrücklich gewählte Kamera wird durchgereicht", async () => {
   stopScan();
   sel.innerHTML = "";
 
-  assertEqual(zxingAufrufe[0], "ultraweit");
+  assertEqual(zxingAufrufe[0].video.deviceId, { exact: "ultraweit" });
+  assert(zxingAufrufe[0].video.facingMode === undefined,
+    "mit fester Kamera darf kein facingMode dagegenhalten");
+});
+
+test("Der Scan startet in hoher Auflösung, sonst erzwingt er Nahaufnahmen", async () => {
+  zxingAufrufe = [];
+  document.getElementById("camera-select").innerHTML = "";
+  if (scanning) stopScan();
+
+  await toggleScan();
+  stopScan();
+
+  const v = zxingAufrufe[0].video;
+  assertEqual(v.width, { ideal: 1920 },
+    "bei 640px muss der Code fast das Bild füllen – näher, als die Kamera scharf stellt");
+  assertEqual(v.height, { ideal: 1080 });
+});
+
+test("Der Cover-Weg nimmt dieselben Constraints", async () => {
+  const c = videoConstraints();
+  assertEqual(c.width, { ideal: 1920 }, "beide Wege brauchen dieselbe Kamera und dieselbe Auflösung");
 });
 
 runTests();

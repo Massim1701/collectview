@@ -69,6 +69,65 @@ modeToggle.addEventListener("click", (e) => {
   if (el) setMode(el.dataset.mode);
 });
 
+/* ---------- Kamera-Constraints ---------- */
+
+/**
+ * Auflösung ist hier kein Luxus, sondern der Unterschied zwischen
+ * "geht" und "geht nicht".
+ *
+ * ZXing startet ohne Angabe mit den Standardwerten des Browsers, in der
+ * Regel 640×480. Ein EAN-13 ist rund 3 cm breit und hat 95 Module; bei
+ * 640px Bildbreite muss der Code fast das halbe Bild füllen, damit ein
+ * Modul überhaupt auf mehr als einen Pixel fällt. Das zwingt zu einem
+ * Abstand von wenigen Zentimetern – und da ist die Hauptkamera des
+ * iPhone am Ende, sie stellt erst ab etwa 10 cm scharf. Ergebnis:
+ * nah genug zum Auflösen heißt zu nah zum Fokussieren.
+ *
+ * Mit 1920px Breite reicht ein Abstand von 20–30 cm. Das liegt bequem
+ * im Schärfebereich, und der Scan gelingt, ohne dass man die Hülle
+ * an die Linse hält.
+ */
+const KAMERA_IDEAL = {
+  width: { ideal: 1920 },
+  height: { ideal: 1080 },
+  // Von Safari teils ignoriert; unbekannte Felder stören dort nicht.
+  focusMode: "continuous",
+};
+
+/** Ausdrücklich gewählte Kamera, sonst die Rückkamera des Systems. */
+function videoConstraints() {
+  return cameraSelect.value
+    ? { deviceId: { exact: cameraSelect.value }, ...KAMERA_IDEAL }
+    : { facingMode: { ideal: "environment" }, ...KAMERA_IDEAL };
+}
+
+/**
+ * Nach dem Start: nachschärfen, soweit das Gerät es zulässt, und
+ * zurückmelden, was tatsächlich herauskam. Die Rückmeldung ist kein
+ * Selbstzweck – ohne sie lässt sich am Telefon nicht unterscheiden, ob
+ * die Wunschauflösung durchkam oder still auf 640×480 gefallen ist.
+ */
+async function kameraFeinschliff() {
+  const track = videoEl.srcObject?.getVideoTracks?.()[0];
+  if (!track) return "";
+
+  try {
+    const koennen = track.getCapabilities ? track.getCapabilities() : {};
+    const erweitert = [];
+    if (koennen.focusMode?.includes("continuous")) erweitert.push({ focusMode: "continuous" });
+    // Manche Geräte fokussieren näher, wenn man den Zoom nicht antastet –
+    // deshalb hier bewusst kein Zoom setzen.
+    if (erweitert.length) await track.applyConstraints({ advanced: erweitert });
+  } catch {
+    // Nicht unterstützt: der Scan läuft trotzdem, nur ohne Nachschärfen.
+  }
+
+  const ist = track.getSettings ? track.getSettings() : {};
+  const name = (track.label || "").replace(/^Back\s*/i, "").trim();
+  return [ist.width && ist.height ? `${ist.width}×${ist.height}` : "", name]
+    .filter(Boolean).join(" · ");
+}
+
 async function refreshCameraList(selectedId) {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -124,17 +183,16 @@ async function toggleScan() {
     // undefined lässt ZXing auf facingMode "environment" zurückfallen –
     // dieselbe Wahl, die der Cover-Weg unten schon trifft. Das System
     // gibt dabei die Hauptkamera, nicht irgendeine.
-    const deviceId = cameraSelect.value || undefined;
-
-    scanControls = await codeReader.decodeFromVideoDevice(deviceId, videoEl, (result) => {
+    scanControls = await codeReader.decodeFromConstraints({ video: videoConstraints() }, videoEl, (result) => {
       if (!result) return;
       setStatus("Erkannt: " + result.getText());
       lookupBarcode(result.getText());
       stopScan();
     });
 
-    await refreshCameraList(deviceId);
-    setStatus("Barcode im Rahmen positionieren …", { active: true });
+    const kamera = await kameraFeinschliff();
+    await refreshCameraList(cameraSelect.value || undefined);
+    setStatus(`Barcode aus etwa 20 cm anvisieren${kamera ? " · " + kamera : ""}`, { active: true });
   } catch (e) {
     scanning = false;
     frameEl.classList.remove("live");
@@ -170,17 +228,17 @@ document.addEventListener("visibilitychange", () => {
 async function startCoverCamera() {
   try {
     if (coverStream) coverStream.getTracks().forEach((t) => t.stop());
-    const deviceId = cameraSelect.value || undefined;
     coverStream = await navigator.mediaDevices.getUserMedia({
-      video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" },
+      video: videoConstraints(),
     });
     videoEl.srcObject = coverStream;
     frameEl.classList.add("live");
     scanning = true;
     scanBtn.textContent = "Kamera stoppen";
     captureBtn.hidden = false;
-    setStatus("Cover gut ausgeleuchtet in den Rahmen halten, dann „Foto aufnehmen“.", { active: true });
-    await refreshCameraList(deviceId);
+    const kamera = await kameraFeinschliff();
+    setStatus(`Cover gut ausgeleuchtet in den Rahmen halten, dann „Foto aufnehmen“.${kamera ? " · " + kamera : ""}`, { active: true });
+    await refreshCameraList(cameraSelect.value || undefined);
   } catch (e) {
     setStatus("Kamera-Zugriff fehlgeschlagen: " + e.message);
   }
