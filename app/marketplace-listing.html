@@ -26,6 +26,12 @@
     Marktplatz
   </a>
 
+  <div id="paywall" hidden class="card" style="text-align:center; padding:34px 24px;">
+    <div class="section-title" style="justify-content:center;">Nur für Plattenregal Plus</div>
+    <p class="muted" style="margin:8px 0 20px;">Der Marktplatz ist Abo-Mitgliedern vorbehalten.</p>
+    <a class="btn-primary" href="../wireframes/pricing.html" style="display:inline-flex; align-items:center; height:46px; padding:0 22px;">Zu den Preisen</a>
+  </div>
+
   <div id="content"></div>
 
 </main>
@@ -40,6 +46,17 @@
 (async function () {
   const user = await requireAuth();
   if (!user) return;
+
+  let subscribed = false;
+  try {
+    subscribed = await fetchIsSubscribed(user.id);
+  } catch (e) {
+    // Bei Fehler vorsichtshalber sperren statt versehentlich zu öffnen.
+  }
+  if (!subscribed) {
+    document.getElementById("paywall").hidden = false;
+    return;
+  }
 
   const params = new URLSearchParams(location.search);
   const id = params.get("id");
@@ -68,14 +85,14 @@
     <div class="ml-cover ${coverClass(listing.title)}"></div>
     <h1 class="page-title" style="font-size:26px; margin:0;">${escapeHtml(listing.title)}</h1>
     <div style="color:var(--text-muted); margin-top:4px;">${[listing.artist, listing.format, listing.year].filter(Boolean).map(escapeHtml).join(" · ")}</div>
-    <div class="ml-price">${listing.status === "sold" ? "Verkauft" : formatPrice(listing.price_cents, listing.currency)}</div>
+    <div class="ml-price">${listingBadge(listing).text}</div>
     ${listing.description ? `<p style="line-height:1.6; margin-bottom:22px;">${escapeHtml(listing.description)}</p>` : ""}
 
     ${isOwner ? `
       <div class="card">
         <div class="section-title">Dein Angebot</div>
         <div class="row" style="display:flex; gap:10px;">
-          ${listing.status === "active" ? `<button class="btn-primary" id="mark-sold" style="flex:1;height:46px;">Als verkauft markieren</button>` : ""}
+          ${listing.status === "active" ? `<button class="btn-primary" id="mark-sold" style="flex:1;height:46px;">${listing.kind === "gesucht" ? "Als gefunden markieren" : "Als verkauft markieren"}</button>` : ""}
           ${listing.status !== "removed" ? `<button class="btn-secondary" id="remove-listing" style="flex:1;height:46px;">Entfernen</button>` : ""}
         </div>
       </div>

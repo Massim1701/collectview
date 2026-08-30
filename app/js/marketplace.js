@@ -1,14 +1,25 @@
 /* =====================================================================
-   marketplace.js – Käufer/Verkäufer-Marktplatz (marketplace_listings,
+   marketplace.js – Forum/Marktplatz für Abo-Nutzer (marketplace_listings,
    marketplace_messages). Eigenständiges Modul, rührt db.js/ui.js/auth.js
    nicht an – nutzt nur deren globale Funktionen (sb, escapeHtml, coverClass).
    Tabellenspalten (Stand: angelegt via SQL-Editor):
    marketplace_listings: id, seller_id, collection_item_id, title, artist,
-     format, year, price_cents, currency, description, cover_url, status,
-     created_at
+     format, year, price_cents (optional), currency, description, cover_url,
+     status, kind ('biete' | 'gesucht'), created_at
    marketplace_messages: id, listing_id, sender_id, recipient_id, body,
      created_at
+
+   Nur für Nutzer mit aktivem Abo (profiles.subscription_status = 'active'):
+   RLS erlaubt Ansehen fremder Angebote, Erstellen und Nachrichten nur dann.
+   Handel läuft ausschließlich per Direktnachricht, nie öffentlich im Forum.
    ===================================================================== */
+
+/** Hat der Nutzer ein aktives Abo? Bestimmt Zugriff auf das Forum. */
+async function fetchIsSubscribed(userId) {
+  const { data, error } = await sb.from("profiles").select("subscription_status").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data?.subscription_status === "active";
+}
 
 /** Aktive Angebote aller Nutzer, neueste zuerst. */
 async function fetchActiveListings() {
@@ -92,10 +103,19 @@ function formatPrice(priceCents, currency = "EUR") {
   }
 }
 
+/** Preis-/Status-Badge: Verkauft, Preis, oder "Gesucht" bei Nachfrage-Einträgen. */
+function listingBadge(listing) {
+  if (listing.status === "sold") return { text: "Verkauft", muted: true };
+  if (listing.kind === "gesucht") {
+    return { text: listing.price_cents ? `Gesucht · bis ${formatPrice(listing.price_cents, listing.currency)}` : "Gesucht", muted: false };
+  }
+  return { text: formatPrice(listing.price_cents, listing.currency), muted: false };
+}
+
 /** Listing-Kachel im .list-card-Stil (siehe ui.js listCardMarkup). */
 function listingCardMarkup(listing, { href } = {}) {
   const target = href || `marketplace-listing.html?id=${encodeURIComponent(listing.id)}`;
-  const priceBadge = listing.status === "sold" ? "Verkauft" : formatPrice(listing.price_cents, listing.currency);
+  const badge = listingBadge(listing);
   return `
     <a class="list-card" href="${target}">
       ${coverMarkup(listing, { size: 56 })}
@@ -103,6 +123,6 @@ function listingCardMarkup(listing, { href } = {}) {
         <div class="list-card-title">${escapeHtml(listing.title)}</div>
         <div class="list-card-sub">${[listing.artist, listing.format].filter(Boolean).map(escapeHtml).join(" · ")}</div>
       </div>
-      <div style="flex:0 0 auto; font-weight:800; color:${listing.status === "sold" ? "var(--text-muted)" : "var(--accent-text)"};">${escapeHtml(priceBadge)}</div>
+      <div style="flex:0 0 auto; font-weight:800; color:${badge.muted ? "var(--text-muted)" : "var(--accent-text)"};">${escapeHtml(badge.text)}</div>
     </a>`;
 }
