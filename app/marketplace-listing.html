@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="de">
+<head>
+<title>Angebot – Plattenregal</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF6EC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="./app.css">
+<style>
+  .ml-cover{ width:100%; aspect-ratio:1; border-radius:var(--radius-md); margin-bottom:18px; }
+  .ml-price{ font-family:var(--font-display); font-style:italic; font-size:32px; margin:4px 0 18px; }
+  .msg{ background:var(--surface-2); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:8px; font-size:14px; }
+  .msg.own{ background:var(--accent-soft); }
+  .msg-meta{ font-size:11.5px; color:var(--text-muted); margin-top:3px; }
+</style>
+</head>
+<body>
+<main class="shell">
+
+  <a href="marketplace.html" style="display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-weight:700; font-size:13.5px; margin:30px 0 18px;">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Marktplatz
+  </a>
+
+  <div id="content"></div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="./config.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/db.js"></script>
+<script src="./js/marketplace.js"></script>
+<script>
+(async function () {
+  const user = await requireAuth();
+  if (!user) return;
+
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  const content = document.getElementById("content");
+
+  if (!id) {
+    content.innerHTML = errorState("Kein Angebot angegeben.");
+    return;
+  }
+
+  let listing;
+  try {
+    listing = await fetchListing(id);
+  } catch (e) {
+    content.innerHTML = errorState(e.message);
+    return;
+  }
+  if (!listing) {
+    content.innerHTML = errorState("Dieses Angebot existiert nicht (mehr).");
+    return;
+  }
+
+  const isOwner = listing.seller_id === user.id;
+
+  content.innerHTML = `
+    <div class="ml-cover ${coverClass(listing.title)}"></div>
+    <h1 class="page-title" style="font-size:26px; margin:0;">${escapeHtml(listing.title)}</h1>
+    <div style="color:var(--text-muted); margin-top:4px;">${[listing.artist, listing.format, listing.year].filter(Boolean).map(escapeHtml).join(" · ")}</div>
+    <div class="ml-price">${listing.status === "sold" ? "Verkauft" : formatPrice(listing.price_cents, listing.currency)}</div>
+    ${listing.description ? `<p style="line-height:1.6; margin-bottom:22px;">${escapeHtml(listing.description)}</p>` : ""}
+
+    ${isOwner ? `
+      <div class="card">
+        <div class="section-title">Dein Angebot</div>
+        <div class="row" style="display:flex; gap:10px;">
+          ${listing.status === "active" ? `<button class="btn-primary" id="mark-sold" style="flex:1;height:46px;">Als verkauft markieren</button>` : ""}
+          ${listing.status !== "removed" ? `<button class="btn-secondary" id="remove-listing" style="flex:1;height:46px;">Entfernen</button>` : ""}
+        </div>
+      </div>
+      <div class="card" id="messages-card">
+        <div class="section-title">Nachrichten von Interessenten</div>
+        <div id="messages"></div>
+      </div>
+    ` : listing.status === "active" ? `
+      <div class="card">
+        <div class="section-title">Interesse?</div>
+        <textarea class="field" id="msg-text" rows="3" placeholder="Deine Nachricht an den Verkäufer …" style="margin-bottom:10px; resize:vertical;"></textarea>
+        <button class="btn-primary" id="send-msg" style="width:100%; height:46px;">Nachricht senden</button>
+        <div class="err" id="msg-error" style="margin-top:8px;"></div>
+        <div id="sent-note" class="muted" style="margin-top:10px; display:none;">Nachricht gesendet.</div>
+      </div>
+    ` : ""}
+  `;
+
+  if (isOwner) {
+    const soldBtn = document.getElementById("mark-sold");
+    if (soldBtn) soldBtn.addEventListener("click", async () => {
+      soldBtn.disabled = true;
+      await setListingStatus(id, "sold");
+      location.reload();
+    });
+    const removeBtn = document.getElementById("remove-listing");
+    if (removeBtn) removeBtn.addEventListener("click", async () => {
+      if (!confirm("Angebot wirklich entfernen?")) return;
+      removeBtn.disabled = true;
+      await setListingStatus(id, "removed");
+      location.href = "marketplace.html";
+    });
+
+    const messagesEl = document.getElementById("messages");
+    try {
+      const messages = await fetchListingMessages(id);
+      messagesEl.innerHTML = messages.length
+        ? messages.map((m) => `<div class="msg"><div>${escapeHtml(m.body)}</div><div class="msg-meta">${new Date(m.created_at).toLocaleString("de-DE")}</div></div>`).join("")
+        : `<div class="muted">Noch keine Nachrichten.</div>`;
+    } catch (e) {
+      messagesEl.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
+    }
+  } else if (listing.status === "active") {
+    document.getElementById("send-msg").addEventListener("click", async () => {
+      const text = document.getElementById("msg-text").value.trim();
+      const errorEl = document.getElementById("msg-error");
+      errorEl.textContent = "";
+      if (!text) { errorEl.textContent = "Bitte eine Nachricht eingeben."; return; }
+      try {
+        await sendListingMessage(id, listing.seller_id, text);
+        document.getElementById("msg-text").value = "";
+        document.getElementById("sent-note").style.display = "block";
+      } catch (e) {
+        errorEl.textContent = e.message;
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>

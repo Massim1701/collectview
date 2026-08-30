@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="de">
+<head>
+<title>Marktplatz – Plattenregal</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF6EC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="./app.css">
+<style>
+  .mp-head{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin:38px 0 16px; }
+  .mp-head .page-title{ margin:0; font-size:28px; }
+  #list .list-card + .list-card{ margin-top:10px; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#list">Direkt zu den Angeboten</a>
+
+<main class="shell">
+
+  <div class="mp-head">
+    <h1 class="page-title">Marktplatz</h1>
+    <a class="btn-primary" style="height:42px; padding:0 18px; display:inline-flex; align-items:center;" href="listing-new.html">Verkaufen</a>
+  </div>
+
+  <div class="chip-row" id="tabs" role="tablist" aria-label="Marktplatz-Ansicht" style="margin-bottom:18px;">
+    <button class="chip active" type="button" data-tab="all" role="tab" aria-selected="true">Alle Angebote</button>
+    <button class="chip" type="button" data-tab="mine" role="tab" aria-selected="false">Meine Angebote</button>
+  </div>
+
+  <div id="list"></div>
+
+</main>
+
+<div class="bottomnav" id="bottomnav"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="./config.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/db.js"></script>
+<script src="./js/marketplace.js"></script>
+<script>
+(async function () {
+  const user = await requireAuth();
+  if (!user) return;
+  renderBottomNav(document.getElementById("bottomnav"), null);
+
+  const list = document.getElementById("list");
+  const tabs = document.getElementById("tabs");
+  let active = "all";
+
+  async function render() {
+    list.innerHTML = skeletonGrid(3);
+    try {
+      const items = active === "all" ? await fetchActiveListings() : await fetchMyListings(user.id);
+      if (items.length === 0) {
+        list.innerHTML = emptyState(
+          active === "all"
+            ? { iconName: "grid", title: "Noch keine Angebote", text: "Sei die erste Person, die hier etwas anbietet." }
+            : { iconName: "grid", title: "Noch nichts eingestellt", text: "Verkaufe Tonträger aus deiner Sammlung.", action: { href: "listing-new.html", label: "Angebot erstellen" } },
+        );
+        return;
+      }
+      list.innerHTML = items.map((it) => listingCardMarkup(it)).join("");
+    } catch (e) {
+      list.innerHTML = errorState(e.message);
+    }
+  }
+
+  tabs.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-tab]");
+    if (!btn) return;
+    active = btn.dataset.tab;
+    tabs.querySelectorAll("button").forEach((b) => {
+      b.classList.toggle("active", b === btn);
+      b.setAttribute("aria-selected", String(b === btn));
+    });
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
