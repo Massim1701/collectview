@@ -44,6 +44,7 @@
   var fetchResponse = null;
   var fetchCalls = 0;
   var scanLimitReached = false;   // simuliert den Trigger aus db/scan-limit.sql
+  var scanTabelleFehlt = false;   // simuliert: db/scan-limit.sql nie ausgeführt
   var subscribed = false;
 
   var sb = {
@@ -51,6 +52,9 @@
       return {
         select() {
           const filter = async (column, value) => {
+            if (scanTabelleFehlt && table === "scan_events") {
+              return { data: null, count: null, error: { code: "PGRST205", message: "Could not find the table 'public.scan_events' in the schema cache" } };
+            }
             if (wishlistError && table === "wishlist_items") return { data: null, error: wishlistError };
             const list = rows[table] || [];
             const wanted = Array.isArray(value) ? value.map(String) : [String(value)];
@@ -61,6 +65,9 @@
         },
         async insert(row) {
           if (table === "scan_events") {
+            if (scanTabelleFehlt) {
+              return { error: { code: "PGRST205", message: "Could not find the table 'public.scan_events' in the schema cache" } };
+            }
             if (scanLimitReached) {
               return { error: { message: "SCAN_LIMIT: keine freien Scans mehr", code: "23514" } };
             }
@@ -122,7 +129,7 @@
     rows = { collection_items: [], wishlist_items: [], scan_events: [], releases: [] };
     inserts = []; scanInserts = []; wishlistAdds = []; wishlistRemoves = []; rpcAufrufe = [];
     insertError = null; wishlistError = null; fetchResponse = null;
-    fetchCalls = 0; scanLimitReached = false; subscribed = false;
+    fetchCalls = 0; scanLimitReached = false; scanTabelleFehlt = false; subscribed = false;
     scanQuota = { used: 0, subscribed: false, known: false };
   }
 
@@ -404,6 +411,35 @@ test("Nach dem Speichern geht es direkt weiter", async () => {
   assertEqual(zxingAufrufe.length, 1,
     "wer ein Regal erfasst, scannt die nächste Platte, nicht den Startknopf");
   stopScan();
+});
+
+test("Fehlt die scan_events-Tabelle, läuft der Scan trotzdem", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  scanTabelleFehlt = true;
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+
+  await lookupBarcode("111");
+
+  assertEqual(fetchCalls, 1,
+    "ein nicht eingerichteter Zähler ist ein Betriebsfehler – er darf die App nicht blockieren");
+  assertIncludes(out().textContent, "Nevermind");
+  assertEqual(quota(), "", "eine Zahl, die es nicht gibt, wird auch nicht angezeigt");
+});
+
+test("Eine fehlende Tabelle ist kein erreichtes Limit", async () => {
+  resetStub();
+  scanTabelleFehlt = true;
+  const r = await recordScan("user-1", "barcode", "111");
+  assert(r.ok, "muss durchgelassen werden");
+  assert(r.ungezaehlt, "aber als ungezählt gemeldet");
+  assert(!r.limitReached, "und keinesfalls als Limit");
+});
+
+test("Ohne Tabelle gibt es keinen Zählerstand", async () => {
+  resetStub();
+  scanTabelleFehlt = true;
+  assertEqual(await fetchScanCount("user-1"), null, "null heißt unbekannt, nicht null Scans");
 });
 
 /* ---------- Gemeinsamer Katalog ---------- */

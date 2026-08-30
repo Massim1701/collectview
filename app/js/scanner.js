@@ -405,7 +405,8 @@ async function refreshScanQuota() {
       fetchScanCount(currentUser.id),
       fetchIsSubscribed(currentUser.id).catch(() => false),
     ]);
-    scanQuota = { used, subscribed, known: true };
+    // null = Tabelle fehlt; dann gibt es keinen Stand zum Anzeigen.
+    scanQuota = { used: used || 0, subscribed, known: used !== null };
   } catch {
     // Kontingent unbekannt – dann eben ohne Anzeige. Der Trigger zählt
     // trotzdem, hier fehlt nur der Hinweis vorher.
@@ -445,6 +446,14 @@ async function allowScan(source, term, counted) {
   if (!result.ok) {
     setStatus("Scan konnte nicht gezählt werden: " + result.message);
     return false;
+  }
+
+  // Ungezählt: die Tabelle fehlt. Durchlassen, aber keine Zahl anzeigen,
+  // die es nicht gibt.
+  if (result.ungezaehlt) {
+    scanQuota.known = false;
+    paintScanQuota();
+    return true;
   }
 
   scanQuota.used += 1;

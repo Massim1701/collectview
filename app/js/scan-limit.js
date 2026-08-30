@@ -17,6 +17,17 @@ function isScanLimitError(error) {
 }
 
 /**
+ * Gibt es die Tabelle überhaupt? PostgREST meldet das als PGRST205.
+ *
+ * Der Fall ist real: db/scan-limit.sql muss von Hand im SQL-Editor
+ * ausgeführt werden, und solange das nicht passiert ist, gibt es
+ * scan_events nicht.
+ */
+function isMissingTableError(error) {
+  return !!error && (error.code === "PGRST205" || /Could not find the table/i.test(error.message || ""));
+}
+
+/**
  * Scan protokollieren. Der Insert IST die Erlaubnis: lehnt der Trigger ab,
  * findet die Discogs-Suche gar nicht erst statt.
  *
@@ -30,6 +41,14 @@ async function recordScan(userId, source, term) {
 
   if (!error) return { ok: true };
   if (isScanLimitError(error)) return { ok: false, limitReached: true };
+
+  // Fehlt die Tabelle, lässt sich nichts zählen – aber deswegen die App
+  // zu blockieren wäre die falsche Richtung. Ein nicht eingerichteter
+  // Zähler ist ein Betriebsfehler, kein Missbrauch; das Limit auf die
+  // Sammlung greift ohnehin weiter (Trigger aus 69a68bc). Also
+  // durchlassen und den Scan als ungezählt melden.
+  if (isMissingTableError(error)) return { ok: true, ungezaehlt: true };
+
   return { ok: false, limitReached: false, message: error.message };
 }
 
@@ -39,6 +58,8 @@ async function fetchScanCount(userId) {
     .from("scan_events")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId);
+  // Ohne Tabelle gibt es keinen Stand – null heißt "unbekannt", nicht "null Scans".
+  if (isMissingTableError(error)) return null;
   if (error) throw error;
   return count || 0;
 }
