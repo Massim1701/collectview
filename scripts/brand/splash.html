@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../app/vendor/fonts/fonts.css">
+<style>
+  /* 2732×2732. Die LaunchScreen-Storyboard zeigt das Bild mit
+     scaleAspectFill – auf einem 9:19,5-Telefon bleibt also nur ein
+     Streifen von rund 1260px in der Mitte sichtbar. Alles Inhaltliche
+     muss deshalb deutlich innerhalb dieser Mitte liegen. */
+  html,body{ margin:0; padding:0; width:2732px; height:2732px; overflow:hidden; }
+  .splash{
+    width:2732px; height:2732px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:96px;
+  }
+  .hell{
+    background:
+      radial-gradient(circle at 50% 32%, rgba(255,106,61,.16), transparent 46%),
+      radial-gradient(circle at 62% 74%, rgba(255,79,129,.10), transparent 50%),
+      #FFFFFF;
+  }
+  /* Deutlich zurückhaltender als im Hellen: --bg ist im Dunkelmodus ein
+     neutrales #121214. Zu viel Wärme hier und der Übergang vom
+     Startbildschirm in die App macht einen sichtbaren Farbsprung. */
+  .dunkel{
+    background:
+      radial-gradient(circle at 50% 34%, rgba(255,143,94,.085), transparent 38%),
+      radial-gradient(circle at 62% 74%, rgba(255,79,129,.05), transparent 42%),
+      #121214;
+  }
+  .disc{
+    width:360px; height:360px; border-radius:50%;
+    background:
+      repeating-radial-gradient(circle at 50% 50%,
+        rgba(253,246,240,0) 0px, rgba(253,246,240,0) 7px,
+        rgba(253,246,240,.09) 7px, rgba(253,246,240,.09) 9px),
+      radial-gradient(circle at 34% 26%, #34343C 0%, #1C1C22 62%);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .dunkel .disc{ box-shadow:0 0 0 2px rgba(255,255,255,.07); }
+  .label{
+    width:128px; height:128px; border-radius:50%;
+    background:radial-gradient(circle at 38% 30%, #FFFFFF, #F6E7DC);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .label span{
+    font-family:'Instrument Serif', Georgia, serif; font-style:italic;
+    font-size:92px; line-height:1; color:#1C1C22; margin-top:-7px; margin-left:-3px;
+  }
+  .wortmarke{
+    font-family:'Instrument Serif', Georgia, serif; font-style:italic;
+    font-size:220px; line-height:1; letter-spacing:.01em;
+  }
+  .hell   .wortmarke{ color:#1C1C22; }
+  .dunkel .wortmarke{ color:#F2F2F5; }
+</style></head>
+<body>
+  <div class="splash" id="flaeche">
+    <div class="disc"><div class="label"><span>P</span></div></div>
+    <div class="wortmarke">Plattenregal</div>
+  </div>
+  <script>
+    document.getElementById("flaeche").className =
+      "splash " + (new URLSearchParams(location.search).get("modus") === "dunkel" ? "dunkel" : "hell");
+  </script>
+</body></html>

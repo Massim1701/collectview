@@ -1,0 +1,54 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../app/vendor/fonts/fonts.css">
+<style>
+  html,body{ margin:0; padding:0; width:1024px; height:1024px; overflow:hidden; }
+  /* Kein Alpha, keine runden Ecken: iOS maskiert selbst, und der App
+     Store weist Icons mit Transparenz ab. */
+  .icon{
+    width:1024px; height:1024px; position:relative;
+    background:linear-gradient(145deg, #FF8A5C 0%, #FF6A3D 45%, #F04E22 100%);
+  }
+  /* Weiche Aufhellung oben links, damit die Fläche nicht flach wirkt */
+  .sheen{
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 26% 18%, rgba(255,255,255,.30), transparent 55%);
+  }
+  .disc{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:748px; height:748px; border-radius:50%;
+    background:
+      /* Rillen: bewusst schwach, sie sollen bei 60px nicht zu Grau verschmieren */
+      repeating-radial-gradient(circle at 50% 50%,
+        rgba(253,246,240,.00) 0px, rgba(253,246,240,.00) 9px,
+        rgba(253,246,240,.085) 9px, rgba(253,246,240,.085) 11px),
+      radial-gradient(circle at 34% 26%, #34343C 0%, #1C1C22 62%);
+    box-shadow:0 26px 60px rgba(60,16,0,.34);
+  }
+  /* Lichtkante über der Platte */
+  .glint{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-32deg);
+    width:748px; height:748px; border-radius:50%;
+    background:linear-gradient(105deg, transparent 34%, rgba(255,255,255,.16) 45%, transparent 53%);
+  }
+  .label{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:268px; height:268px; border-radius:50%;
+    background:radial-gradient(circle at 38% 30%, #FFFFFF, #F6E7DC);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 0 0 3px rgba(28,28,34,.10);
+  }
+  /* Markenbuchstabe aus dem Schriftzug – Instrument Serif kursiv */
+  .label span{
+    font-family:'Instrument Serif', Georgia, serif; font-style:italic;
+    font-size:190px; line-height:1; color:#1C1C22; margin-top:-14px; margin-left:-6px;
+  }
+</style></head>
+<body>
+  <div class="icon">
+    <div class="sheen"></div>
+    <div class="disc"></div>
+    <div class="glint"></div>
+    <div class="label"><span>P</span></div>
+  </div>
+</body></html>

@@ -8,7 +8,8 @@
     "sync": "./scripts/build-www.sh && cap sync",
     "ios": "./scripts/build-www.sh && cap sync ios && cap open ios",
     "test": "./test/run.sh",
-    "vendor": "./scripts/vendor.sh"
+    "vendor": "./scripts/vendor.sh",
+    "brand": "./scripts/brand.sh"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.0",
