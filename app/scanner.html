@@ -89,6 +89,18 @@
     <div class="notice" id="scan-notice" role="status" aria-live="polite" hidden></div>
     <p class="status" id="scan-status" role="status" aria-live="polite"></p>
     <p class="scan-quota" id="scan-quota" role="status" aria-live="polite"></p>
+
+    <!-- Barcode von Hand. Nicht nur zum Prüfen, ob die Kamera oder die
+         Suche klemmt: Aufkleber, Kratzer und Preisschilder machen genug
+         Codes unlesbar, und die Ziffern stehen daneben. -->
+    <form class="code-form" id="code-form">
+      <label class="sr-only" for="code-input">Barcode-Ziffern</label>
+      <input class="field" id="code-input" type="text" inputmode="numeric"
+             autocomplete="off" spellcheck="false" maxlength="17"
+             placeholder="Barcode eintippen">
+      <button class="btn-secondary" type="submit" id="code-submit">Suchen</button>
+      <p class="err" id="code-error" role="alert"></p>
+    </form>
   </div>
 
   <div class="card" id="results-card" style="display:none;">

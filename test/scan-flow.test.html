@@ -21,6 +21,7 @@
 <div class="notice" id="scan-notice" hidden></div>
 <p class="status" id="scan-status"></p>
 <p class="scan-quota" id="scan-quota"></p>
+<form id="code-form"><input id="code-input"><button id="code-submit" type="submit"></button><p class="err" id="code-error"></p></form>
 <div class="card" id="results-card" style="display:none;">
   <div class="card-head-title" id="results-title"></div>
   <div class="card-head-sub" id="results-sub"></div>
@@ -452,6 +453,65 @@ test("Ohne Tabelle gibt es keinen Zählerstand", async () => {
   resetStub();
   scanTabelleFehlt = true;
   assertEqual(await fetchScanCount("user-1"), null, "null heißt unbekannt, nicht null Scans");
+});
+
+/* ---------- Barcode von Hand ---------- */
+
+const codeFehler = () => document.getElementById("code-error").textContent;
+function tippe(text) {
+  document.getElementById("code-input").value = text;
+  document.getElementById("code-form").dispatchEvent(new Event("submit", { cancelable: true }));
+}
+
+test("Die Prüfziffer wird richtig gerechnet", () => {
+  assert(eanPruefzifferStimmt("724385522925"), "OK Computer, UPC-A");
+  assert(eanPruefzifferStimmt("0724385522925"), "derselbe Code als EAN-13");
+  assert(eanPruefzifferStimmt("4006381333931"), "bekannter EAN-13");
+  assert(!eanPruefzifferStimmt("724385522926"), "letzte Ziffer verdreht");
+  assert(!eanPruefzifferStimmt("12345"), "falsche Länge");
+});
+
+test("Falsche Längen werden abgewiesen", () => {
+  assertEqual(pruefeEingabe("").fehler !== undefined, true);
+  assertIncludes(pruefeEingabe("12345").fehler, "8, 12 oder 13");
+  assertEqual(pruefeEingabe("724385522925").code, "724385522925");
+});
+
+test("Zwischenräume und Bindestriche stören nicht", () => {
+  assertEqual(pruefeEingabe("7 24385 52292 5").code, "724385522925",
+    "unter dem Strichcode stehen die Ziffern in Gruppen");
+});
+
+test("Eine falsche Prüfziffer warnt, blockiert aber nicht", () => {
+  const r = pruefeEingabe("724385522926");
+  assertEqual(r.code, "724385522926", "gesucht wird trotzdem – Codes sind manchmal falsch gedruckt");
+  assertIncludes(r.warnung, "Prüfziffer");
+});
+
+test("Ein eingetippter Code läuft durch dieselbe Suche wie ein Scan", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind", { barcode: ["724385522925"] })]);
+
+  tippe("724385522925");
+  await tick(60);
+
+  assertEqual(fetchCalls, 1, "die Discogs-Suche muss laufen");
+  assertEqual(scanInserts.length, 1, "und der Scan zählt wie jeder andere");
+  assertEqual(head(), "Treffer");
+  assertIncludes(out().textContent, "Nevermind");
+});
+
+test("Ohne gültige Länge wird gar nicht erst gesucht", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([]);
+
+  tippe("42");
+  await tick(40);
+
+  assertEqual(fetchCalls, 0);
+  assertIncludes(codeFehler(), "8, 12 oder 13");
 });
 
 /* ---------- Barcode-Abgleich ---------- */

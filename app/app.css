@@ -316,6 +316,17 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
    niemand soll erst beim Speichern erfahren, dass nichts mehr frei ist. */
 .scan-quota{ font-size:var(--text-xs); color:var(--text-muted); margin:var(--space-2) 0 0; min-height:16px; }
 
+/* Barcode von Hand eintippen. Die Ziffern stehen unter jedem Strichcode;
+   wenn die Kamera nicht durchkommt, ist Abtippen der kürzere Weg. */
+.code-form{ display:flex; gap:var(--space-2); flex-wrap:wrap; margin-top:var(--space-3); }
+.code-form .field{
+  flex:1 1 190px; margin-bottom:0; min-height:var(--target);
+  font-variant-numeric:tabular-nums; letter-spacing:.04em;
+}
+.code-form .btn-secondary{ flex:0 0 auto; height:var(--target); padding:0 var(--space-5); }
+.code-form .err{ flex:1 0 100%; margin:0; }
+.code-form .err:empty{ display:none; }
+
 /* ===== Scan-Ergebnis (scanner.html) =====
    Der Treffer bekommt bewusst mehr Fläche als eine Listenzeile: hier
    wird entschieden, ob die Platte ins Regal wandert. */

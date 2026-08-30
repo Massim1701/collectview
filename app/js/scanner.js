@@ -35,6 +35,8 @@ const resultsEl = document.getElementById("results");
 const resultsTitleEl = document.getElementById("results-title");
 const resultsSubEl = document.getElementById("results-sub");
 const recentEl = document.getElementById("recent-saved");
+const codeForm = document.getElementById("code-form");
+const codeInput = document.getElementById("code-input");
 
 /** Treffer und Statusdaten des laufenden Scans. */
 let currentScan = { barcode: null, results: [], statusData: emptyScanStatusData() };
@@ -448,6 +450,59 @@ function makeCodeReader() {
   } catch (e) {
     return new ZXingBrowser.BrowserMultiFormatOneDReader();
   }
+}
+
+/* ---------- Barcode von Hand ---------- */
+
+/**
+ * Prüfziffer nach GS1. Die letzte Ziffer eines Strichcodes ist aus den
+ * übrigen berechenbar – damit fällt ein Tippfehler sofort auf, statt
+ * erst als "keine Treffer" zurückzukommen.
+ *
+ * EAN-13 und UPC-A rechnen von rechts mit dem Gewicht 3 beginnend,
+ * EAN-8 ebenso. Von rechts zu zählen deckt alle drei Längen mit
+ * derselben Schleife ab.
+ */
+function eanPruefzifferStimmt(ziffern) {
+  const z = normalizeBarcode(ziffern);
+  if (![8, 12, 13].includes(z.length)) return false;
+
+  let summe = 0;
+  for (let i = z.length - 2; i >= 0; i--) {
+    const abstand = z.length - 2 - i;          // 0 = direkt vor der Prüfziffer
+    summe += Number(z[i]) * (abstand % 2 === 0 ? 3 : 1);
+  }
+  return (10 - (summe % 10)) % 10 === Number(z[z.length - 1]);
+}
+
+/**
+ * Eingetippten Code prüfen. Gibt { code } zurück oder { fehler }.
+ * Eine falsche Prüfziffer ist ein Hinweis, keine Sperre: manche Codes
+ * sind schlicht falsch gedruckt, und suchen darf man trotzdem.
+ */
+function pruefeEingabe(eingabe) {
+  const z = normalizeBarcode(eingabe);
+  if (z.length === 0) return { fehler: "Bitte die Ziffern unter dem Strichcode eintippen." };
+  if (![8, 12, 13].includes(z.length)) {
+    return { fehler: `Ein Barcode hat 8, 12 oder 13 Ziffern – das waren ${z.length}.` };
+  }
+  return { code: z, warnung: eanPruefzifferStimmt(z) ? "" : "Die Prüfziffer passt nicht. Vertippt? Gesucht wird trotzdem." };
+}
+
+if (codeForm) {
+  codeForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fehlerEl = document.getElementById("code-error");
+    const { code, fehler, warnung } = pruefeEingabe(codeInput.value);
+    fehlerEl.textContent = fehler || warnung || "";
+    if (!code) return;
+
+    // Läuft durch denselben Weg wie ein Scan: Kontingent, Katalog,
+    // Discogs, Abgleich. Nur die Ziffern kommen woanders her.
+    if (scanning) stopScan();
+    codeInput.blur();
+    lookupBarcode(code);
+  });
 }
 
 /* ---------- Barcode-Abgleich ---------- */
