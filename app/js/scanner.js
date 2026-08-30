@@ -202,7 +202,15 @@ async function captureCoverPhoto() {
 
   let guess = "";
   try {
-    const { data } = await Tesseract.recognize(canvas, "deu+eng");
+    // Worker und WASM-Kern liegen lokal (app/vendor) – ohne diese Pfade
+    // holt tesseract.js sie zur Laufzeit vom CDN, und die App wäre dort
+    // ohne Netz blind. Die Sprachdaten (langPath) bleiben bewusst am
+    // CDN: deu+eng wären rund 30 MB im Bundle. Sie werden einmal geladen
+    // und danach von tesseract.js in IndexedDB gehalten.
+    const { data } = await Tesseract.recognize(canvas, "deu+eng", {
+      workerPath: "./vendor/tesseract-worker.min.js",
+      corePath: "./vendor/tesseract-core/",
+    });
     guess = (data.text || "")
       .split("\n")
       .map((l) => l.trim())

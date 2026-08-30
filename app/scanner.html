@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FFFFFF">
 <title>Scanner – Plattenregal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./vendor/fonts/fonts.css">
 <link rel="stylesheet" href="../wireframes/styles.css">
 <link rel="stylesheet" href="./app.css">
 <style>
@@ -128,11 +126,11 @@
 
 <div class="bottomnav" id="bottomnav"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://unpkg.com/@zxing/browser@0.2.1"></script>
+<script src="./vendor/supabase.js"></script>
+<script src="./vendor/zxing-browser.min.js"></script>
 <!-- Nur für den Cover-Foto-Modus geladen (siehe scanner.js): Texterkennung
      läuft komplett im Browser, kein externer API-Key nötig. -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="./vendor/tesseract.min.js"></script>
 <script src="./config.js"></script>
 <script src="./js/i18n.js"></script>
 <script src="./js/ui.js"></script>

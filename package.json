@@ -7,10 +7,15 @@
     "build": "./scripts/build-www.sh",
     "sync": "./scripts/build-www.sh && cap sync",
     "ios": "./scripts/build-www.sh && cap sync ios && cap open ios",
-    "test": "./test/run.sh"
+    "test": "./test/run.sh",
+    "vendor": "./scripts/vendor.sh"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.5.0"
+    "@capacitor/cli": "^8.5.0",
+    "@supabase/supabase-js": "^2.112.4",
+    "@zxing/browser": "^0.2.1",
+    "tesseract.js": "^5.1.1",
+    "tesseract.js-core": "^6.1.2"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.0",

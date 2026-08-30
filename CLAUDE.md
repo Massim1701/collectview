@@ -35,6 +35,23 @@ npm run ios                        # build + cap sync + Xcode öffnen
 nie von Hand ändern, das nächste `npm run build` überschreibt es. Geändert
 wird immer in `app/` bzw. `wireframes/`.
 
+**Fremde Bibliotheken liegen unter `app/vendor/`, nicht am CDN.** Supabase,
+ZXing, Tesseract und die beiden Schriften kommen aus dem Repo. Zwei Gründe:
+ohne Netz fehlte sonst schon der Supabase-Client und die App startete gar
+nicht, und Google Fonts direkt einzubinden überträgt die IP jedes Nutzers
+an Google – bei deutschem Publikum ein DSGVO-Thema.
+
+`app/vendor/` ist erzeugt (`npm run vendor`, `scripts/vendor-fonts.sh`) und
+liegt trotzdem im Repo: die Web-App soll ohne `npm install` lauffähig
+bleiben. Neue Version einer Bibliothek: Version in `package.json` ändern,
+dann das jeweilige Skript laufen lassen – nie die Datei in `app/vendor/`
+von Hand anfassen.
+
+Einzige Ausnahme, die noch ans Netz geht: die Sprachdaten für die
+Texterkennung (`deu+eng`, rund 30 MB). Die lädt Tesseract beim ersten
+Cover-Scan nach und legt sie in IndexedDB ab. Alles andere – Login,
+Sammlung, Barcode-Scan – läuft ohne Netz an.
+
 `scripts/build-www.sh` ist ein Kopiervorgang, kein Build im üblichen Sinn:
 `app/` und `wireframes/` müssen beide mit, weil `app/*.html` auf
 `../wireframes/styles.css` und `../wireframes/pricing.html` verweist.
