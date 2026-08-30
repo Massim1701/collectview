@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preise – Plattenregal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+<style>
+  .pricing-hero{ padding:70px 44px 20px; text-align:center; }
+  .billing-toggle{ display:flex; justify-content:center; margin:34px 0 56px; }
+  .plans-row{ display:flex; gap:28px; max-width:940px; margin:0 auto; padding:0 44px 100px; align-items:stretch; }
+  .plan-card{ flex:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:34px 28px; display:flex; flex-direction:column; }
+  .plan-card.featured{ border-color:var(--accent); box-shadow:0 20px 50px -24px rgba(255,150,53,.35); position:relative; }
+  .plan-badge{ position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:var(--accent); color:var(--accent-ink); font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:6px 16px; border-radius:999px; }
+  .plan-name{ font-family:var(--font-display); font-style:italic; font-size:26px; margin-bottom:6px; }
+  .plan-price{ font-size:38px; font-weight:800; margin:14px 0 2px; }
+  .plan-price span{ font-size:15px; font-weight:600; color:var(--text-muted); }
+  .plan-note{ font-size:12.5px; color:var(--text-muted); min-height:18px; margin-bottom:22px; }
+  .plan-features{ list-style:none; padding:0; margin:0 0 28px; flex:1; }
+  .plan-features li{ display:flex; gap:10px; align-items:flex-start; font-size:14px; margin-bottom:12px; line-height:1.4; }
+  .plan-features li svg{ flex:0 0 auto; margin-top:2px; stroke:var(--accent-text); }
+  .plan-card .btn-primary, .plan-card .btn-secondary{ width:100%; height:48px; }
+  .checkout-note{ max-width:560px; margin:0 auto; text-align:center; padding:0 44px 90px; color:var(--text-muted); font-size:13.5px; line-height:1.6; }
+</style>
+</head>
+<body style="background:var(--bg);">
+
+  <div class="landing-nav">
+    <div class="landing-nav-inner">
+      <a class="brand" href="./landing.html" style="font-size:22px;">Plattenregal</a>
+      <div class="landing-nav-links">
+        <a href="./landing.html#features">Funktionen</a>
+        <a href="./pricing.html">Preise</a>
+        <a href="../app/login.html">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="pricing-hero">
+    <div class="section-heading" style="margin-bottom:10px;">Einfach starten, jederzeit upgraden</div>
+    <div class="section-subheading" style="margin-bottom:0;">Kostenlos katalogisieren – oder mit Plus mehr rausholen</div>
+  </div>
+
+  <div class="billing-toggle">
+    <div class="segmented" id="billing-toggle">
+      <div class="segmented-item active" data-cycle="monthly">Monatlich</div>
+      <div class="segmented-item" data-cycle="yearly">Jährlich <span style="opacity:.8;">– 2 Monate gratis</span></div>
+    </div>
+  </div>
+
+  <div class="plans-row">
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">0 €</div>
+      <div class="plan-note">für immer kostenlos</div>
+      <ul class="plan-features">
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Barcode-Scan &amp; Cover-Erkennung</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Eigene Sammlung, durchsuchbar</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>YouTube-/Spotify-Links</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Zugriff auf den Marktplatz</li>
+      </ul>
+      <a href="../app/login.html"><button class="btn-secondary" type="button">Kostenlos starten</button></a>
+    </div>
+
+    <div class="plan-card featured">
+      <div class="plan-badge">Beliebt</div>
+      <div class="plan-name">Plattenregal Plus</div>
+      <div class="plan-price" id="plus-price">3,99 € <span>/ Monat</span></div>
+      <div class="plan-note" id="plus-note">monatlich kündbar</div>
+      <ul class="plan-features">
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Alles aus Free</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Unbegrenzte Scans ohne Limit</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Marktplatz-Angebote hervorgehoben</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Werbefrei &amp; bevorzugter Support</li>
+      </ul>
+      <button class="btn-primary" type="button" id="upgrade-btn">Jetzt upgraden</button>
+      <div class="err" id="upgrade-note" style="margin-top:12px; font-size:12.5px; color:var(--text-muted);"></div>
+    </div>
+  </div>
+
+  <div class="checkout-note">
+    Die Bezahlung läuft sicher über unseren Zahlungsanbieter. In dieser Vorschau ist die Zahlungsanbindung
+    noch nicht aktiv – Konto und Abo-Status sind aber bereits vorbereitet.
+  </div>
+
+  <div class="landing-footer">
+    <div class="landing-footer-inner">
+      <div>Plattenregal &copy; 2026</div>
+      <div class="landing-footer-links">
+        <a href="#">Impressum</a>
+        <a href="#">Datenschutz</a>
+        <a href="#">Kontakt</a>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../app/config.js"></script>
+<script>
+  const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  const PRICES = {
+    monthly: { amount: "3,99 €", unit: "/ Monat", note: "monatlich kündbar" },
+    yearly: { amount: "34,90 €", unit: "/ Jahr", note: "entspricht 2,91 €/Monat · jährlich kündbar" },
+  };
+  let cycle = "monthly";
+
+  document.getElementById("billing-toggle").addEventListener("click", (ev) => {
+    const item = ev.target.closest(".segmented-item");
+    if (!item) return;
+    document.querySelectorAll("#billing-toggle .segmented-item").forEach((el) => el.classList.remove("active"));
+    item.classList.add("active");
+    cycle = item.dataset.cycle;
+    const p = PRICES[cycle];
+    document.getElementById("plus-price").innerHTML = `${p.amount} <span>${p.unit}</span>`;
+    document.getElementById("plus-note").textContent = p.note;
+  });
+
+  document.getElementById("upgrade-btn").addEventListener("click", async () => {
+    const note = document.getElementById("upgrade-note");
+    if (!sb) {
+      note.textContent = "Verbindung zum Server nicht möglich. Bitte Seite neu laden.";
+      return;
+    }
+    const { data } = await sb.auth.getSession();
+    if (!data.session) {
+      location.href = "../app/login.html";
+      return;
+    }
+    note.textContent =
+      "Zahlungsanbieter ist in dieser Vorschau noch nicht verbunden. Dein Konto (" +
+      data.session.user.email +
+      ") ist bereit, sobald Stripe eingerichtet ist.";
+  });
+</script>
+</body>
+</html>
