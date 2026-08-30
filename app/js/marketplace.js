@@ -14,12 +14,6 @@
    Handel läuft ausschließlich per Direktnachricht, nie öffentlich im Forum.
    ===================================================================== */
 
-/** Hat der Nutzer ein aktives Abo? Bestimmt Zugriff auf das Forum. */
-async function fetchIsSubscribed(userId) {
-  const { data, error } = await sb.from("profiles").select("subscription_status").eq("id", userId).maybeSingle();
-  if (error) throw error;
-  return data?.subscription_status === "active";
-}
 
 /** Aktive Angebote aller Nutzer, neueste zuerst. */
 async function fetchActiveListings() {

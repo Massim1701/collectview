@@ -26,12 +26,6 @@
     Marktplatz
   </a>
 
-  <div id="paywall" hidden class="card" style="text-align:center; padding:34px 24px;">
-    <div class="section-title" style="justify-content:center;">Nur für Plattenregal Plus</div>
-    <p class="muted" style="margin:8px 0 20px;">Der Marktplatz ist Abo-Mitgliedern vorbehalten.</p>
-    <a class="btn-primary" href="../wireframes/pricing.html" style="display:inline-flex; align-items:center; height:46px; padding:0 22px;">Zu den Preisen</a>
-  </div>
-
   <div id="content"></div>
 
 </main>
@@ -47,15 +41,12 @@
   const user = await requireAuth();
   if (!user) return;
 
+  // Ansehen ist read-only für alle offen; nur Nachrichten schreiben braucht ein Abo.
   let subscribed = false;
   try {
     subscribed = await fetchIsSubscribed(user.id);
   } catch (e) {
-    // Bei Fehler vorsichtshalber sperren statt versehentlich zu öffnen.
-  }
-  if (!subscribed) {
-    document.getElementById("paywall").hidden = false;
-    return;
+    subscribed = false;
   }
 
   const params = new URLSearchParams(location.search);
@@ -100,7 +91,7 @@
         <div class="section-title">Nachrichten von Interessenten</div>
         <div id="messages"></div>
       </div>
-    ` : listing.status === "active" ? `
+    ` : listing.status === "active" ? (subscribed ? `
       <div class="card">
         <div class="section-title">Interesse?</div>
         <textarea class="field" id="msg-text" rows="3" placeholder="Deine Nachricht an den Verkäufer …" style="margin-bottom:10px; resize:vertical;"></textarea>
@@ -108,7 +99,12 @@
         <div class="err" id="msg-error" style="margin-top:8px;"></div>
         <div id="sent-note" class="muted" style="margin-top:10px; display:none;">Nachricht gesendet.</div>
       </div>
-    ` : ""}
+    ` : `
+      <div class="card" style="text-align:center;">
+        <p class="muted" style="margin:0 0 14px;">Nachrichten an Verkäufer:innen gibt es mit Plattenregal Plus.</p>
+        <a class="btn-primary" href="../wireframes/pricing.html" style="display:inline-flex; align-items:center; height:44px; padding:0 20px;">Zu den Preisen</a>
+      </div>
+    `) : ""}
   `;
 
   if (isOwner) {
@@ -135,7 +131,7 @@
     } catch (e) {
       messagesEl.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
     }
-  } else if (listing.status === "active") {
+  } else if (listing.status === "active" && subscribed) {
     document.getElementById("send-msg").addEventListener("click", async () => {
       const text = document.getElementById("msg-text").value.trim();
       const errorEl = document.getElementById("msg-error");

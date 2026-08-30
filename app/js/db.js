@@ -45,6 +45,13 @@ async function fetchCollection() {
  * "CD, Album, Reissue" – deshalb wird der Format-String durchsucht,
  * nicht exakt verglichen.
  */
+/** Hat der Nutzer ein aktives Plattenregal-Plus-Abo? */
+async function fetchIsSubscribed(userId) {
+  const { data, error } = await sb.from("profiles").select("subscription_status").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data?.subscription_status === "active";
+}
+
 const FORMAT_FILTERS = [
   { key: "all", label: "Alle", test: () => true },
   { key: "vinyl", label: "Vinyl", test: (f) => /vinyl|\bLP\b|\b\d{1,2}"\b/i.test(f) },

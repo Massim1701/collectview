@@ -159,12 +159,29 @@ async function init() {
     allItems = await fetchCollection();
     renderChips();
     renderGrid();
+    showFreeLimitHint(user, allItems.length);
   } catch (e) {
     gridEl.innerHTML = "";
     messageEl.innerHTML = errorState(e.message);
   }
 
   if (params.get("focus") === "suche") searchEl.focus();
+}
+
+/** Hinweis auf das Free-Limit (max. 5), solange kein Abo aktiv ist. */
+async function showFreeLimitHint(user, count) {
+  try {
+    if (await fetchIsSubscribed(user.id)) return;
+  } catch (e) {
+    return;
+  }
+  const hint = document.createElement("div");
+  hint.className = "muted";
+  hint.style.cssText = "font-size:12.5px; margin-top:2px;";
+  hint.innerHTML = count >= 5
+    ? `Free-Limit erreicht (5/5). <a href="../wireframes/pricing.html" style="color:var(--accent-text); font-weight:700;">Plattenregal Plus</a> für mehr.`
+    : `${count}/5 in der kostenlosen Version.`;
+  countEl.insertAdjacentElement("afterend", hint);
 }
 
 init();
