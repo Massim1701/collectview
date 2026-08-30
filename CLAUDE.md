@@ -6,8 +6,8 @@ Sprache im Projekt: **Deutsch** – Oberflächentexte, Kommentare und Commit-Mes
 
 ## Befehle
 
-**Es gibt keinen Build-Schritt, keinen Paketmanager und keine Testsuite.** Kein
-`package.json`, keine Abhängigkeiten – die Seiten laufen direkt im Browser.
+**Es gibt keinen Build-Schritt und keinen Paketmanager.** Kein `package.json`,
+keine Abhängigkeiten – die Seiten laufen direkt im Browser.
 
 ```bash
 python3 -m http.server 8000        # http://localhost:8000/app/login.html
@@ -16,11 +16,29 @@ python3 -m http.server 8000        # http://localhost:8000/app/login.html
 Ein echter Webserver ist Pflicht: Kamera-Zugriff (ZXing) und Supabase
 funktionieren nicht über `file://`.
 
-Geprüft wird mit Headless Chrome gegen diesen Server. Für angemeldete Seiten
-eine Stub-Datei neben `db.js` einhängen, die `requireAuth`, `fetchCollection`
-und `renderAccountRow` überschreibt (`auth.js` und `config.js` dabei aus den
-`<script>`-Tags herausnehmen, `db.js` **behalten** – sonst fehlen
-`computeStats` und Co.):
+### Tests
+
+```bash
+./test/run.sh                      # alle test/*.test.html, Exit-Code 1 bei Fehlern
+CHROME=/pfad/zu/chrome ./test/run.sh
+```
+
+Der Runner startet selbst einen Server, fährt jede `test/*.test.html` in
+Headless Chrome und liest das Ergebnis base64-kodiert aus dem `<title>`.
+Kein npm, keine Abhängigkeiten. Eine einzelne Datei laufen lassen: die
+anderen `*.test.html` kurz umbenennen, oder die URL direkt im Browser öffnen –
+die Tests laufen dort genauso.
+
+Eine neue Testdatei braucht nur `test/assert.js`, die zu prüfenden Module und
+am Ende `runTests()`. Stubs für `sb`/`currentUser` als `var` **vor** dem Modul
+deklarieren, das sie benutzt.
+
+### Seiten von Hand prüfen
+
+Für angemeldete Seiten eine Stub-Datei neben `db.js` einhängen, die
+`requireAuth`, `fetchCollection` und `renderAccountRow` überschreibt
+(`auth.js` und `config.js` dabei aus den `<script>`-Tags herausnehmen,
+`db.js` **behalten** – sonst fehlen `computeStats` und Co.):
 
 ```bash
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -124,7 +142,12 @@ marketplace_listings   id · seller_id · collection_item_id · title · artist 
                        status · created_at
 
 marketplace_messages   id · listing_id · sender_id · recipient_id · body · created_at
+
+feedback               id · user_id · category · message · page · user_agent · created_at
 ```
+
+Neue Tabellen kommen als SQL nach `db/` und werden im Supabase-SQL-Editor
+ausgeführt – siehe `db/feedback.sql`.
 
 - **Keine `genre`-Spalte** in `collection_items`. Das Home-Dashboard zeigt
   deshalb „Formate" statt der in den Wireframes vorgesehenen „Genres".

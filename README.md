@@ -26,6 +26,10 @@ App + Webseite zum Katalogisieren von Schallplatten, CDs und Musik-DVDs/Blu-rays
 | `scanner.html` | Barcode-Scan (ZXing) → Discogs-Lookup → speichern |
 | `detail.html?id=<uuid>` | Ein Tonträger: Tracklist, Hörlinks, Details, Löschen |
 
+Über den Konto-Bereich auf der Startseite lässt sich Feedback abschicken; es
+landet in der Tabelle `feedback` (einmalig `db/feedback.sql` im Supabase-
+SQL-Editor ausführen).
+
 Alle Seiten sind geschützt: ohne Session leitet `requireAuth()` auf
 `login.html?next=…` um.
 
@@ -79,6 +83,15 @@ Offen: eine Spalte `genre text` fehlt. Das Home-Dashboard zeigt deshalb
 „Formate" statt der in den Wireframes vorgesehenen „Genres". Sobald die Spalte
 existiert und beim Scannen aus dem Discogs-Ergebnis mitgeschrieben wird, kann
 `computeStats()` in `db.js` darauf umgestellt werden.
+
+## Tests
+
+```bash
+./test/run.sh
+```
+
+Läuft ohne npm: ein eigener Server plus Headless Chrome, Exit-Code 1 bei
+Fehlern.
 
 ## Lokal starten
 
