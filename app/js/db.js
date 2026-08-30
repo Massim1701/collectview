@@ -5,6 +5,30 @@
    barcode, cover_url, created_at, notes
    ===================================================================== */
 
+/** Ein einzelner Eintrag. Gibt null zurück, wenn es ihn nicht gibt
+    (oder er einem anderen User gehört – das filtert bereits RLS). */
+async function fetchItem(id) {
+  const { data, error } = await sb.from("collection_items").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Löscht einen Eintrag. `.select()` liefert die tatsächlich gelöschten
+ * Zeilen zurück – ohne passende RLS-Policy meldet Postgres keinen Fehler,
+ * löscht aber auch nichts. Genau das fangen wir hier ab.
+ */
+async function deleteItem(id) {
+  const { data, error } = await sb.from("collection_items").delete().eq("id", id).select("id");
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Der Eintrag wurde nicht gelöscht. Vermutlich fehlt in Supabase eine DELETE-Policy " +
+      "für collection_items (Row Level Security).",
+    );
+  }
+}
+
 /** Alle Einträge des angemeldeten Users, neueste zuerst. RLS filtert nach user_id. */
 async function fetchCollection() {
   const { data, error } = await sb

@@ -36,26 +36,33 @@ function itemSubtitle(item) {
   return [item.artist, item.format, item.year].filter(Boolean).map(escapeHtml).join(" · ");
 }
 
-/** Listeneintrag im .list-card-Stil. */
+/** Link zur Detailseite eines gespeicherten Eintrags. */
+function detailHref(item) {
+  return `detail.html?id=${encodeURIComponent(item.id)}`;
+}
+
+/** Listeneintrag im .list-card-Stil, führt zur Detailseite. */
 function listCardMarkup(item) {
   return `
-    <div class="list-card">
+    <a class="list-card" href="${detailHref(item)}">
       ${coverMarkup(item, { size: 56 })}
       <div style="min-width:0;">
         <div class="list-card-title">${escapeHtml(item.title)}</div>
         <div class="list-card-sub">${itemSubtitle(item)}</div>
       </div>
-    </div>`;
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </a>`;
 }
 
-/** Kachel für Rail und Grid. */
+/** Kachel für Rail und Grid, führt zur Detailseite. */
 function coverTileMarkup(item) {
   return `
-    <div data-id="${escapeHtml(item.id)}">
+    <a href="${detailHref(item)}" data-id="${escapeHtml(item.id)}">
       ${coverMarkup(item)}
       <div class="cover-title">${escapeHtml(item.title)}</div>
       <div class="cover-artist">${escapeHtml(item.artist || "Unbekannt")}</div>
-    </div>`;
+    </a>`;
 }
 
 /** Ladeplatzhalter im Grid – hält die Höhe, damit nichts springt. */
