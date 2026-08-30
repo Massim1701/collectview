@@ -12,6 +12,12 @@
 <div id="bottomnav"></div>
 <div id="scan-frame"><video id="video"></video></div>
 <button id="scan-btn" type="button"></button>
+<!-- seit 729ad2b (Cover-Modus): scanner.js holt diese drei beim Laden.
+     Fehlen sie, wirft die Datei und der Klick-Listener am Ende wird nie
+     registriert – Rendern geht dank Hoisting trotzdem, Klicks nicht. -->
+<button id="capture-btn" type="button"></button>
+<select id="camera-select"></select>
+<div id="mode-toggle"></div>
 <div class="notice" id="scan-notice" hidden></div>
 <p class="status" id="scan-status"></p>
 <div class="card" id="results-card" style="display:none;">
@@ -280,6 +286,38 @@ test("'Auf Wunschliste' legt einen Wunschlisten-Eintrag an", async () => {
   assertEqual(inserts.length, 0, "die Sammlung darf unberührt bleiben");
   assertEqual(wishlistAdds.length, 1);
   assertEqual(wishlistAdds[0].title, "Nevermind");
+});
+
+test("Wunschlisten-Eintrag aus dem Scan trägt discogs_id, Cover und Barcode", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([
+    discogsResult(1, "Nirvana - Nevermind", { cover_image: "https://example.test/cover.jpg" }),
+  ]);
+  await lookupBarcode("111");
+  btn("add-wishlist").click();
+  await tick();
+
+  const row = wishlistAdds[0];
+  assertEqual(row.discogs_id, 1, "ohne discogs_id findet der nächste Scan den Eintrag nie");
+  assertEqual(row.barcode, "111");
+  assertEqual(row.cover_url, "https://example.test/cover.jpg");
+  assertEqual(row.artist, "Nirvana");
+});
+
+test("Ein gemerkter Tonträger wird beim nächsten Scan wiedererkannt", async () => {
+  resetStub();
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+  btn("add-wishlist").click();
+  await tick();
+
+  // Genau das, was der Eintrag oben in die Tabelle geschrieben hat.
+  rows.wishlist_items = [{ id: "w1", ...wishlistAdds[0] }];
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+  await lookupBarcode("111");
+
+  assertIncludes(out().textContent, "Auf deiner Wunschliste");
+  assert(btn("wishlist-to-collection"), "Verschieben müsste angeboten werden");
 });
 
 test("'Verwerfen' schließt die Karte, ohne zu speichern", async () => {

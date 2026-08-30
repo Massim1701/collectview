@@ -567,12 +567,19 @@ async function saveToWishlist(item) {
   if (!currentUser) return;
   scanError("");
   try {
+    // discogs_id, Cover und Barcode gehören mit: nur damit erkennt ein
+    // späterer Scan den Eintrag wieder (Schritt 3) und die Wunschliste
+    // kann das Cover zeigen. Von Hand angelegte Einträge auf
+    // wishlist.html haben das naturgemäß nicht.
     await addWishlistItem({
       user_id: currentUser.id,
+      discogs_id: item.discogs_id,
       title: item.title,
       artist: item.artist,
       format: item.format,
       year: item.year,
+      cover_url: item.cover_url,
+      barcode: item.barcode,
     });
     resultsCard.style.display = "none";
     setStatus(`„${item.title}“ steht auf deiner Wunschliste.`, { active: true });
