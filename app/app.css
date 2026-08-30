@@ -191,6 +191,18 @@ a.list-card:hover, .list-card[role="button"]:hover{ border-color:var(--border-st
 }
 /* 44px+ Touch-Ziel, auch wenn das Label klein ist */
 .navitem{ min-width:58px; min-height:46px; justify-content:center; cursor:pointer; transition:color .15s ease; }
+
+/* Seit dbe2093 stehen fünf Einträge plus FAB in der Leiste. Bei 58px
+   Mindestbreite braucht die Reihe 5×58 + 58 + 32 = 380px – auf 360px
+   (die häufigste Android-Breite) läuft sie damit über, gemessen in allen
+   fünf Sprachen. Unter 380px darf der Eintrag deshalb schmaler werden.
+   44px bleibt die Untergrenze: bei 320px kommen rechnerisch noch 49px
+   je Eintrag heraus, das Touch-Ziel bleibt also intakt. Die Höhe rührt
+   das hier nicht an. */
+@media (max-width: 379px){
+  .bottomnav-inner{ padding:0 var(--space-2); }
+  .navitem{ min-width:44px; }
+}
 .navitem:hover{ color:var(--text); }
 .navitem.active, .navitem.active:hover{ color:var(--accent-text); }
 .bottomnav .fab{ flex:0 0 auto; }

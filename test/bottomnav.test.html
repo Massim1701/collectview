@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Bottom-Nav – Tests</title>
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="../app/vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../app/app.css">
+</head>
+<body>
+<div id="rahmen"></div>
+
+<script src="../app/js/i18n.js"></script>
+<script src="../app/js/ui.js"></script>
+<script src="assert.js"></script>
+
+<script>
+/*
+ * Die Leiste trägt seit dbe2093 fünf Einträge plus FAB. Ob sie passt,
+ * entscheidet eine Media Query – und die wertet den Viewport aus, nicht
+ * die Breite eines Containers. Ein <div> mit width:360px würde sie also
+ * gar nicht auslösen und der Test wäre wertlos.
+ *
+ * Headless Chrome lässt sich nicht auf 360px Fensterbreite bringen
+ * (Mindestbreite 500px, siehe CLAUDE.md). Ein iframe hat aber seinen
+ * eigenen Viewport: darin greifen Media Queries korrekt.
+ */
+const BREITEN = [320, 360, 375, 390, 430];
+const SPRACHEN = ["de", "en", "it", "pl", "es"];
+const MIN_ZIEL = 44;
+
+async function messen(breite, sprache) {
+  localStorage.setItem("pr_lang", sprache);
+
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = `width:${breite}px; height:160px; border:0;`;
+  document.getElementById("rahmen").appendChild(iframe);
+
+  const doc = iframe.contentDocument;
+  doc.open();
+  doc.write(
+    '<!doctype html><html><head><meta charset="utf-8">' +
+    '<link rel="stylesheet" href="../wireframes/styles.css">' +
+    '<link rel="stylesheet" href="../app/vendor/fonts/fonts.css">' +
+    '<link rel="stylesheet" href="../app/app.css">' +
+    '<style>body{margin:0}.bottomnav{position:static}</style>' +
+    '</head><body><div class="bottomnav" id="nav"></div></body></html>');
+  doc.close();
+
+  const nav = doc.getElementById("nav");
+  // renderBottomNav setzt nur innerHTML – das geht auch über Dokumentgrenzen.
+  renderBottomNav(nav, "home");
+
+  // Warten, bis die Stylesheets im iframe wirken.
+  for (let i = 0; i < 60; i++) {
+    const inner = nav.querySelector(".bottomnav-inner");
+    if (inner && iframe.contentWindow.getComputedStyle(inner).display === "flex") break;
+    await tick(25);
+  }
+  await tick(30);
+
+  const inner = nav.querySelector(".bottomnav-inner");
+  const ziele = [...nav.querySelectorAll(".navitem, .fab")];
+  const kleinste = ziele.map((e) => e.getBoundingClientRect());
+
+  const ergebnis = {
+    ueberlauf: inner.scrollWidth - inner.clientWidth,
+    schmalstes: Math.min(...kleinste.map((r) => r.width)),
+    niedrigstes: Math.min(...kleinste.map((r) => r.height)),
+    anzahl: ziele.length,
+  };
+  iframe.remove();
+  return ergebnis;
+}
+
+for (const breite of BREITEN) {
+  test(`Die Leiste läuft bei ${breite}px in keiner Sprache über`, async () => {
+    for (const sprache of SPRACHEN) {
+      const r = await messen(breite, sprache);
+      assertEqual(r.ueberlauf, 0, `${sprache} bei ${breite}px läuft über`);
+    }
+  });
+}
+
+test("Jedes Ziel bleibt auch auf dem schmalsten Gerät bei 44px", async () => {
+  const r = await messen(320, "de");
+  assert(r.schmalstes >= MIN_ZIEL, `schmalstes Ziel war ${r.schmalstes}px`);
+  assert(r.niedrigstes >= MIN_ZIEL, `niedrigstes Ziel war ${r.niedrigstes}px`);
+});
+
+test("Es sind fünf Einträge plus FAB – ein sechster spränge hier auf", async () => {
+  const r = await messen(390, "de");
+  assertEqual(r.anzahl, 6, "Anzahl geändert? Dann die Breiten oben neu prüfen");
+});
+
+test("Auf breiten Geräten bleibt die volle Mindestbreite erhalten", async () => {
+  const r = await messen(430, "de");
+  assert(r.schmalstes >= 58, `auf 430px sollten es 58px sein, waren ${r.schmalstes}`);
+});
+
+runTests();
+</script>
+</body>
+</html>
