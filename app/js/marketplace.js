@@ -61,8 +61,10 @@ async function fetchListingMessages(listingId) {
 }
 
 async function sendListingMessage(listingId, recipientId, body) {
+  const { data: auth } = await sb.auth.getUser();
   const { error } = await sb.from("marketplace_messages").insert({
     listing_id: listingId,
+    sender_id: auth.user.id,
     recipient_id: recipientId,
     body,
   });
