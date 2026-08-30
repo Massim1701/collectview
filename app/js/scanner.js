@@ -97,8 +97,10 @@ modeToggle.addEventListener("click", (e) => {
 const KAMERA_IDEAL = {
   width: { ideal: 1280 },
   height: { ideal: 720 },
-  // Von Safari teils ignoriert; unbekannte Felder stören dort nicht.
-  focusMode: "continuous",
+  // Bewusst nichts weiter: focusMode stand hier einmal, ohne dass je
+  // belegt war, dass es etwas bewirkt. Bei einem Kernstück, das schon
+  // zweimal an gut gemeinten Zusätzen gescheitert ist, fliegt raus, was
+  // nicht nachweislich hilft.
 };
 
 /** Ausdrücklich gewählte Kamera, sonst die Rückkamera des Systems. */
@@ -114,20 +116,24 @@ function videoConstraints() {
  * Selbstzweck – ohne sie lässt sich am Telefon nicht unterscheiden, ob
  * die Wunschauflösung durchkam oder still auf 640×480 gefallen ist.
  */
-async function kameraFeinschliff() {
+function kameraFeinschliff() {
   const track = videoEl.srcObject?.getVideoTracks?.()[0];
   if (!track) return "";
 
-  try {
-    const koennen = track.getCapabilities ? track.getCapabilities() : {};
-    const erweitert = [];
-    if (koennen.focusMode?.includes("continuous")) erweitert.push({ focusMode: "continuous" });
-    // Manche Geräte fokussieren näher, wenn man den Zoom nicht antastet –
-    // deshalb hier bewusst kein Zoom setzen.
-    if (erweitert.length) await track.applyConstraints({ advanced: erweitert });
-  } catch {
-    // Nicht unterstützt: der Scan läuft trotzdem, nur ohne Nachschärfen.
-  }
+  // Hier stand einmal ein applyConstraints() für den Dauerfokus. Das
+  // ist raus: auf iOS beendet ein applyConstraints auf dem laufenden
+  // Kamerastrom den Track – die Kamera ging nach etwa zwei Sekunden
+  // wieder aus. Der Gewinn war ohnehin nie belegt, der Schaden schon.
+  // Es wird nur noch gelesen, nichts mehr gesetzt.
+
+  // Geht der Track von sich aus zu Ende (Anruf, Kamera von einer
+  // anderen App übernommen, Systemfehler), soll das dastehen und nicht
+  // als schwarzes Bild rätselhaft bleiben.
+  track.addEventListener("ended", () => {
+    if (!scanning) return;
+    stopScan();
+    setStatus("Die Kamera wurde vom System beendet. Noch einmal starten.");
+  }, { once: true });
 
   const ist = track.getSettings ? track.getSettings() : {};
   const name = (track.label || "").replace(/^Back\s*/i, "").trim();
@@ -197,7 +203,7 @@ async function toggleScan() {
       stopScan();
     });
 
-    const kamera = await kameraFeinschliff();
+    const kamera = kameraFeinschliff();
     await refreshCameraList(cameraSelect.value || undefined);
     setStatus(`Barcode aus etwa 20 cm anvisieren${kamera ? " · " + kamera : ""}`, { active: true });
   } catch (e) {
@@ -226,8 +232,22 @@ function stopScan() {
 
 // Kamera freigeben, wenn die Seite verlassen oder in den Hintergrund geschoben wird.
 window.addEventListener("pagehide", stopScan);
+/*
+ * Kamera freigeben, wenn die Seite wirklich in den Hintergrund geht.
+ *
+ * Nicht sofort: iOS meldet die Seite auch kurz als verborgen, während
+ * die Systemabfrage nach der Kamerafreigabe darüberliegt oder die
+ * Ansicht wechselt. Ein sofortiges stopScan() hätte die Kamera dann
+ * gleich nach dem Einschalten wieder abgeschaltet. Deshalb erst
+ * nachsehen, ob sie eine halbe Sekunde später immer noch verborgen ist.
+ */
+let verborgenTimer = null;
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden && (scanning || coverStream)) stopScan();
+  clearTimeout(verborgenTimer);
+  if (!document.hidden) return;
+  verborgenTimer = setTimeout(() => {
+    if (document.hidden && (scanning || coverStream)) stopScan();
+  }, 500);
 });
 
 /* ---------- Cover-Foto ---------- */
@@ -243,7 +263,7 @@ async function startCoverCamera() {
     scanning = true;
     scanBtn.textContent = "Kamera stoppen";
     captureBtn.hidden = false;
-    const kamera = await kameraFeinschliff();
+    const kamera = kameraFeinschliff();
     setStatus(`Cover gut ausgeleuchtet in den Rahmen halten, dann „Foto aufnehmen“.${kamera ? " · " + kamera : ""}`, { active: true });
     await refreshCameraList(cameraSelect.value || undefined);
   } catch (e) {

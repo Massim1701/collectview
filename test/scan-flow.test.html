@@ -891,6 +891,14 @@ test("Der Cover-Weg nimmt dieselben Constraints", async () => {
   assertEqual(c.width, { ideal: 1280 }, "beide Wege brauchen dieselbe Kamera und dieselbe Auflösung");
 });
 
+test("Die Constraints fassen die Kamera nicht mehr an als nötig", () => {
+  document.getElementById("camera-select").innerHTML = "";   // ohne eigene Wahl
+  const c = videoConstraints();
+  assert(!("focusMode" in c),
+    "auf iOS hat jeder Eingriff in den laufenden Strom die Kamera gekostet");
+  assertEqual(Object.keys(c).sort(), ["facingMode", "height", "width"]);
+});
+
 runTests();
 </script>
 </body>
