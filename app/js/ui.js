@@ -174,6 +174,7 @@ function renderBottomNav(container, active) {
         </svg>
         <span class="sr-only">${escapeHtml(t("nav_scan_sr"))}</span>
       </a>
+      ${item("forum", "marketplace.html", t("nav_forum"), '<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M9 21v-6h6v6"/>')}
       ${item("search", "collection.html?focus=suche", t("nav_search"), ICONS.search)}
       ${item("account", "index.html#konto", t("nav_account"), '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.8-4 5-6 8-6s6.2 2 8 6"/>')}
     </nav>`;

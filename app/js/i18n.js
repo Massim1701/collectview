@@ -17,6 +17,7 @@ const I18N = {
   de: {
     nav_home: "Home",
     nav_collection: "Sammlung",
+    nav_forum: "Forum",
     nav_search: "Suche",
     nav_account: "Konto",
     nav_scan_sr: "Tonträger scannen",
@@ -84,6 +85,7 @@ const I18N = {
   en: {
     nav_home: "Home",
     nav_collection: "Collection",
+    nav_forum: "Forum",
     nav_search: "Search",
     nav_account: "Account",
     nav_scan_sr: "Scan a release",
@@ -151,6 +153,7 @@ const I18N = {
   it: {
     nav_home: "Home",
     nav_collection: "Collezione",
+    nav_forum: "Forum",
     nav_search: "Cerca",
     nav_account: "Account",
     nav_scan_sr: "Scansiona un disco",
@@ -218,6 +221,7 @@ const I18N = {
   pl: {
     nav_home: "Start",
     nav_collection: "Kolekcja",
+    nav_forum: "Forum",
     nav_search: "Szukaj",
     nav_account: "Konto",
     nav_scan_sr: "Zeskanuj płytę",
@@ -285,6 +289,7 @@ const I18N = {
   es: {
     nav_home: "Inicio",
     nav_collection: "Colección",
+    nav_forum: "Foro",
     nav_search: "Buscar",
     nav_account: "Cuenta",
     nav_scan_sr: "Escanear un disco",
