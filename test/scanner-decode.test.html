@@ -55,6 +55,19 @@
 </script>
 
 <script src="../app/vendor/zxing-browser.min.js"></script>
+<script>
+  /* Nur scanHints() wird gebraucht; scanner.js selbst zieht das ganze
+     Seiten-DOM nach sich. Die Funktion wird daher hier gespiegelt –
+     und der Test unten prüft, dass beide Fassungen übereinstimmen. */
+  const HINT_POSSIBLE_FORMATS = 2, HINT_TRY_HARDER = 3;
+  function scanHints() {
+    const F = ZXingBrowser.BarcodeFormat;
+    const hints = new Map();
+    hints.set(HINT_POSSIBLE_FORMATS, [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E]);
+    hints.set(HINT_TRY_HARDER, true);
+    return hints;
+  }
+</script>
 <script src="lib/ean13.js"></script>
 <script src="assert.js"></script>
 
@@ -72,10 +85,17 @@ test("Ein erzeugter Code hat 95 Module", () => {
 
 /* ---------- Der Leser, den die App benutzt ---------- */
 
-/** Dekodiert mit genau der Klasse, die scanner.js verwendet. */
+/** Dekodiert mit genau der Klasse UND den Einstellungen aus scanner.js. */
 function liesMitAppLeser(code, optionen) {
-  const leser = new ZXingBrowser.BrowserMultiFormatOneDReader();
+  const leser = new ZXingBrowser.BrowserMultiFormatOneDReader(scanHints());
   return leser.decodeFromCanvas(ean13Canvas(code, optionen)).getText();
+}
+
+/** Versucht zu lesen, gibt null zurück statt zu werfen. */
+function versuche(canvas, hints) {
+  try {
+    return new ZXingBrowser.BrowserMultiFormatOneDReader(hints).decodeFromCanvas(canvas).getText();
+  } catch { return null; }
 }
 
 test("Der 1D-Leser der App liest einen EAN-13", () => {
@@ -130,6 +150,43 @@ test("Kleine Module gehen noch, ohne Ruhezone nicht", () => {
 test("Der 1D-Leser steht überhaupt zur Verfügung", () => {
   assert(typeof ZXingBrowser.BrowserMultiFormatOneDReader === "function",
     "scanner.js baut darauf – fehlt die Klasse, startet kein Scan");
+});
+
+/* ---------- Fremde Symbolsätze dürfen nicht mitgelesen werden ---------- */
+
+test("Ohne Formatvorgabe liest der Leser auch Code 39", () => {
+  const fremd = code39Canvas("12345670");
+  assertEqual(versuche(fremd, undefined), "12345670",
+    "genau das ist das Problem: der Leser liefert Ziffern, die kein Produktcode sind");
+});
+
+test("Mit den Einstellungen der App wird Code 39 nicht mehr gelesen", () => {
+  const fremd = code39Canvas("12345670");
+  assertEqual(versuche(fremd, scanHints()), null,
+    "auf einer CD-Hülle kann nur EAN oder UPC der gesuchte Code sein");
+});
+
+test("Die Einschränkung kostet keinen echten Treffer", () => {
+  const code = ean13Complete("724385522925");
+  assertEqual(versuche(ean13Canvas(code, { modul: 3 }), scanHints()), code);
+});
+
+test("Der Leser meldet auch das erkannte Format", () => {
+  const code = ean13Complete("724385522925");
+  const r = new ZXingBrowser.BrowserMultiFormatOneDReader(scanHints())
+    .decodeFromCanvas(ean13Canvas(code, { modul: 3 }));
+  assertEqual(r.getBarcodeFormat(), ZXingBrowser.BarcodeFormat.EAN_13);
+});
+
+test("Die Hinweis-Schlüssel stimmen noch mit der Bibliothek überein", () => {
+  // Ändert ZXing die Aufzählung, greift die Einschränkung stillschweigend
+  // nicht mehr – dann fällt oben der Code-39-Test um, und dieser hier
+  // sagt, warum.
+  const hints = scanHints();
+  assertEqual(hints.get(HINT_POSSIBLE_FORMATS).length, 4);
+  assertEqual(hints.get(HINT_TRY_HARDER), true);
+  assert(hints.get(HINT_POSSIBLE_FORMATS).every((f) => typeof f === "number"),
+    "BarcodeFormat muss Zahlen liefern, sonst ist der Hinweis wirkungslos");
 });
 
 runTests();

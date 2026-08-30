@@ -63,3 +63,47 @@ function ean13Canvas(code, { modul = 3, hoehe = 160, ruhe = 12 } = {}) {
   }
   return canvas;
 }
+
+/* =====================================================================
+   Code 39 – nur für Tests.
+
+   Der Scanner soll ausschließlich Produktbarcodes lesen. Code 39 ist
+   ein anderer Symbolsatz und darf gerade NICHT erkannt werden; ohne
+   Formatvorgabe liest ZXing ihn mit. Dieser Generator macht die
+   Einschränkung überprüfbar, statt sie zu behaupten.
+   ===================================================================== */
+
+const CODE39 = {
+  "0":"nnnwwnwnn","1":"wnnwnnnnw","2":"nnwwnnnnw","3":"wnwwnnnnn","4":"nnnwwnnnw",
+  "5":"wnnwwnnnn","6":"nnwwwnnnn","7":"nnnwnnwnw","8":"wnnwnnwnn","9":"nnwwnnwnn",
+  // Start-/Stoppzeichen. Wie jedes Code-39-Zeichen genau drei breite
+  // Elemente von neun – Binärform 100101101101.
+  "*":"nwnnwnwnn",
+};
+
+/** Zeichnet eine Ziffernfolge als Code 39 (mit Start-/Stoppzeichen). */
+function code39Canvas(text, { schmal = 3, breit = 8, hoehe = 160, ruhe = 14 } = {}) {
+  const zeichen = ("*" + String(text).replace(/\D/g, "") + "*").split("");
+  const elemente = [];
+  zeichen.forEach((z, i) => {
+    const muster = CODE39[z];
+    if (!muster) throw new Error("Code 39 kennt das Zeichen nicht: " + z);
+    for (let k = 0; k < 9; k++) elemente.push([k % 2 === 0, muster[k] === "w" ? breit : schmal]);
+    if (i < zeichen.length - 1) elemente.push([false, schmal]); // Trennlücke
+  });
+
+  const breiteGesamt = elemente.reduce((s, [, b]) => s + b, 0) + ruhe * schmal * 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = breiteGesamt;
+  canvas.height = hoehe;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#000";
+  let x = ruhe * schmal;
+  for (const [istBalken, b] of elemente) {
+    if (istBalken) ctx.fillRect(x, 0, b, hoehe);
+    x += b;
+  }
+  return canvas;
+}

@@ -169,11 +169,7 @@ async function toggleScan() {
   }
 
   try {
-    // Nur 1D-Leser: Produktbarcodes sind EAN und UPC. Der
-    // MultiFormat-Leser prüft jedes Bild zusätzlich auf QR, Aztec,
-    // DataMatrix und PDF417 – das kostet Rechenzeit pro Bild und
-    // eröffnet Fehllesungen auf Bildrauschen, ohne je zu nützen.
-    codeReader = new ZXingBrowser.BrowserMultiFormatOneDReader();
+    codeReader = new ZXingBrowser.BrowserMultiFormatOneDReader(scanHints());
     frameEl.classList.add("live");
     scanning = true;
     scanBtn.textContent = "Scan stoppen";
@@ -376,6 +372,43 @@ function showRateLimitNotice(term, retryFn = lookupBarcode) {
 function hideRateLimitNotice() {
   noticeEl.hidden = true;
   noticeEl.innerHTML = "";
+}
+
+/* ---------- Leser-Einstellungen ---------- */
+
+/*
+ * Zahlenwerte statt Namen, weil das Browser-Bündel von ZXing
+ * DecodeHintType nicht exportiert – BarcodeFormat dagegen schon. Die
+ * Werte stammen aus der Aufzählung der Bibliothek und sind im Bündel
+ * nachgesehen: POSSIBLE_FORMATS = 2, TRY_HARDER = 3. Sollten sie sich
+ * je ändern, schlägt test/scanner-decode.test.html an: dort wird
+ * geprüft, dass ein Code 39 NICHT mehr gelesen wird.
+ */
+const HINT_POSSIBLE_FORMATS = 2;
+const HINT_TRY_HARDER = 3;
+
+/**
+ * Auf Produktbarcodes einschränken.
+ *
+ * Ohne Vorgabe probiert der 1D-Leser auch Code 39, Codabar und
+ * Interleaved 2 of 5 durch. Gerade ITF ist berüchtigt dafür, aus
+ * beliebigen Streifenmustern plausible Ziffern zu lesen – auf einer
+ * CD-Hülle gibt es davon reichlich: Ränder, Spiegelungen, Textzeilen,
+ * das Booklet dahinter. Herausgekommen sind Zahlen, die mit dem
+ * aufgedruckten Code nichts zu tun hatten.
+ *
+ * EAN-13, EAN-8, UPC-A und UPC-E decken jeden Handelsartikel ab. Alles
+ * andere kann auf einer Platte oder CD nicht der gesuchte Code sein.
+ *
+ * TRY_HARDER kostet etwas Rechenzeit pro Bild, findet den Code dafür
+ * auch schräg gehalten – das ist die Sorte Aufwand, die sich hier lohnt.
+ */
+function scanHints() {
+  const F = ZXingBrowser.BarcodeFormat;
+  const hints = new Map();
+  hints.set(HINT_POSSIBLE_FORMATS, [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E]);
+  hints.set(HINT_TRY_HARDER, true);
+  return hints;
 }
 
 /* ---------- Barcode-Abgleich ---------- */

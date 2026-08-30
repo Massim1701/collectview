@@ -105,6 +105,8 @@
   /* ZXing-Ersatz: merkt sich nur, mit welcher Kamera-ID gestartet wurde. */
   var zxingAufrufe = [];
   var ZXingBrowser = {
+    // scanner.js baut daraus die Formatvorgabe; Zahlen genügen hier.
+    BarcodeFormat: { EAN_13: 8, EAN_8: 7, UPC_A: 14, UPC_E: 15 },
     // Nur 1D: der Scanner nutzt seit dem Wechsel den schmalen Leser.
     BrowserMultiFormatOneDReader: function () {
       this.decodeFromConstraints = async (constraints) => {
