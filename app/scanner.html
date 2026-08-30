@@ -20,8 +20,16 @@
     background:radial-gradient(circle at 50% 40%, #2A2A2E, #121214 75%);
     min-height:80px; display:flex; align-items:center; justify-content:center;
   }
-  #video{ width:100%; display:none; background:#000; }
+  /* Das Sucherfenster ist bewusst niedrig. Ein Barcode ist breit und
+     flach; ein hohes Videobild zeigt vor allem Tisch und Daumen und
+     schiebt dabei Statuszeile und Treffer aus dem Bild. object-fit
+     schneidet mittig zu, statt das Bild zu stauchen – der Ausschnitt
+     bleibt also formattreu. */
+  #video{ width:100%; height:180px; object-fit:cover; display:none; background:#000; }
   .scan-frame.live #video{ display:block; }
+  /* Ein Cover ist quadratisch: dafür braucht es mehr Höhe als für einen
+     Strichcode, sonst sieht man die Hülle nie ganz. */
+  .scan-frame.cover-mode #video{ height:300px; }
   .scan-frame.live .placeholder{ display:none; }
   .placeholder{ padding:46px 20px; text-align:center; color:#B9B2A4; font-size:14.5px; display:flex; flex-direction:column; align-items:center; gap:10px; }
 

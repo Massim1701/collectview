@@ -61,6 +61,8 @@ function setMode(next) {
     el.classList.toggle("active", el.dataset.mode === mode);
   });
   scanBtn.textContent = mode === "barcode" ? "Barcode-Scan starten" : "Kamera starten";
+  // Barcode: flaches Band. Cover: höheres Fenster für die quadratische Hülle.
+  frameEl.classList.toggle("cover-mode", mode === "cover");
   captureBtn.hidden = true;
 }
 
@@ -167,7 +169,11 @@ async function toggleScan() {
   }
 
   try {
-    codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+    // Nur 1D-Leser: Produktbarcodes sind EAN und UPC. Der
+    // MultiFormat-Leser prüft jedes Bild zusätzlich auf QR, Aztec,
+    // DataMatrix und PDF417 – das kostet Rechenzeit pro Bild und
+    // eröffnet Fehllesungen auf Bildrauschen, ohne je zu nützen.
+    codeReader = new ZXingBrowser.BrowserMultiFormatOneDReader();
     frameEl.classList.add("live");
     scanning = true;
     scanBtn.textContent = "Scan stoppen";
@@ -372,6 +378,50 @@ function hideRateLimitNotice() {
   noticeEl.innerHTML = "";
 }
 
+/* ---------- Barcode-Abgleich ---------- */
+
+/**
+ * Discogs' barcode=-Suche ist KEINE exakte Suche.
+ *
+ * Nachgemessen: der frei erfundene Code 9999999999999 liefert 14
+ * Treffer – Black Eyed Peas, Sampler, alles Mögliche. Steht eine CD
+ * nicht in der Datenbank, kam also nicht "keine Treffer" zurück,
+ * sondern ein Stapel fremder Platten. Bei genau einem solchen
+ * Zufallstreffer sprang die App sogar direkt aufs Ergebnis und
+ * präsentierte eine wildfremde Platte als DIE Antwort.
+ *
+ * Der Suchtreffer trägt aber selbst ein barcode-Feld. Wir können also
+ * nachprüfen, ohne eine einzige zusätzliche Anfrage zu stellen.
+ */
+
+/** Nur Ziffern: Discogs schreibt denselben Code mal "724385522925",
+    mal "7 24385 52292 5". */
+function normalizeBarcode(value) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+/**
+ * Ein EAN-13 mit führender Null und der 12-stellige UPC-A darauf sind
+ * derselbe Code. Der Scanner liefert je nach Aufdruck mal das eine, mal
+ * das andere, Discogs speichert mal so, mal so.
+ */
+function barcodeVariants(code) {
+  const ziffern = normalizeBarcode(code);
+  const varianten = new Set();
+  if (!ziffern) return [];
+  varianten.add(ziffern);
+  if (ziffern.length === 13 && ziffern.startsWith("0")) varianten.add(ziffern.slice(1));
+  if (ziffern.length === 12) varianten.add("0" + ziffern);
+  return [...varianten];
+}
+
+/** Trägt dieser Treffer wirklich den gescannten Barcode? */
+function resultHasBarcode(result, code) {
+  const gesucht = new Set(barcodeVariants(code));
+  if (gesucht.size === 0) return false;
+  return (result.barcode || []).some((b) => gesucht.has(normalizeBarcode(b)));
+}
+
 function splitTitle(fullTitle) {
   const idx = fullTitle.indexOf(" - ");
   if (idx === -1) return ["", fullTitle];
@@ -388,8 +438,13 @@ function normalizeResult(r, barcode) {
     format: (r.format || []).join(", "),
     year: r.year ? parseInt(r.year, 10) : null,
     country: r.country || null,
-    barcode: barcode || null,
+    barcode: barcode ? normalizeBarcode(barcode) : null,
     cover_url: r.cover_image || r.thumb || null,
+    // Der Suchtreffer bringt das alles schon mit – es kostet nichts,
+    // den Katalog gleich damit zu füllen.
+    label: (r.label || [])[0] || null,
+    catalog_no: r.catno || null,
+    genres: (r.genre || []).length ? r.genre : null,
   };
 }
 
@@ -504,7 +559,15 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     const data = await res.json();
     hideRateLimitNotice();
 
-    const results = (data.results || []).slice(0, 8).map((r) => normalizeResult(r, barcode));
+    // Erst die Zufallstreffer aussortieren, dann kappen – sonst fallen
+    // echte Treffer hinten aus der Liste, weil vorne Fremdes steht.
+    const roh = data.results || [];
+    const echte = roh.filter((r) => resultHasBarcode(r, barcode));
+    const results = echte.slice(0, 8).map((r) => normalizeResult(r, barcode));
+
+    // Discogs hat geantwortet, aber nichts davon trägt diesen Barcode:
+    // das ist "nicht gefunden", nicht "hier ist deine Platte".
+    currentScan.verworfen = roh.length - echte.length;
     await showScan(barcode, results, collectionByBarcode);
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
@@ -526,10 +589,12 @@ async function showScan(barcode, results, collectionByBarcodePromise, quelle = "
     fetchWishlistByDiscogsIds(ids).catch(() => []),
   ]);
 
+  const verworfen = currentScan.verworfen || 0;
   currentScan = {
     barcode,
     results,
     quelle,
+    verworfen,
     statusData: { collection: [...byBarcode, ...byId], wishlist: wished },
   };
 
@@ -593,9 +658,15 @@ function renderNoMatch(barcode) {
     emptyState({
       iconName: "search",
       title: "Nicht gefunden",
-      text: barcode
-        ? `Zu Barcode ${barcode} kennt Discogs keine Veröffentlichung. Bei älteren Platten ohne Barcode hilft die Cover-Suche.`
-        : "Discogs kennt dazu nichts. Text anpassen oder manuell anlegen.",
+      // Discogs hat geantwortet, aber nichts trug den Barcode: eine
+      // andere Geschichte als "kennt nichts". Der Nutzer soll nicht
+      // denken, die App habe den Scan verschluckt.
+      text: !barcode
+        ? "Discogs kennt dazu nichts. Text anpassen oder manuell anlegen."
+        : currentScan.verworfen > 0
+          ? `Zu Barcode ${barcode} gibt es bei Discogs keine passende Veröffentlichung. ` +
+            `${currentScan.verworfen} ähnliche Einträge wurden aussortiert – ihr Barcode ist ein anderer.`
+          : `Zu Barcode ${barcode} kennt Discogs keine Veröffentlichung. Bei älteren Platten ohne Barcode hilft die Cover-Suche.`,
     }) + manualHintMarkup();
 }
 

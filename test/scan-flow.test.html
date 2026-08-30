@@ -105,7 +105,8 @@
   /* ZXing-Ersatz: merkt sich nur, mit welcher Kamera-ID gestartet wurde. */
   var zxingAufrufe = [];
   var ZXingBrowser = {
-    BrowserMultiFormatReader: function () {
+    // Nur 1D: der Scanner nutzt seit dem Wechsel den schmalen Leser.
+    BrowserMultiFormatOneDReader: function () {
       this.decodeFromConstraints = async (constraints) => {
         zxingAufrufe.push(constraints);
         return { stop() {} };
@@ -137,8 +138,17 @@
   function discogsAnswer(results) {
     return { ok: true, status: 200, json: async () => ({ results }) };
   }
+  /* Ein Discogs-Suchtreffer. barcode ist Pflicht, seit der Scanner
+     gegenprüft – Discogs liefert das Feld ebenfalls mit. */
   function discogsResult(id, title, extra = {}) {
-    return { id, title, format: ["Vinyl", "LP"], year: "1991", country: "US", cover_image: null, ...extra };
+    return {
+      id, title, format: ["Vinyl", "LP"], year: "1991", country: "US",
+      cover_image: null, barcode: ["111"], ...extra,
+    };
+  }
+  /* Ein Zufallstreffer der unscharfen Discogs-Suche: passt nicht zum Code. */
+  function fremderTreffer(id, title) {
+    return discogsResult(id, title, { barcode: ["4006758290430"] });
   }
 </script>
 
@@ -440,6 +450,86 @@ test("Ohne Tabelle gibt es keinen Zählerstand", async () => {
   resetStub();
   scanTabelleFehlt = true;
   assertEqual(await fetchScanCount("user-1"), null, "null heißt unbekannt, nicht null Scans");
+});
+
+/* ---------- Barcode-Abgleich ---------- */
+
+test("Barcodes werden auf Ziffern reduziert", () => {
+  assertEqual(normalizeBarcode("7 24385 52292 5"), "724385522925");
+  assertEqual(normalizeBarcode("724385522925"), "724385522925");
+  assertEqual(normalizeBarcode(null), "");
+});
+
+test("EAN-13 mit führender Null und UPC-A gelten als derselbe Code", () => {
+  assertEqual(barcodeVariants("0720642442524").sort(), ["0720642442524", "720642442524"]);
+  assertEqual(barcodeVariants("720642442524").sort(), ["0720642442524", "720642442524"]);
+  assertEqual(barcodeVariants(""), []);
+});
+
+test("Ein Treffer gilt nur mit passendem Barcode", () => {
+  assert(resultHasBarcode({ barcode: ["7 24385 52292 5"] }, "724385522925"), "Leerzeichen dürfen nicht stören");
+  assert(resultHasBarcode({ barcode: ["720642442524"] }, "0720642442524"), "UPC-A gegen EAN-13");
+  assert(!resultHasBarcode({ barcode: ["4006758290430"] }, "724385522925"));
+  assert(!resultHasBarcode({}, "724385522925"), "ohne Barcode kein Treffer");
+});
+
+test("Zufallstreffer der unscharfen Suche werden aussortiert", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  // Genau das liefert Discogs bei einem unbekannten Code: fremde Platten.
+  fetchResponse = discogsAnswer([
+    fremderTreffer(9, "Black Eyed Peas - Greatest Hits"),
+    fremderTreffer(8, "Various - Full Moon Party 2009"),
+  ]);
+
+  await lookupBarcode("111");
+
+  assertEqual(head(), "Keine Treffer",
+    "eine fremde Platte als DIE Antwort zu zeigen ist schlimmer als kein Treffer");
+  assertIncludes(out().textContent, "aussortiert");
+});
+
+test("Ein einzelner Zufallstreffer springt nicht mehr aufs Ergebnis", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([fremderTreffer(9, "Black Eyed Peas - Greatest Hits")]);
+
+  await lookupBarcode("111");
+
+  assertEqual(head(), "Keine Treffer");
+  assert(!btn("add-collection"), "es darf nichts zum Speichern angeboten werden");
+});
+
+test("Echte Treffer bleiben, Fremdes fliegt raus", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([
+    fremderTreffer(9, "Black Eyed Peas - Greatest Hits"),
+    discogsResult(1, "Nirvana - Nevermind"),
+    fremderTreffer(8, "Various - Full Moon Party 2009"),
+  ]);
+
+  await lookupBarcode("111");
+
+  assertEqual(head(), "Treffer", "genau einer passt – der geht direkt durch");
+  assertIncludes(out().textContent, "Nevermind");
+});
+
+test("Katalogfelder aus dem Suchtreffer werden mitgenommen", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([
+    discogsResult(1, "Nirvana - Nevermind", { label: ["DGC"], catno: "DGCD-24425", genre: ["Rock"] }),
+  ]);
+  await lookupBarcode("111");
+  btn("add-collection").click();
+  await tick();
+
+  const d = rpcAufrufe[0].args.daten;
+  assertEqual(d.label, "DGC");
+  assertEqual(d.catalog_no, "DGCD-24425");
+  assertEqual(d.genres, ["Rock"], "Genres gab es bisher nirgends – der Suchtreffer bringt sie mit");
+  stopScan();
 });
 
 /* ---------- Gemeinsamer Katalog ---------- */
