@@ -63,6 +63,7 @@ async function init() {
   if (!user) return;
 
   renderAccountRow(document.getElementById("account-card"), user);
+  initFeedback();
 
   recentEl.innerHTML = `<div class="rail-item">${skeletonGrid(1)}</div>`.repeat(3);
 

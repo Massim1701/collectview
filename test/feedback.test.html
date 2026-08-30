@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>feedback.js – Tests</title>
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="../app/app.css">
+</head>
+<body>
+
+<!-- Auslöser, wie er auch auf index.html steht -->
+<button type="button" data-action="feedback-open">Feedback geben</button>
+
+<script>
+  /* Stubs statt auth.js/db.js: feedback.js braucht nur sb und currentUser. */
+  var currentUser = { id: "user-1", email: "test@example.com" };
+  var inserts = [];
+  var nextError = null;
+
+  var sb = {
+    from(table) {
+      return {
+        async insert(row) {
+          inserts.push({ table, row });
+          return { error: nextError };
+        },
+      };
+    },
+  };
+
+  function resetStub() {
+    inserts = [];
+    nextError = null;
+  }
+</script>
+
+<script src="../app/js/ui.js"></script>
+<script src="../app/js/feedback.js"></script>
+<script src="assert.js"></script>
+
+<script>
+const dialog = () => document.getElementById("feedback-dialog");
+const $ = (sel) => dialog().querySelector(sel);
+const fill = (text) => { $("#feedback-message").value = text; };
+
+/** Jeder Test startet mit frischem Stub und geschlossenem Dialog. */
+async function fresh() {
+  resetStub();
+  closeFeedback();
+  openFeedback();
+  await tick();
+}
+
+test("Button mit data-action=feedback-open öffnet den Dialog", async () => {
+  resetStub();
+  closeFeedback();
+  initFeedback();
+  document.querySelector('[data-action="feedback-open"]').click();
+  await tick();
+  assert(dialog(), "Dialog wurde nicht angelegt");
+  assert(dialog().open, "Dialog ist nicht geöffnet");
+});
+
+test("Dialog ist ein natives <dialog> (Escape und Fokusfalle vom Browser)", async () => {
+  await fresh();
+  assert(dialog() instanceof HTMLDialogElement, "kein natives dialog-Element");
+});
+
+test("Beim Öffnen liegt der Fokus im Textfeld", async () => {
+  await fresh();
+  assertEqual(document.activeElement.id, "feedback-message", "Fokus sitzt falsch");
+});
+
+test("Erste Kategorie ist vorausgewählt", async () => {
+  await fresh();
+  assertEqual($("[data-category].active").dataset.category, "fehler", "falsche Vorauswahl");
+  assertEqual($("[data-category].active").getAttribute("aria-checked"), "true", "aria-checked fehlt");
+});
+
+test("Leere Nachricht wird abgewiesen und nichts gesendet", async () => {
+  await fresh();
+  fill("   ");
+  await sendFeedback();
+  assertEqual(inserts.length, 0, "es wurde trotzdem gesendet");
+  assertIncludes($("#feedback-error").textContent, "Bitte schreib kurz", "Hinweis fehlt");
+  assert(dialog().open, "Dialog wurde fälschlich geschlossen");
+});
+
+test("Gültige Rückmeldung landet mit allen Feldern in der Tabelle", async () => {
+  await fresh();
+  fill("  Der Scanner findet meine Platte nicht.  ");
+  await sendFeedback();
+  assertEqual(inserts.length, 1, "genau ein Insert erwartet");
+  assertEqual(inserts[0].table, "feedback", "falsche Tabelle");
+  const row = inserts[0].row;
+  assertEqual(row.user_id, "user-1", "user_id fehlt");
+  assertEqual(row.category, "fehler", "category fehlt");
+  assertEqual(row.message, "Der Scanner findet meine Platte nicht.", "message nicht getrimmt");
+  assertEqual(row.page, "feedback.test.html", "page-Kontext fehlt");
+  assert(row.user_agent && row.user_agent.length > 0, "user_agent fehlt");
+});
+
+test("Nach dem Senden erscheint die Bestätigung statt des Formulars", async () => {
+  await fresh();
+  fill("Alles gut soweit.");
+  await sendFeedback();
+  assert($("#feedback-form").hidden, "Formular ist noch sichtbar");
+  assert(!$("#feedback-done").hidden, "Bestätigung fehlt");
+  assertIncludes($("#feedback-done").textContent, "Danke", "Danke-Text fehlt");
+});
+
+test("Gewählte Kategorie wird übernommen", async () => {
+  await fresh();
+  $('[data-category="wunsch"]').click();
+  fill("Bitte eine Wunschliste einbauen.");
+  await sendFeedback();
+  assertEqual(inserts[0].row.category, "wunsch", "Kategorie nicht übernommen");
+  assertEqual($('[data-category="fehler"]').getAttribute("aria-checked"), "false", "alte Auswahl nicht zurückgesetzt");
+});
+
+test("Fehlende Tabelle erklärt den nächsten Schritt", async () => {
+  await fresh();
+  nextError = { code: "PGRST205", message: "Could not find the table 'public.feedback'" };
+  fill("Test");
+  await sendFeedback();
+  assertIncludes($("#feedback-error").textContent, "db/feedback.sql", "Hinweis auf die Migration fehlt");
+  assert(!$("#feedback-form").hidden, "Formular darf nicht verschwinden");
+});
+
+test("Sonstiger Datenbankfehler wird im Wortlaut gezeigt", async () => {
+  await fresh();
+  nextError = { code: "42501", message: "new row violates row-level security policy" };
+  fill("Test");
+  await sendFeedback();
+  assertIncludes($("#feedback-error").textContent, "row-level security", "Fehlertext fehlt");
+  assert(dialog().open, "Dialog wurde geschlossen");
+});
+
+test("Absenden-Button ist nach einem Fehler wieder benutzbar", async () => {
+  await fresh();
+  nextError = { code: "42501", message: "kaputt" };
+  fill("Test");
+  await sendFeedback();
+  const btn = $('[data-action="feedback-send"]');
+  assert(!btn.disabled, "Button bleibt gesperrt");
+  assertEqual(btn.textContent, "Absenden", "Beschriftung nicht zurückgesetzt");
+});
+
+test("Abbrechen schließt ohne zu senden", async () => {
+  await fresh();
+  fill("Doch nicht.");
+  $('[data-action="feedback-cancel"]').click();
+  await tick();
+  assert(!dialog().open, "Dialog ist noch offen");
+  assertEqual(inserts.length, 0, "es wurde gesendet");
+});
+
+test("Zeichenzähler folgt der Eingabe", async () => {
+  await fresh();
+  const message = $("#feedback-message");
+  message.value = "12345";
+  message.dispatchEvent(new Event("input"));
+  assertIncludes($("#feedback-counter").textContent, "5 / 2000", "Zähler stimmt nicht");
+});
+
+test("Erneutes Öffnen startet leer", async () => {
+  await fresh();
+  fill("Erster Text");
+  await sendFeedback();
+  closeFeedback();
+  openFeedback();
+  await tick();
+  assertEqual($("#feedback-message").value, "", "Text blieb stehen");
+  assertEqual($("#feedback-error").textContent, "", "Fehler blieb stehen");
+  assert(!$("#feedback-form").hidden, "Formular fehlt");
+  assert($("#feedback-done").hidden, "Bestätigung noch sichtbar");
+  assertEqual($("[data-category].active").dataset.category, "fehler", "Kategorie nicht zurückgesetzt");
+});
+
+runTests();
+</script>
+</body>
+</html>
