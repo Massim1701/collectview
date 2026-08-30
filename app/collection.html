@@ -15,7 +15,13 @@
   /* Weicher Auslauf, damit Kacheln nicht hart unter dem Header abreißen */
   .collection-head::after{ content:""; display:block; height:24px; margin:0 -22px -24px; background:linear-gradient(var(--bg) 40%, transparent); pointer-events:none; }
   .shell{ padding-top:0; }
-  #grid{ scroll-margin-top:190px; }
+  #grid{ scroll-margin-top:190px; display:flex; flex-direction:column; gap:var(--space-2); }
+  .alpha-heading{
+    font-family:var(--font-display); font-style:italic; font-size:var(--text-xl);
+    color:var(--text-muted); margin:var(--space-4) var(--space-1) 0;
+  }
+  .alpha-heading:first-child{ margin-top:0; }
+  .list-card-plain{ padding:var(--space-3) var(--space-4); }
 </style>
 </head>
 <body>

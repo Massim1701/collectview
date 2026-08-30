@@ -55,6 +55,23 @@ function listCardMarkup(item) {
     </a>`;
 }
 
+/**
+ * Listeneintrag ohne Cover – reiner Text, führt zur Detailseite.
+ * Für lange Listen (z. B. die Sammlungsübersicht): Cover laden erst
+ * auf der Detailseite, nicht vorher für jeden Eintrag.
+ */
+function plainListRowMarkup(item) {
+  return `
+    <a class="list-card list-card-plain" href="${detailHref(item)}">
+      <div style="min-width:0;">
+        <div class="list-card-title">${escapeHtml(item.title)}</div>
+        <div class="list-card-sub">${itemSubtitle(item)}</div>
+      </div>
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </a>`;
+}
+
 /** Kachel für Rail und Grid, führt zur Detailseite. */
 function coverTileMarkup(item) {
   return `
@@ -76,6 +93,13 @@ function skeletonGrid(count = 6) {
         <div class="skeleton skeleton-line short"></div>
       </div>`,
     )
+    .join("");
+}
+
+/** Ladeplatzhalter für reine Textlisten (z. B. Sammlung ohne Cover). */
+function skeletonList(count = 8) {
+  return Array.from({ length: count })
+    .map(() => `<div class="skeleton skeleton-line" style="height:50px;border-radius:var(--radius-md);"></div>`)
     .join("");
 }
 

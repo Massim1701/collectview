@@ -19,8 +19,16 @@ let allItems = [];
 const state = {
   format: formatFilterByKey(params.get("format")).key,
   query: "",
-  sort: "newest",
+  sort: "title",
 };
+
+/** Erster Buchstabe für die Gruppierung: Ziffern zusammen unter "0–9". */
+function groupLetter(value) {
+  const c = String(value || "").trim().charAt(0).toLocaleUpperCase("de");
+  if (/[0-9]/.test(c)) return "0–9";
+  if (/[A-ZÄÖÜ]/.test(c)) return c;
+  return "#";
+}
 
 /* ---------- Rendern ---------- */
 
@@ -81,7 +89,27 @@ function renderGrid() {
     return;
   }
 
-  gridEl.innerHTML = items.map(coverTileMarkup).join("");
+  // Nur bei Titel/Interpret-Sortierung gruppieren – sonst (neueste, Jahr) reine Liste.
+  const groupBy = state.sort === "title" ? (i) => groupLetter(i.title)
+    : state.sort === "artist" ? (i) => groupLetter(i.artist)
+    : null;
+
+  if (!groupBy) {
+    gridEl.innerHTML = items.map(plainListRowMarkup).join("");
+    return;
+  }
+
+  let html = "";
+  let current = null;
+  for (const item of items) {
+    const letter = groupBy(item);
+    if (letter !== current) {
+      html += `<div class="alpha-heading">${escapeHtml(letter)}</div>`;
+      current = letter;
+    }
+    html += plainListRowMarkup(item);
+  }
+  gridEl.innerHTML = html;
 }
 
 /* ---------- Ereignisse ---------- */
@@ -125,7 +153,7 @@ async function init() {
   if (!user) return;
 
   renderSort();
-  gridEl.innerHTML = skeletonGrid(9);
+  gridEl.innerHTML = skeletonList(9);
 
   try {
     allItems = await fetchCollection();
