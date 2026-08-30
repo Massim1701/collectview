@@ -248,11 +248,6 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 
 /* Löschen: zweistufig, damit kein Fehlgriff die Platte kostet */
 .danger-zone{ margin-top:34px; border-top:1px solid var(--border); padding-top:8px; }
-/* .menu-item ist in styles.css für <div> gedacht – als <button> muss die
-   Browser-Umrandung weg, der Trenner unten bleibt. */
-.menu-item{ width:100%; background:none; font-family:var(--font-body); text-align:left; cursor:pointer;
-  border:none; border-bottom:1px solid var(--border);
-  color:inherit; }  /* <button> erbt color nicht – sonst UA-Schwarz */
 .menu-item.danger{ border-bottom:none; color:var(--danger-ink); }
 .menu-item.danger svg{ stroke:currentColor; }
 .confirm-box{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; }
@@ -316,26 +311,17 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 /* =====================================================================
    Lesbarkeit – altersgerechte Typografie und Touch-Ziele
    ---------------------------------------------------------------------
-   Gemessen ergab die App vor dieser Ebene fast keinen Text in 16px:
-   Navigationslabels 10,5px, Interpret in der Sammlung 12px, Untertitel
-   12,5px. Für Augen jenseits der 50 ist das mühsam, und die Sammlung ist
-   genau der Inhalt, den man liest.
+   Die Skala selbst steht seit der Token-Umstellung in styles.css. Hier
+   bleiben nur Klassen, die es dort nicht gibt – App-eigene Bausteine wie
+   Detailzeile, Hinweisbanner, Sortierfeld oder Sucheingabe.
 
-   styles.css bleibt unangetastet – die Wireframes und die Landingpage
-   behalten ihre Skala. Diese Ebene hebt nur die App an.
-
-   Skala: 12 · 13,5 · 14 · 15 · 16 · 18
-   Kleiner als 12px wird nichts, Touch-Ziele nicht unter 44x44.
+   Untergrenzen unverändert: kein Text unter 12px, kein Bedienelement
+   unter 44x44px. test/legibility.test.html hält sie fest.
    ===================================================================== */
 
 /* --- Fließtext und Inhalt --------------------------------------------- */
-.list-card-title{ font-size:16px; }
-.list-card-sub{ font-size:14px; }
-.cover-title{ font-size:15px; }
-.cover-artist{ font-size:13.5px; }
 .card-head-title{ font-size:17px; }
 .card-head-sub{ font-size:14px; }
-.eyebrow{ font-size:14px; }
 .user-email{ font-size:15px; }
 .user-label{ font-size:13px; }
 .count-badge, .result-count{ font-size:13.5px; }
@@ -343,11 +329,8 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 /* --- Detailseite ------------------------------------------------------ */
 .detail-artist{ font-size:17px; }
 .detail-meta{ font-size:14px; }
-.track-row{ font-size:16px; }
-.track-row .dur{ font-size:15px; }
 .meta-row{ font-size:15px; }
 .community-note{ font-size:13.5px; }
-.link-chip{ font-size:15px; }
 .link-chip .chip-sub{ font-size:13.5px; }
 
 /* --- Scanner ---------------------------------------------------------- */
@@ -357,29 +340,15 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .notice{ font-size:14.5px; }
 
 /* --- Bedienelemente: Größe UND Touch-Ziel ----------------------------- */
-.btn-primary, .btn-secondary{ font-size:16px; }
 .btn-secondary.small{ height:44px; font-size:14.5px; }
 
-.chip{ font-size:14px; padding:11px 18px; min-height:44px; display:inline-flex; align-items:center; }
-.segmented-item{ font-size:13.5px; padding:12px 22px; }
 .sort-select{ font-size:13.5px; min-height:44px; }
 .search-bar input{ font-size:16px; }               /* verhindert Zoom auf iOS */
 .search-clear{ min-width:44px; justify-content:center; }
 
-/* "Alle" war 31x17px – zu klein zum Treffen */
-.section-title .see-all{
-  font-size:14px; display:inline-flex; align-items:center; justify-content:flex-end;
-  min-height:44px; min-width:44px; padding:0 6px;
-}
-
 /* Navigationslabels bleiben kompakt, damit fünf Einträge nebeneinander
    passen – dafür ist das Touch-Ziel großzügig. */
-.navitem{ font-size:12px; letter-spacing:.02em; min-height:48px; }
-.stat-label{ font-size:12px; letter-spacing:.04em; }
-.stat-value{ font-size:30px; }
 
-.avatar{ width:44px; height:44px; }
-.menu-item{ font-size:15.5px; padding:18px 2px; }
 .breakdown-row{ font-size:15px; padding:15px 2px; }
 
 .skip-link{ font-size:15px; padding:14px 20px; }
