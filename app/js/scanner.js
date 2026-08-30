@@ -422,6 +422,38 @@ function resultHasBarcode(result, code) {
   return (result.barcode || []).some((b) => gesucht.has(normalizeBarcode(b)));
 }
 
+/**
+ * Taugt dieser Barcode überhaupt zur Identifikation?
+ *
+ * Ein Barcode gehört zu genau einer Veröffentlichung. Wenn die Treffer
+ * dazu über viele verschiedene Interpreten streuen, ist der Code in
+ * Discogs mehrfach falsch vergeben – dann kann keine Auswahl richtig
+ * sein, und eine Liste fremder Platten anzuzeigen ist schlechter als
+ * ehrlich zu sagen, dass es nicht geht.
+ *
+ * Nachgemessen an echten Fällen (erste Ergebnisseite):
+ *   724352306428 (Depeche Mode, Speak & Spell)  38 Interpreten in 50
+ *                Treffern, häufigster 14 % – in Discogs bei 315
+ *                fremden Platten eingetragen, die richtige ist nicht
+ *                darunter.
+ *   724385522925 (Radiohead, OK Computer)        1 Interpret, 100 %
+ *   008811078522 (B. Brown Posse)                1 Interpret, 100 %
+ *
+ * Unter fünf Treffern greift die Regel nicht: dort ist Streuung normal
+ * und die Stichprobe zu klein.
+ */
+function barcodeIstVerlaesslich(results) {
+  if (results.length < 5) return true;
+
+  const proInterpret = new Map();
+  for (const r of results) {
+    const name = String(r.artist || "").trim().toLowerCase();
+    proInterpret.set(name, (proInterpret.get(name) || 0) + 1);
+  }
+  const groesste = Math.max(...proInterpret.values());
+  return groesste / results.length >= 0.5;
+}
+
 function splitTitle(fullTitle) {
   const idx = fullTitle.indexOf(" - ");
   if (idx === -1) return ["", fullTitle];
@@ -563,11 +595,26 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     // echte Treffer hinten aus der Liste, weil vorne Fremdes steht.
     const roh = data.results || [];
     const echte = roh.filter((r) => resultHasBarcode(r, barcode));
-    const results = echte.slice(0, 8).map((r) => normalizeResult(r, barcode));
+    // Erst alle umwandeln, dann kappen: die Verlässlichkeitsprüfung
+    // unten soll die ganze Ergebnisseite sehen, nicht nur die acht,
+    // die angezeigt werden – größere Stichprobe, klareres Bild.
+    const alle = echte.map((r) => normalizeResult(r, barcode));
+    const results = alle.slice(0, 8);
 
     // Discogs hat geantwortet, aber nichts davon trägt diesen Barcode:
     // das ist "nicht gefunden", nicht "hier ist deine Platte".
     currentScan.verworfen = roh.length - echte.length;
+
+    // Streuen die Treffer über viele Interpreten, ist der Barcode in
+    // Discogs mehrfach vergeben und taugt nicht zur Identifikation.
+    if (barcode && !barcodeIstVerlaesslich(alle)) {
+      currentScan = { barcode, results, quelle: "Discogs", verworfen: currentScan.verworfen, statusData: emptyScanStatusData() };
+      resultsCard.style.display = "block";
+      renderUnreliableBarcode(barcode, results);
+      setStatus("");
+      return;
+    }
+
     await showScan(barcode, results, collectionByBarcode);
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
@@ -668,6 +715,32 @@ function renderNoMatch(barcode) {
             `${currentScan.verworfen} ähnliche Einträge wurden aussortiert – ihr Barcode ist ein anderer.`
           : `Zu Barcode ${barcode} kennt Discogs keine Veröffentlichung. Bei älteren Platten ohne Barcode hilft die Cover-Suche.`,
     }) + manualHintMarkup();
+}
+
+/**
+ * Der Barcode ist in Discogs mehrfach vergeben. Kein Treffer kann
+ * stimmen – das gehört gesagt, statt eine Auswahl fremder Platten
+ * hinzustellen. Die Liste bleibt auf Wunsch trotzdem erreichbar, damit
+ * der Weg keine Sackgasse ist.
+ */
+function renderUnreliableBarcode(barcode, results) {
+  const interpreten = new Set(results.map((r) => String(r.artist || "").trim().toLowerCase())).size;
+  setResultsHead("Barcode nicht verwertbar", `Barcode ${barcode}`);
+  resultsEl.innerHTML = `
+    ${emptyState({
+      iconName: "alert",
+      title: "Dieser Barcode führt zu nichts",
+      text: `Discogs hat ihn bei vielen verschiedenen Veröffentlichungen eingetragen – ` +
+            `${interpreten} unterschiedliche Interpreten allein auf der ersten Seite. ` +
+            `Damit lässt sich die Platte nicht bestimmen. Über das Cover-Foto oder von Hand klappt es.`,
+    })}
+    <div class="scan-actions">
+      <button class="btn-primary" type="button" data-action="manual-open">Manuell anlegen</button>
+      <button class="btn-secondary" type="button" data-action="weiter">Weiter scannen</button>
+    </div>
+    <p class="manual-hint">
+      <button type="button" class="linklike" data-action="show-anyway">Treffer trotzdem ansehen</button>
+    </p>`;
 }
 
 function manualHintMarkup() {
@@ -867,6 +940,7 @@ resultsEl.addEventListener("click", (e) => {
   if (action === "back-to-list") renderResultList();
   if (action === "discard") discardResult();
   if (action === "weiter") weiterScannen("");
+  if (action === "show-anyway") renderResultList();
   if (!item) return;
   if (action === "add-collection") saveToCollection(item);
   if (action === "add-wishlist") saveToWishlist(item);

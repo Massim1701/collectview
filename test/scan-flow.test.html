@@ -532,6 +532,69 @@ test("Katalogfelder aus dem Suchtreffer werden mitgenommen", async () => {
   stopScan();
 });
 
+/* ---------- Unbrauchbare Barcodes ---------- */
+
+/** Baut n Treffer mit je eigenem Interpreten – die Streuung, die einen
+    mehrfach vergebenen Barcode verrät. */
+function streuung(n) {
+  return Array.from({ length: n }, (_, i) => discogsResult(100 + i, `Interpret ${i} - Album ${i}`));
+}
+
+test("Einheitliche Treffer gelten als verlässlich", () => {
+  const gleich = Array.from({ length: 12 }, (_, i) => ({ artist: "Radiohead", title: "OK Computer " + i }));
+  assert(barcodeIstVerlaesslich(gleich));
+});
+
+test("Streuen die Interpreten, ist der Barcode unbrauchbar", () => {
+  const bunt = Array.from({ length: 12 }, (_, i) => ({ artist: "Interpret " + i, title: "Album" }));
+  assert(!barcodeIstVerlaesslich(bunt),
+    "ein Barcode gehört zu einer Platte – 12 Interpreten heißt: falsch vergeben");
+});
+
+test("Unter fünf Treffern greift die Regel nicht", () => {
+  const wenige = [{ artist: "A", title: "x" }, { artist: "B", title: "y" }];
+  assert(barcodeIstVerlaesslich(wenige), "zu kleine Stichprobe, Streuung dort normal");
+});
+
+test("Ein mehrfach vergebener Barcode zeigt keine fremden Platten", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  // Genau der Fall Speak & Spell: viele Treffer, alle mit dem Barcode,
+  // aber jede von einem anderen Interpreten.
+  fetchResponse = discogsAnswer(streuung(9));
+
+  await lookupBarcode("111");
+
+  assertEqual(head(), "Barcode nicht verwertbar");
+  assert(!btn("add-collection"), "nichts zum Speichern – es kann nichts stimmen");
+  assert(btn("manual-open"), "der Weg von Hand muss offen sein");
+  assert(btn("show-anyway"), "keine Sackgasse: ansehen darf man sie trotzdem");
+});
+
+test("Auf Wunsch sind die Treffer weiterhin erreichbar", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer(streuung(9));
+  await lookupBarcode("111");
+
+  btn("show-anyway").click();
+  assertIncludes(head(), "Treffer gefunden");
+});
+
+test("Ein sauberer Barcode läuft unverändert durch", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  // Neun Treffer, aber alle derselbe Interpret – verschiedene Pressungen.
+  fetchResponse = discogsAnswer(
+    Array.from({ length: 9 }, (_, i) => discogsResult(200 + i, "Radiohead - OK Computer", { year: String(1997 + i) })),
+  );
+
+  await lookupBarcode("111");
+
+  // Die Liste zeigt höchstens acht; geprüft wird auf der ganzen Seite.
+  assertEqual(head(), "8 Treffer gefunden", "verschiedene Pressungen sind kein Grund zur Warnung");
+});
+
 /* ---------- Gemeinsamer Katalog ---------- */
 
 test("Ist die Platte im Katalog, wird Discogs gar nicht gefragt", async () => {
