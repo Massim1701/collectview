@@ -59,20 +59,46 @@ async function signOut() {
 }
 
 /**
- * Rendert die Konto-Zeile (Avatar, E-Mail, Abmelden) in einen Container.
+ * Rendert die Konto-Zeile (Avatar, Benutzername, Abmelden) in einen Container.
+ * Die E-Mail bleibt hier sichtbar (eigenes Konto) – anderen Nutzern zeigt die
+ * App nirgends die E-Mail, nur den Benutzernamen aus profiles.display_name.
  */
-function renderAccountRow(container, user) {
+async function renderAccountRow(container, user) {
   if (!container || !user) return;
+
+  let displayName = null;
+  try {
+    displayName = (await fetchMyProfile(user.id))?.display_name || null;
+  } catch (e) {
+    // Ohne Profil-Antwort bleibt nur die E-Mail als Anzeige.
+  }
+
   container.innerHTML = `
     <div class="user-row">
       <div class="user-id">
-        <div class="user-avatar" aria-hidden="true">${escapeHtml(user.email.charAt(0).toUpperCase())}</div>
+        <div class="user-avatar" aria-hidden="true">${escapeHtml((displayName || user.email).charAt(0).toUpperCase())}</div>
         <div style="min-width:0;">
-          <div class="user-email">${escapeHtml(user.email)}</div>
-          <div class="user-label">Angemeldet</div>
+          <div class="user-email">${displayName ? escapeHtml(displayName) : "Noch kein Benutzername"}</div>
+          <div class="user-label">${escapeHtml(user.email)}</div>
         </div>
       </div>
-      <button class="btn-secondary small" type="button" data-action="sign-out">Abmelden</button>
+      <div style="display:flex; gap:8px; flex:0 0 auto;">
+        <button class="btn-secondary small" type="button" data-action="edit-name">${displayName ? "Ändern" : "Festlegen"}</button>
+        <button class="btn-secondary small" type="button" data-action="sign-out">Abmelden</button>
+      </div>
     </div>`;
+
   container.querySelector('[data-action="sign-out"]').addEventListener("click", signOut);
+  container.querySelector('[data-action="edit-name"]').addEventListener("click", async () => {
+    const input = prompt("Benutzername (3–20 Zeichen: Buchstaben, Ziffern, _ oder -)\nSichtbar für andere Nutzer, nie deine E-Mail:", displayName || "");
+    if (input == null) return;
+    const name = input.trim();
+    if (!name) return;
+    try {
+      await setDisplayName(user.id, name);
+      renderAccountRow(container, user);
+    } catch (e) {
+      alert(e.message);
+    }
+  });
 }

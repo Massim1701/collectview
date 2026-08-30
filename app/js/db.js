@@ -52,6 +52,37 @@ async function fetchIsSubscribed(userId) {
   return data?.subscription_status === "active";
 }
 
+/** Eigenes Profil (Benutzername). */
+async function fetchMyProfile(userId) {
+  const { data, error } = await sb.from("profiles").select("display_name").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Benutzernamen setzen/ändern. Wirft einen lesbaren Fehler bei ungültigem
+ * Format oder wenn der Name schon vergeben ist (Unique-Verletzung 23505).
+ */
+async function setDisplayName(userId, name) {
+  const { error } = await sb.from("profiles").update({ display_name: name }).eq("id", userId);
+  if (error) {
+    if (error.code === "23505") throw new Error("Dieser Benutzername ist schon vergeben.");
+    if (error.code === "23514") throw new Error("3–20 Zeichen: Buchstaben, Ziffern, _ oder -.");
+    throw error;
+  }
+}
+
+/** Benutzernamen mehrerer Nutzer auf einmal (für z. B. Nachrichtenlisten). Nie die E-Mail. */
+async function fetchDisplayNames(userIds) {
+  const ids = [...new Set(userIds)].filter(Boolean);
+  if (ids.length === 0) return {};
+  const { data, error } = await sb.from("profiles_public").select("id, display_name").in("id", ids);
+  if (error) throw error;
+  const map = {};
+  (data || []).forEach((row) => { map[row.id] = row.display_name; });
+  return map;
+}
+
 const FORMAT_FILTERS = [
   { key: "all", label: "Alle", test: () => true },
   { key: "vinyl", label: "Vinyl", test: (f) => /vinyl|\bLP\b|\b\d{1,2}"\b/i.test(f) },

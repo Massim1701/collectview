@@ -125,8 +125,14 @@
     const messagesEl = document.getElementById("messages");
     try {
       const messages = await fetchListingMessages(id);
+      const names = await fetchDisplayNames(messages.map((m) => m.sender_id));
       messagesEl.innerHTML = messages.length
-        ? messages.map((m) => `<div class="msg"><div>${escapeHtml(m.body)}</div><div class="msg-meta">${new Date(m.created_at).toLocaleString("de-DE")}</div></div>`).join("")
+        ? messages.map((m) => `
+            <div class="msg">
+              <div class="msg-meta" style="margin-top:0; margin-bottom:2px; font-weight:700;">${escapeHtml(names[m.sender_id] || "Unbekannter Nutzer")}</div>
+              <div>${escapeHtml(m.body)}</div>
+              <div class="msg-meta">${new Date(m.created_at).toLocaleString("de-DE")}</div>
+            </div>`).join("")
         : `<div class="muted">Noch keine Nachrichten.</div>`;
     } catch (e) {
       messagesEl.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
