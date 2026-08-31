@@ -47,6 +47,11 @@
   var scanLimitReached = false;   // simuliert den Trigger aus db/scan-limit.sql
   var scanTabelleFehlt = false;   // simuliert: db/scan-limit.sql nie ausgeführt
   var subscribed = false;
+  // discogs.js braucht beides beim Laden; die Werte sind reine Attrappen.
+  var SUPABASE_URL = "https://test.supabase.co";
+  var SUPABASE_ANON_KEY = "test-anon-key";
+  var sessionStub = null;    // null = keine Sitzung, also Direktweg
+  var proxyAntwort = null;   // gesetzt: eigene Antwort für die Edge Function
 
   var sb = {
     from(table) {
@@ -85,6 +90,8 @@
 
   async function fetchIsSubscribed() { return subscribed; }
 
+  sb.auth = { getSession: async () => ({ data: { session: sessionStub } }) };
+
   sb.rpc = async (name, args) => {
     rpcAufrufe.push({ name, args });
     return { data: "release-" + (args?.daten?.discogs_id ?? "x"), error: null };
@@ -102,7 +109,11 @@
   async function removeWishlistItem(id) { wishlistRemoves.push(id); }
 
   var gesuchtePfade = [];
-  window.fetch = async (url) => { fetchCalls += 1; gesuchtePfade.push(String(url)); return fetchResponse; };
+  window.fetch = async (url) => {
+    fetchCalls += 1; gesuchtePfade.push(String(url));
+    if (proxyAntwort && String(url).includes("discogs-suche")) return proxyAntwort;
+    return fetchResponse;
+  };
 
   /* ZXing-Ersatz: merkt sich nur, mit welcher Kamera-ID gestartet wurde. */
   var zxingAufrufe = [];
@@ -136,6 +147,10 @@
     insertError = null; wishlistError = null; fetchResponse = null;
     fetchCalls = 0; gesuchtePfade = []; scanLimitReached = false; scanTabelleFehlt = false; subscribed = false;
     scanQuota = { used: 0, subscribed: false, known: false };
+    sessionStub = null; proxyAntwort = null;
+    // Merker in discogs.js: sonst schleppt ein Test das "Proxy ist tot"
+    // des vorigen mit sich herum.
+    proxyAus = false; proxyBenutzt = false;
   }
 
   /** Discogs-Antwort mit n Treffern nachbauen. */
@@ -160,6 +175,7 @@
      6be7693 t(), sonst wirft die aufrufende Datei beim Laden. -->
 <script src="../app/js/i18n.js"></script>
 <script src="../app/js/ui.js"></script>
+<script src="../app/js/discogs.js"></script>
 <script src="../app/js/releases.js"></script>
 <script src="../app/js/scan-status.js"></script>
 <script src="../app/js/scan-limit.js"></script>
@@ -1056,6 +1072,54 @@ test("Die Constraints fassen die Kamera nicht mehr an als nötig", () => {
   assert(!("focusMode" in c),
     "auf iOS hat jeder Eingriff in den laufenden Strom die Kamera gekostet");
   assertEqual(Object.keys(c).sort(), ["facingMode", "height", "width"]);
+});
+
+test("Mit Sitzung läuft die Suche über den Proxy – nur der liefert Cover", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  sessionStub = { access_token: "tok" };
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+
+  tippe("Nevermind");
+  await tick(60);
+
+  assert(gesuchtePfade.some((u) => u.includes("discogs-suche")),
+    "mit Sitzung muss die Suche über die Edge Function gehen – ohne Token liefert Discogs keine Cover");
+  assert(!gesuchtePfade.some((u) => u.includes("api.discogs.com")),
+    "und dann nicht zusätzlich direkt: das belastete das Kontingent doppelt");
+});
+
+test("Fehlt die Edge Function, sucht die App direkt weiter", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  sessionStub = { access_token: "tok" };
+  proxyAntwort = { ok: false, status: 404, json: async () => ({}) };
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+
+  tippe("Nevermind");
+  await tick(60);
+
+  assert(gesuchtePfade.some((u) => u.includes("discogs-suche")), "erst wird der Proxy versucht");
+  assert(gesuchtePfade.some((u) => u.includes("api.discogs.com")),
+    "dann der Direktweg – ein fehlender Proxy darf den Scan nie lahmlegen");
+});
+
+test("Ist der Proxy einmal tot, wird er nicht bei jedem Scan neu versucht", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  sessionStub = { access_token: "tok" };
+  proxyAntwort = { ok: false, status: 404, json: async () => ({}) };
+  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
+
+  tippe("Nevermind");
+  await tick(60);
+  gesuchtePfade = [];
+
+  tippe("Nevermind");
+  await tick(60);
+
+  assert(!gesuchtePfade.some((u) => u.includes("discogs-suche")),
+    "der zweite Scan kostet sonst jedes Mal eine tote Anfrage Wartezeit");
 });
 
 runTests();

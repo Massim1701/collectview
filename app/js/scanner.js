@@ -410,9 +410,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
   setStatus("Suche bei Discogs …", { active: true, busy: true });
 
   try {
-    const res = await fetch(
-      `https://api.discogs.com/database/search?q=${encodeURIComponent(text)}&type=release`,
-    );
+    const res = await discogsSuche({ q: text });
     if (res.status === 429) {
       showRateLimitNotice(text, lookupCoverText);
       setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
@@ -847,9 +845,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
   }
 
   try {
-    const res = await fetch(
-      `https://api.discogs.com/database/search?barcode=${encodeURIComponent(barcode)}&type=release`,
-    );
+    const res = await discogsSuche({ barcode });
 
     // 429 = Rate Limit. Bewusst kein automatischer Neuversuch: das würde
     // das Limit nur weiter belasten. Der Nutzer entscheidet, wann erneut.
