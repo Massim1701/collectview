@@ -57,6 +57,12 @@ create trigger trg_enforce_role_limits
   before insert or update of role on public.profiles
   for each row execute function public.enforce_role_limits();
 
+-- ACHTUNG: db/abo.sql enthält eine NEUERE Fassung dieser Funktion, die
+-- zusätzlich die vier store_*-Spalten schützt. Läuft roles.sql erneut,
+-- muss abo.sql danach noch einmal laufen – sonst kann ein Client
+-- store_transaction_id überschreiben und einen fremden Kauf für sich
+-- beanspruchen.
+--
 -- Erweitert die vorhandene protect_subscription_fields() (schützt bereits
 -- subscription_tier/status/renews_at/stripe_customer_id) um role: nur
 -- service_role oder ein Admin darf role ändern, alle anderen Updates lassen

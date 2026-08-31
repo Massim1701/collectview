@@ -37,23 +37,27 @@ Der Vision-Schlüssel braucht ein Google-Cloud-Projekt mit **aktivierter Cloud
 Vision API** und **hinterlegter Abrechnung**, auch innerhalb der 1000
 Freianfragen pro Monat. Schlüssel auf diese eine API beschränken.
 
-### 2. Das Abo trägt so nicht · Entscheidung, keine Aufgabe
+### 2. In-App-Kauf · Serverseite steht, Store-Seite fehlt
 
-`wireframes/pricing.html` sagt „sobald Stripe eingerichtet ist". Apple und
-Google verlangen für **digitale Abos ihre eigene Kaufabwicklung**; eine App,
-die daran vorbei über Stripe kassiert, wird im Review abgelehnt. Im Repo gibt
-es keine Zeile In-App-Kauf.
+Der Weg ist entschieden: **In-App-Kauf bei Apple und Google**. Stripe trägt im
+Store-Kontext nicht.
 
-Das betrifft das Geschäftsmodell, nicht ein Feature — und es steht auf keiner
-bisherigen Übergabeliste. Drei gangbare Wege:
+Die Datenbankseite ist fertig (`db/abo.sql`, noch **nicht ausgeführt**) und die
+Edge Function `abo-pruefen` geschrieben. Was du anlegen musst:
 
-| Weg | Was er kostet | Was er bringt |
-|---|---|---|
-| **In-App-Kauf in beiden Stores** | Plugin, zwei Store-Konfigurationen, serverseitige Belegprüfung; 15–30 % Provision | Der einzige Weg, der *in* der App verkaufen darf |
-| **Abo nur im Web abschließen** | Stripe bleibt; die App darf darauf nicht einmal verlinken (Apple), in der EU seit DMA gelockert, aber mit Auflagen | Keine Provision, dafür ein Bruch im Ablauf |
-| **Kostenlos ohne Abo** | Free-Limit fällt weg, Discogs-Kosten bleiben | Kein Store-Thema mehr |
+1. **App Store Connect**: Abo-Produkt anlegen, dazu einen In-App-Kauf-Schlüssel
+   (.p8) — er wird nur einmal zum Herunterladen angeboten.
+2. **Play Console**: dasselbe Abo-Produkt, dazu ein Dienstkonto mit Zugriff auf
+   die Play Developer API.
+3. Beide Schlüssel nach `supabase/.env` (Vorlage steht in `.env.beispiel`).
+4. `db/abo.sql` im SQL-Editor ausführen, Function deployen.
 
-Bis das entschieden ist, sollte nichts weiter auf dem Abo aufgebaut werden.
+**Ungeprüft:** die beiden Store-Abfragen in `abo-pruefen` sind gegen die
+Dokumentation geschrieben, aber nie gegen einen echten Kauf gelaufen. Das geht
+erst, wenn die Produkte in beiden Stores existieren.
+
+**Noch nicht gebaut:** die Client-Seite. Die App kann bisher keinen Kauf
+auslösen — dafür fehlt ein Capacitor-Plugin und der Ablauf auf `pricing.html`.
 
 ### 3. App Store Connect prüfen
 
