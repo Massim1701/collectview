@@ -27,11 +27,11 @@
   --text:#1C1C22;
   --text-muted:#6B6B76;
   --text-faint:#9C9CA6;
-  --accent:#FF6A3D;
-  --accent-2:#FF4F81;
-  --accent-ink:#2A1006;
-  --accent-soft:rgba(255,106,61,.14);
-  --accent-text:#C1400D;
+  --accent:#14B8A6;
+  --accent-2:#FF8A5C;
+  --accent-ink:#062C28;
+  --accent-soft:rgba(20,184,166,.14);
+  --accent-text:#0E7C70;
   --danger:#E2412C;
   --danger-ink:#A82E1C;
   --danger-soft:rgba(226,65,44,.12);
@@ -58,10 +58,10 @@
   --space-5:20px;  --space-6:24px;  --space-8:32px;  --space-10:40px;
   --space-14:56px; --space-18:72px; --space-24:96px;
 
-  --radius-xs:8px;
-  --radius-sm:13px;
-  --radius-md:18px;
-  --radius-lg:32px;
+  --radius-xs:10px;
+  --radius-sm:14px;
+  --radius-md:20px;
+  --radius-lg:34px;
   --radius-pill:999px;
 
   /* Elevation – drei Stufen statt einer */
@@ -121,6 +121,36 @@
   --shadow-lg:0 18px 36px -18px rgba(0,0,0,.65);
   --shadow-frame:0 30px 60px -24px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06);
 }
+
+/* =====================================================================
+   Jahreszeiten-Akzentfarbe. Ein winziges Head-Skript auf jeder Seite
+   setzt data-season auf <html> je nach aktuellem Monat (fruehling /
+   sommer / herbst / winter) – die Basis-Tokens oben entsprechen Sommer,
+   hier kommen nur die drei anderen Jahreszeiten als Override dazu.
+   Getrennt fuer Hell- und Dunkelmodus, damit der Kontrast stimmt.
+   ===================================================================== */
+:root[data-season="fruehling"]{
+  --accent:#4FAE7C; --accent-2:#FF8FB4; --accent-ink:#06281A;
+  --accent-soft:rgba(79,174,124,.14); --accent-text:#2C7350;
+}
+:root[data-season="herbst"]{
+  --accent:#E08A3C; --accent-2:#B0472F; --accent-ink:#2A1607;
+  --accent-soft:rgba(224,138,60,.14); --accent-text:#A85E1E;
+}
+:root[data-season="winter"]{
+  --accent:#4C6FFF; --accent-2:#38BDF8; --accent-ink:#06102E;
+  --accent-soft:rgba(76,111,255,.14); --accent-text:#2E48C9;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"])[data-season="fruehling"]{ --accent:#57C88C; --accent-ink:#04140D; --accent-soft:rgba(87,200,140,.18); --accent-text:#7BE0AA; }
+  :root:not([data-theme="light"])[data-season="sommer"]{ --accent:#2DD4C0; --accent-ink:#03211D; --accent-soft:rgba(45,212,192,.18); --accent-text:#5CE8D8; }
+  :root:not([data-theme="light"])[data-season="herbst"]{ --accent:#F0A85E; --accent-ink:#241305; --accent-soft:rgba(240,168,94,.18); --accent-text:#F5C48C; }
+  :root:not([data-theme="light"])[data-season="winter"]{ --accent:#6E8CFF; --accent-ink:#080D22; --accent-soft:rgba(110,140,255,.18); --accent-text:#A9BAFF; }
+}
+:root[data-theme="dark"][data-season="fruehling"]{ --accent:#57C88C; --accent-ink:#04140D; --accent-soft:rgba(87,200,140,.18); --accent-text:#7BE0AA; }
+:root[data-theme="dark"][data-season="sommer"]{ --accent:#2DD4C0; --accent-ink:#03211D; --accent-soft:rgba(45,212,192,.18); --accent-text:#5CE8D8; }
+:root[data-theme="dark"][data-season="herbst"]{ --accent:#F0A85E; --accent-ink:#241305; --accent-soft:rgba(240,168,94,.18); --accent-text:#F5C48C; }
+:root[data-theme="dark"][data-season="winter"]{ --accent:#6E8CFF; --accent-ink:#080D22; --accent-soft:rgba(110,140,255,.18); --accent-text:#A9BAFF; }
 
 /* ===== Grundlagen ===== */
 *{ box-sizing:border-box; }
