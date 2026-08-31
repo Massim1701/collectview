@@ -1,8 +1,8 @@
 {
-  "name": "plattenregal",
+  "name": "collectview",
   "version": "0.1.0",
   "private": true,
-  "description": "Plattenregal – native Verpackung der Web-App für iOS und Android",
+  "description": "CollectView – native Verpackung der Web-App für iOS und Android",
   "scripts": {
     "build": "./scripts/build-www.sh",
     "sync": "./scripts/build-www.sh && cap sync",

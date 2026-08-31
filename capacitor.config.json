@@ -1,6 +1,6 @@
 {
-  "appId": "online.driftware.plattenregal",
-  "appName": "Plattenregal",
+  "appId": "online.driftware.collectview",
+  "appName": "CollectView",
   "webDir": "www",
   "ios": {
     "contentInset": "always"

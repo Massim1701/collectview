@@ -1,4 +1,4 @@
-// Supabase-Projekt "plattenregal" (Fornetta / eu-central-1)
+// Supabase-Projekt "collectview" (Fornetta / eu-central-1)
 // Der "anon/publishable" Key ist bewusst öffentlich nutzbar (kein Geheimnis) –
 // der Zugriff auf Daten wird über Row Level Security in der Datenbank geregelt.
 const SUPABASE_URL = "https://mevmpihydpksruhmzzwr.supabase.co";

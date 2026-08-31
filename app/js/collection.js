@@ -201,7 +201,7 @@ async function showFreeLimitHint(user, count) {
   hint.className = "muted";
   hint.style.cssText = "font-size:12.5px; margin-top:2px;";
   hint.innerHTML = count >= 5
-    ? `Free-Limit erreicht (5/5). <a href="../wireframes/pricing.html" style="color:var(--accent-text); font-weight:700;">Plattenregal Plus</a> für mehr.`
+    ? `Free-Limit erreicht (5/5). <a href="../wireframes/pricing.html" style="color:var(--accent-text); font-weight:700;">CollectView Plus</a> für mehr.`
     : `${count}/5 in der kostenlosen Version.`;
   countEl.insertAdjacentElement("afterend", hint);
 }

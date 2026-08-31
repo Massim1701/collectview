@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Plattenregal</string>
+	<string>CollectView</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,7 +25,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Plattenregal liest den Barcode oder das Cover deiner Platten und CDs über die Kamera. Es werden keine Fotos gespeichert oder verschickt.</string>
+	<string>CollectView liest den Barcode oder das Cover deiner Platten und CDs über die Kamera. Es werden keine Fotos gespeichert oder verschickt.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Das Produkt heißt durchgängig **Plattenregal** – Markenschriftzug, Seitentitel
+Das Produkt heißt durchgängig **CollectView** – Markenschriftzug, Seitentitel
 und Doku. Der Name ist ein Arbeitstitel und kann später ersetzt werden; er
 gehört deshalb nicht in Bezeichner, Tabellennamen oder Dateipfade.
 

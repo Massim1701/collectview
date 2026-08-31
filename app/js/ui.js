@@ -1,5 +1,5 @@
 /* =====================================================================
-   ui.js – geteilte Render-Bausteine im Plattenregal-Design
+   ui.js – geteilte Render-Bausteine im CollectView-Design
    Alle Klassen stammen aus wireframes/styles.css bzw. app/app.css.
    ===================================================================== */
 

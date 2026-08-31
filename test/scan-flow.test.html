@@ -869,7 +869,7 @@ test("Free-Limit wird als Abo-Hinweis gezeigt, nicht als roher Fehler", async ()
   btn("add-collection").click();
   await tick();
 
-  assertIncludes(document.getElementById("scan-error").textContent, "Plattenregal Plus");
+  assertIncludes(document.getElementById("scan-error").textContent, "CollectView Plus");
   assertEqual(card().style.display, "block", "die Karte muss offen bleiben");
 });
 
@@ -956,7 +956,7 @@ test("Ist das Limit erreicht, fragt die App Discogs gar nicht erst", async () =>
   assertEqual(scanInserts.length, 0);
   assertEqual(card().style.display, "none", "es darf kein Ergebnis erscheinen");
   assert(!document.getElementById("scan-notice").hidden, "der Hinweis müsste stehen");
-  assertIncludes(document.getElementById("scan-notice").textContent, "Plattenregal Plus");
+  assertIncludes(document.getElementById("scan-notice").textContent, "CollectView Plus");
 });
 
 test("Auch der Cover-Weg ist bei erreichtem Limit dicht", async () => {
@@ -966,7 +966,7 @@ test("Auch der Cover-Weg ist bei erreichtem Limit dicht", async () => {
   await lookupCoverText("nirvana");
 
   assertEqual(fetchCalls, 0);
-  assertIncludes(document.getElementById("scan-notice").textContent, "Plattenregal Plus");
+  assertIncludes(document.getElementById("scan-notice").textContent, "CollectView Plus");
 });
 
 test("Neuversuch nach einem Rate-Limit kostet keinen zweiten Scan", async () => {

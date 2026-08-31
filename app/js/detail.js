@@ -253,7 +253,7 @@ let currentItem = null;
 
 function render(item, release) {
   currentItem = item;
-  document.title = `${item.title} – Plattenregal`;
+  document.title = `${item.title} – CollectView`;
   shell.setAttribute("aria-busy", "false");
   shell.innerHTML = `
     ${heroMarkup(item)}

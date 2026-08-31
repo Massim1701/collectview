@@ -1,4 +1,4 @@
-# Plattenregal
+# CollectView
 
 App + Webseite zum Katalogisieren von Schallplatten, CDs und Musik-DVDs/Blu-rays weltweit.
 

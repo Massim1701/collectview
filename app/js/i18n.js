@@ -1,5 +1,5 @@
 /* =====================================================================
-   i18n.js – Sprachgerüst für Plattenregal (DE/EN/IT/PL/ES).
+   i18n.js – Sprachgerüst für CollectView (DE/EN/IT/PL/ES).
    Deutsch bleibt die Quelle: fehlt ein Schlüssel in einer anderen
    Sprache, fällt t() automatisch auf Deutsch zurück, nie auf den
    rohen Schlüssel. Auswahl wird in localStorage gemerkt (pr_lang).
@@ -76,7 +76,7 @@ const I18N = {
     marketplace_found: "Gefunden",
     marketplace_contact: "Nachricht senden",
     marketplace_messages: "Nachrichten von Interessenten",
-    marketplace_plus_required: "Nur für Plattenregal Plus",
+    marketplace_plus_required: "Nur für CollectView Plus",
     marketplace_translate: "Übersetzen",
     marketplace_original: "Original anzeigen",
     marketplace_translating: "Übersetze …",
@@ -144,7 +144,7 @@ const I18N = {
     marketplace_found: "Found",
     marketplace_contact: "Send message",
     marketplace_messages: "Messages from interested buyers",
-    marketplace_plus_required: "Plattenregal Plus only",
+    marketplace_plus_required: "CollectView Plus only",
     marketplace_translate: "Translate",
     marketplace_original: "Show original",
     marketplace_translating: "Translating …",
@@ -212,7 +212,7 @@ const I18N = {
     marketplace_found: "Trovato",
     marketplace_contact: "Invia messaggio",
     marketplace_messages: "Messaggi degli interessati",
-    marketplace_plus_required: "Solo per Plattenregal Plus",
+    marketplace_plus_required: "Solo per CollectView Plus",
     marketplace_translate: "Traduci",
     marketplace_original: "Mostra originale",
     marketplace_translating: "Traduzione …",
@@ -280,7 +280,7 @@ const I18N = {
     marketplace_found: "Znalezione",
     marketplace_contact: "Wyślij wiadomość",
     marketplace_messages: "Wiadomości od zainteresowanych",
-    marketplace_plus_required: "Tylko dla Plattenregal Plus",
+    marketplace_plus_required: "Tylko dla CollectView Plus",
     marketplace_translate: "Przetłumacz",
     marketplace_original: "Pokaż oryginał",
     marketplace_translating: "Tłumaczenie …",
@@ -348,7 +348,7 @@ const I18N = {
     marketplace_found: "Encontrado",
     marketplace_contact: "Enviar mensaje",
     marketplace_messages: "Mensajes de interesados",
-    marketplace_plus_required: "Solo para Plattenregal Plus",
+    marketplace_plus_required: "Solo para CollectView Plus",
     marketplace_translate: "Traducir",
     marketplace_original: "Mostrar original",
     marketplace_translating: "Traduciendo …",

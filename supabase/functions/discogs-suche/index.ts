@@ -24,7 +24,7 @@ const DISCOGS_TOKEN = Deno.env.get("DISCOGS_TOKEN");
 
 // Discogs verlangt einen aussagekräftigen User-Agent und weist Anfragen
 // mit einem generischen ab.
-const USER_AGENT = "Plattenregal/0.1 +https://github.com/plattenregal";
+const USER_AGENT = "CollectView/0.1 +https://github.com/collectview";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

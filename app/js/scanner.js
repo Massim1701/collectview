@@ -1281,7 +1281,7 @@ async function saveToCollection(item) {
 
   if (error) {
     scanError(/limit/i.test(error.message)
-      ? "Das Free-Limit ist erreicht. Mit Plattenregal Plus ist die Sammlung unbegrenzt."
+      ? "Das Free-Limit ist erreicht. Mit CollectView Plus ist die Sammlung unbegrenzt."
       : "Konnte nicht gespeichert werden: " + error.message);
     return;
   }

@@ -82,7 +82,7 @@ function scanLimitNoticeMarkup() {
     </svg>
     <div class="notice-body">
       <strong>Die ${FREE_SCAN_LIMIT} freien Scans sind aufgebraucht</strong>
-      <span>Mit Plattenregal Plus scannst du unbegrenzt weiter.</span>
-      <a class="btn-secondary small" href="../wireframes/pricing.html">Plattenregal Plus ansehen</a>
+      <span>Mit CollectView Plus scannst du unbegrenzt weiter.</span>
+      <a class="btn-secondary small" href="../wireframes/pricing.html">CollectView Plus ansehen</a>
     </div>`;
 }

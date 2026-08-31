@@ -25,7 +25,7 @@ cat > www/index.html <<'HTML'
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Plattenregal</title>
+<title>CollectView</title>
 <meta http-equiv="refresh" content="0; url=./app/index.html">
 </head>
 <body>

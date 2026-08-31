@@ -45,7 +45,7 @@ async function fetchCollection() {
  * "CD, Album, Reissue" – deshalb wird der Format-String durchsucht,
  * nicht exakt verglichen.
  */
-/** Hat der Nutzer ein aktives Plattenregal-Plus-Abo? */
+/** Hat der Nutzer ein aktives CollectView-Plus-Abo? */
 async function fetchIsSubscribed(userId) {
   const { data, error } = await sb.from("profiles").select("subscription_status").eq("id", userId).maybeSingle();
   if (error) throw error;

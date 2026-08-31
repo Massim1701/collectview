@@ -11,7 +11,7 @@
    ===================================================================== */
 
 function offlineCacheKey(userId) {
-  return `plattenregal:sammlung-offline:${userId}`;
+  return `collectview:sammlung-offline:${userId}`;
 }
 
 /** Sammlung nach jedem erfolgreichen Laden hier ablegen. */

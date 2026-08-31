@@ -1,6 +1,6 @@
 # Design-System
 
-`styles.css` ist die Quelle der Wahrheit für Plattenregal – Wireframes,
+`styles.css` ist die Quelle der Wahrheit für CollectView – Wireframes,
 App und Landingpage laden dieselbe Datei. `app/app.css` liegt als
 App-Layer darüber und ergänzt nur, was die echten Seiten zusätzlich
 brauchen.
