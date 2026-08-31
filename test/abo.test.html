@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Abo – Tests</title>
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="../app/app.css">
+</head>
+<body>
+
+<script>
+  /* Stubs vor abo.js: die Datei liest SUPABASE_URL und SUPABASE_ANON_KEY
+     beim Laden und benutzt sb.auth.getSession(). */
+  var SUPABASE_URL = "https://test.supabase.co";
+  var SUPABASE_ANON_KEY = "test-anon-key";
+
+  var sitzung = { access_token: "tok" };
+  var sb = { auth: { getSession: async () => ({ data: { session: sitzung } }) } };
+
+  /* Antwort der Edge Function, pro Test gesetzt. */
+  var antwort = null;
+  var anfragen = [];
+  window.fetch = async (url, opts) => {
+    anfragen.push({ url: String(url), rumpf: JSON.parse(opts.body), kopf: opts.headers });
+    return antwort;
+  };
+
+  function serverAntwort(status, koerper) {
+    return { ok: status >= 200 && status < 300, status, json: async () => koerper };
+  }
+
+  /* Kein Capacitor, kein Kauf-Plugin: das ist der Browser-Fall. */
+  var Capacitor = undefined;
+</script>
+
+<script src="../app/js/abo.js"></script>
+<script src="assert.js"></script>
+<script>
+
+function reset() {
+  sitzung = { access_token: "tok" };
+  antwort = null;
+  anfragen = [];
+}
+
+/* ---------- Beleg beim Server anmelden ---------- */
+
+test("Der Beleg geht an abo-pruefen, mit Sitzungstoken", async () => {
+  reset();
+  antwort = serverAntwort(200, { abo: true, produkt: "collectview.plus.monatlich", laeuftBis: "2026-09-30T00:00:00Z" });
+
+  const ergebnis = await meldeKaufAn("apple", "beleg-1", "collectview.plus.monatlich");
+
+  assertEqual(anfragen.length, 1);
+  assert(anfragen[0].url.includes("/functions/v1/abo-pruefen"), "falscher Endpunkt");
+  assertEqual(anfragen[0].rumpf, { plattform: "apple", beleg: "beleg-1", produkt: "collectview.plus.monatlich" });
+  assertEqual(anfragen[0].kopf.Authorization, "Bearer tok",
+    "ohne Token kann der Server nicht wissen, wem das Abo gehört");
+  assertEqual(ergebnis.abo, true);
+});
+
+test("Ohne Anmeldung wird gar nicht erst gefragt", async () => {
+  reset();
+  sitzung = null;
+
+  let fehler = null;
+  try { await meldeKaufAn("apple", "beleg-1", "p"); } catch (e) { fehler = e; }
+
+  assert(fehler, "ohne Sitzung muss es scheitern");
+  assertEqual(anfragen.length, 0, "eine Anfrage ohne Token wäre nur eine 401 mehr");
+});
+
+test("Ein weitergegebener Kauf wird als solcher benannt", async () => {
+  reset();
+  antwort = serverAntwort(409, { error: "Dieser Kauf ist bereits einem anderen Konto zugeordnet." });
+
+  let fehler = null;
+  try { await meldeKaufAn("apple", "geteilt", "p"); } catch (e) { fehler = e; }
+
+  assert(fehler && /anderen Konto/.test(fehler.message),
+    "sonst sucht der Nutzer den Fehler bei sich, obwohl der Beleg schlicht vergeben ist");
+});
+
+test("Fehlt die Edge Function, sagt die App das statt einer rohen Zahl", async () => {
+  reset();
+  antwort = serverAntwort(404, {});
+
+  let fehler = null;
+  try { await meldeKaufAn("google", "beleg", "p"); } catch (e) { fehler = e; }
+
+  assert(fehler && /noch nicht eingerichtet/.test(fehler.message), fehler && fehler.message);
+});
+
+test("Kein laufendes Abo zum Beleg – der Grund wird durchgereicht", async () => {
+  reset();
+  antwort = serverAntwort(200, { abo: false, grund: "Zu diesem Kauf läuft kein aktives Abo." });
+
+  let fehler = null;
+  try { await meldeKaufAn("apple", "abgelaufen", "p"); } catch (e) { fehler = e; }
+
+  assert(fehler && /kein aktives Abo/.test(fehler.message), fehler && fehler.message);
+});
+
+/* ---------- Browser statt App ---------- */
+
+test("Im Browser lässt sich nichts kaufen – und das steht auch so da", async () => {
+  reset();
+
+  let fehler = null;
+  try { await kaufeAbo("monatlich"); } catch (e) { fehler = e; }
+
+  assert(fehler && /nur in der App/.test(fehler.message), fehler && fehler.message);
+  assertEqual(anfragen.length, 0, "ohne Kauf gibt es nichts anzumelden");
+});
+
+test("Ein unbekannter Zeitraum wird abgefangen, bevor der Store gefragt wird", async () => {
+  reset();
+
+  let fehler = null;
+  try { await kaufeAbo("woechentlich"); } catch (e) { fehler = e; }
+
+  assert(fehler && /Zeitraum/.test(fehler.message), fehler && fehler.message);
+});
+
+test("Die Produkt-IDs sind die, die in den Stores angelegt werden", async () => {
+  // Zeichengenau: ein Tippfehler äußert sich im Store als "Produkt nicht
+  // gefunden", nicht als Fehlermeldung mit Hinweis.
+  assertEqual(ABO_PRODUKTE.monatlich, "collectview.plus.monatlich");
+  assertEqual(ABO_PRODUKTE.jaehrlich, "collectview.plus.jaehrlich");
+});
+
+runTests();
+</script>
+</body>
+</html>

@@ -76,6 +76,10 @@
         <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Werbefrei &amp; bevorzugter Support</li>
       </ul>
       <button class="btn-primary" type="button" id="upgrade-btn">Jetzt upgraden</button>
+      <p class="manual-hint" style="text-align:left; margin-top:10px;">
+        Schon gekauft?
+        <button type="button" class="linklike" id="restore-btn">Kauf wiederherstellen</button>
+      </p>
       <div class="err" id="upgrade-note" style="margin-top:12px; font-size:12.5px; color:var(--text-muted);"></div>
     </div>
   </div>
@@ -96,8 +100,12 @@
     </div>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Lokal, nicht vom CDN: die Seite ist aus der App heraus verlinkt und
+     muss auch ohne Netz aufgehen. Dazu überträgt ein CDN-Aufruf die IP
+     jedes Nutzers an einen Dritten – siehe CLAUDE.md. -->
+<script src="../app/vendor/supabase.js"></script>
 <script src="../app/config.js"></script>
+<script src="../app/js/abo.js"></script>
 <script>
   const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
@@ -118,21 +126,54 @@
     document.getElementById("plus-note").textContent = p.note;
   });
 
-  document.getElementById("upgrade-btn").addEventListener("click", async () => {
-    const note = document.getElementById("upgrade-note");
+  const note = document.getElementById("upgrade-note");
+
+  function melde(text, istFehler) {
+    note.textContent = text;
+    note.style.color = istFehler ? "var(--danger-ink)" : "var(--text-muted)";
+  }
+
+  async function angemeldet() {
     if (!sb) {
-      note.textContent = "Verbindung zum Server nicht möglich. Bitte Seite neu laden.";
-      return;
+      melde("Verbindung zum Server nicht möglich. Bitte Seite neu laden.", true);
+      return null;
     }
     const { data } = await sb.auth.getSession();
     if (!data.session) {
-      location.href = "../app/login.html";
-      return;
+      location.href = "../app/login.html?next=pricing.html";
+      return null;
     }
-    note.textContent =
-      "Zahlungsanbieter ist in dieser Vorschau noch nicht verbunden. Dein Konto (" +
-      data.session.user.email +
-      ") ist bereit, sobald Stripe eingerichtet ist.";
+    return data.session;
+  }
+
+  document.getElementById("upgrade-btn").addEventListener("click", async (ev) => {
+    if (!(await angemeldet())) return;
+
+    const knopf = ev.currentTarget;
+    knopf.disabled = true;
+    melde("Kauf wird beim Store angefragt …", false);
+    try {
+      // cycle ist "monthly"/"yearly" aus der Umschaltung oben.
+      await kaufeAbo(cycle === "yearly" ? "jaehrlich" : "monatlich");
+      melde("Abo ist aktiv. Viel Freude mit CollectView Plus.", false);
+    } catch (e) {
+      melde(e.message, true);
+    } finally {
+      knopf.disabled = false;
+    }
+  });
+
+  // Apple verlangt einen Weg, einen früheren Kauf ohne erneute Zahlung
+  // zurückzuholen – Gerätewechsel, Neuinstallation.
+  document.getElementById("restore-btn").addEventListener("click", async () => {
+    if (!(await angemeldet())) return;
+    melde("Frühere Käufe werden gesucht …", false);
+    try {
+      await aboWiederherstellen();
+      melde("Dein Abo wurde wiederhergestellt.", false);
+    } catch (e) {
+      melde(e.message, true);
+    }
   });
 </script>
 </body>

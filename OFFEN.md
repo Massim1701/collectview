@@ -37,7 +37,20 @@ Der Vision-Schlüssel braucht ein Google-Cloud-Projekt mit **aktivierter Cloud
 Vision API** und **hinterlegter Abrechnung**, auch innerhalb der 1000
 Freianfragen pro Monat. Schlüssel auf diese eine API beschränken.
 
-### 2. In-App-Kauf · Serverseite steht, Store-Seite fehlt
+### 2. In-App-Kauf · App-Seite steht, Store-Seite läuft bei Claude Web
+
+**Aufteilung, damit nichts doppelt gebaut wird:** Store-Produkte, Schlüssel und
+das Deployen der Functions macht **Claude Web**. Die App-Seite (Datenbank,
+Edge Function, Client) liegt bei **Claude Code**.
+
+**Diese Produkt-IDs müssen in beiden Stores zeichengenau so heißen** — die App
+fragt genau danach, ein Tippfehler äußert sich nur als „Produkt nicht
+gefunden":
+
+```
+collectview.plus.monatlich
+collectview.plus.jaehrlich
+```
 
 Der Weg ist entschieden: **In-App-Kauf bei Apple und Google**. Stripe trägt im
 Store-Kontext nicht.
@@ -56,8 +69,15 @@ Edge Function `abo-pruefen` geschrieben. Was du anlegen musst:
 Dokumentation geschrieben, aber nie gegen einen echten Kauf gelaufen. Das geht
 erst, wenn die Produkte in beiden Stores existieren.
 
-**Noch nicht gebaut:** die Client-Seite. Die App kann bisher keinen Kauf
-auslösen — dafür fehlt ein Capacitor-Plugin und der Ablauf auf `pricing.html`.
+**Client-Seite steht** (`app/js/abo.js`, `wireframes/pricing.html`): Kaufknopf,
+Wiederherstellen-Knopf (von Apple für jede Abo-App verlangt), Anbindung an
+`abo-pruefen`, Fehlerbehandlung. 8 Tests decken die Serveranbindung ab.
+
+**Was dort noch fehlt:** das Plugin `cordova-plugin-purchase` ist nicht
+installiert. Die zwei Funktionen, die damit sprechen (`storeKaufAusloesen`,
+`aboWiederherstellen`), sind gegen die Doku geschrieben und nie gelaufen — im
+Kopf der Datei so gekennzeichnet. Sie gehören als Erstes auf einem Gerät
+nachgeprüft, sobald die Store-Produkte existieren.
 
 ### 3. App Store Connect prüfen
 
@@ -82,6 +102,10 @@ der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
   Sprachauswahl und Palette laden also aus dem Bundle. Ungeprüft bleibt alles
   hinter der Anmeldung: Kamera, Barcode-Scan, Texterkennung. Der Emulator hat
   keine echte Kamera; dafür braucht es ein Gerät.
+- **Schriften und Bibliotheken kommen jetzt überall lokal.** `pricing.html` lud
+  Supabase von jsdelivr, neun weitere Wireframes luden Google Fonts vom CDN —
+  alle wandern über `build-www.sh` ins App-Bundle. `test/assets.js` setzt die
+  Regel aus CLAUDE.md jetzt durch, statt sie nur zu dokumentieren.
 - **`app/vendor/water.css` ist nirgends eingebunden.** Überbleibsel; löschen,
   sobald sicher ist, dass niemand es braucht.
 

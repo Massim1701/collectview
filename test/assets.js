@@ -73,6 +73,28 @@ for (const datei of [...sammle("app", ".html"), ...sammle("wireframes", ".html")
   }
 }
 
+/* ---------- Fremde Bibliotheken gehören nicht ans CDN ----------
+   CLAUDE.md ist da eindeutig: Bibliotheken liegen unter app/vendor/.
+   Zwei Gründe, beide handfest – ohne Netz fehlte sonst schon der
+   Supabase-Client und die App startete gar nicht, und ein CDN-Aufruf
+   überträgt die IP jedes Nutzers an einen Dritten.
+
+   Die Regel stand bisher nur in der Doku. wireframes/pricing.html lud
+   Supabase trotzdem von jsdelivr – und die Seite ist aus fünf Stellen
+   der App heraus verlinkt. */
+
+for (const datei of [...sammle("app", ".html"), ...sammle("wireframes", ".html")]) {
+  const text = fs.readFileSync(path.join(wurzel, datei), "utf8");
+  for (const [, ziel] of text.matchAll(/<script[^>]+src="((?:https?:)?\/\/[^"]+)"/g)) {
+    geprueft += 1;
+    fehler.push(`${datei}: lädt ein Skript vom CDN statt aus app/vendor/ – ${ziel}`);
+  }
+  for (const [, ziel] of text.matchAll(/<link[^>]+href="((?:https?:)?\/\/[^"]+)"/g)) {
+    geprueft += 1;
+    fehler.push(`${datei}: lädt ein Stylesheet vom CDN statt aus app/vendor/ – ${ziel}`);
+  }
+}
+
 /* ---------- CSS: url(...) ---------- */
 
 for (const datei of [...sammle("app", ".css"), ...sammle("wireframes", ".css")]) {
