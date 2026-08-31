@@ -6,6 +6,10 @@ dist/
 supabase/.env          # Schlüssel für die Edge Functions
 *.log
 
+# Von tesseract.js im Arbeitsverzeichnis abgelegte Kopien der
+# Sprachdaten. Die gepflegten liegen in app/vendor/tessdata/.
+/*.traineddata
+
 # Capacitor: aus app/ + wireframes/ gebaut, nicht von Hand gepflegt.
 # Alles unter ios/ regelt ios/.gitignore selbst.
 www/

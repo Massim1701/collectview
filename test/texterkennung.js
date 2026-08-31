@@ -49,6 +49,10 @@ async function main() {
       corePath: path.join(wurzel, "app/vendor/tesseract-core/"),
       langPath: path.join(wurzel, "app/vendor/tessdata/"),
       gzip: false,
+      // Sonst legt tesseract.js eine Kopie der Sprachdaten im
+      // Arbeitsverzeichnis ab – 5,6 MB, die beim nächsten "git add -A"
+      // im Repo landen. Ist einmal passiert.
+      cacheMethod: "none",
     });
 
     const { data } = await worker.recognize(BILD);
