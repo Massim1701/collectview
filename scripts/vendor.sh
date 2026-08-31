@@ -23,10 +23,12 @@ cp node_modules/@zxing/browser/umd/zxing-browser.min.js         app/vendor/zxing
 cp node_modules/tesseract.js/dist/tesseract.min.js              app/vendor/tesseract.min.js
 cp node_modules/tesseract.js/dist/worker.min.js                 app/vendor/tesseract-worker.min.js
 
-# Nur SIMD-LSTM: iOS und jeder aktuelle Browser können WebAssembly, die
-# reine JS-Rückfallebene (.wasm.js, ~3,9 MB) wird nie gebraucht.
-cp node_modules/tesseract.js-core/tesseract-core-simd-lstm.js   app/vendor/tesseract-core/
-cp node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm app/vendor/tesseract-core/
+# .wasm.js ist keine reine JS-Rückfallebene, sondern die Ladedatei, die
+# der Worker per importScripts nachlädt (fehlte hier -> Texterkennung
+# scheiterte komplett mit 'failed to load'). Alle drei gehören zusammen.
+cp node_modules/tesseract.js-core/tesseract-core-simd-lstm.js      app/vendor/tesseract-core/
+cp node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm    app/vendor/tesseract-core/
+cp node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js app/vendor/tesseract-core/
 
 # Sprachdaten für die Texterkennung.
 #
