@@ -113,6 +113,24 @@ der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
 
 ## Erledigt — bitte nicht erneut auf eine Übergabeliste setzen
 
+- **Cover-Erkennung trägt jetzt, auch mit Spiegelungen.** Am Gerät bestätigt
+  (31.08.2026): eine Hülle, die zuvor nur `\ SPEAK & SPELL I u` ergab, wurde
+  in der Klarsichthülle vollständig erkannt. Zwei Änderungen zusammen:
+
+  1. **Zeilenauswahl nach Schriftgröße und Konfidenz** statt nach Reihenfolge
+     (`f655313`). Interpret und Titel sind auf einer Hülle das Größte, nicht
+     das Oberste — vorher verdrängten Bruchstücke aus dem Glanzlicht den
+     Interpreten aus den zwei Plätzen.
+  2. **Fünf Bilder statt einem** (`dd39d5e`), bewertet nach Struktur und
+     ausgebrannter Fläche, das beste wird ausgewertet. Das Glanzlicht wandert
+     mit dem Haltewinkel — derselbe Grund, aus dem Google Lens auf dem
+     laufenden Bild arbeitet.
+
+  Zwei naheliegende Wege wurden **gemessen und verworfen**: Bildvorverarbeitung
+  (Graustufen, Kontrastspreizung, lokale Schwellwerte — alle 0 von 2 Zeilen,
+  eine Spiegelung überschreibt das Bild) und absolute Spiegelungserkennung
+  (nicht trennscharf: weisses Cover 88 % helle Fläche gegen Glanzlicht 28 %).
+
 - **Migrationen** `db/releases.sql` und `db/scan-limit.sql` sind ausgeführt.
   Bestätigt über REST *und* den Selbsttest auf dem Gerät.
 - **`db/rollen.sql` abgleichen** — hinfällig. Die Datei war ein Duplikat des
