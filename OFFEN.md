@@ -55,14 +55,7 @@ bisherigen Übergabeliste. Drei gangbare Wege:
 
 Bis das entschieden ist, sollte nichts weiter auf dem Abo aufgebaut werden.
 
-### 3. GitHub-Repo umbenennen
-
-Heißt weiter `schallplatten-katalog`. `gh` ist installiert und angemeldet,
-aber der **fine-grained PAT** hat *Administration: Read and write* nicht —
-ein Token kann sich keine Rechte selbst geben. Entweder in der Weboberfläche
-umbenennen oder dem Token die Berechtigung geben.
-
-### 4. App Store Connect prüfen
+### 3. App Store Connect prüfen
 
 Die Bundle-ID ist beim Rebrand von `online.driftware.plattenregal` auf
 `online.driftware.collectview` gewechselt. Liegt dort schon ein Eintrag unter
@@ -80,8 +73,11 @@ der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
   `.btn-secondary` das `hidden`-Attribut schlug — das ist behoben. Ob WebKit
   `torch` wirklich meldet, zeigt erst der nächste Gerätetest. Meldet es das
   nicht, bräuchte es `AVCaptureDevice.torchMode`, also nativen Swift-Code.
-- **Android war nie auf einem Gerät.** Plattform steht, APK baut, Kamera- und
-  Sprachdaten-Fallen sind vorweggenommen — geprüft ist davon nichts.
+- **Android: Start geprüft, Scanner nicht.** Das Debug-APK läuft im Emulator
+  `Pixel_9_Pro`, der Anmeldebildschirm kommt vollständig hoch — Schriften,
+  Sprachauswahl und Palette laden also aus dem Bundle. Ungeprüft bleibt alles
+  hinter der Anmeldung: Kamera, Barcode-Scan, Texterkennung. Der Emulator hat
+  keine echte Kamera; dafür braucht es ein Gerät.
 - **`app/vendor/water.css` ist nirgends eingebunden.** Überbleibsel; löschen,
   sobald sicher ist, dass niemand es braucht.
 
@@ -100,3 +96,6 @@ der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
   ausser Discogs selbst.
 - **Rebrand auf CollectView** ist vollständig — kein `Plattenregal` mehr im Repo.
 - **Android-Plattform** ist angelegt, inklusive Kameraberechtigung.
+- **Repo umbenannt** auf `github.com/Massim1701/collectview`. Der fehlende
+  PAT-Bereich *Administration: Read and write* ist gesetzt, `gh repo rename`
+  funktioniert ab jetzt. Lokales Remote ist umgestellt.
