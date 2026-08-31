@@ -26,6 +26,7 @@ const videoEl = document.getElementById("video");
 const frameEl = document.getElementById("scan-frame");
 const scanBtn = document.getElementById("scan-btn");
 const captureBtn = document.getElementById("capture-btn");
+const torchBtn = document.getElementById("torch-btn");
 const cameraSelect = document.getElementById("camera-select");
 const modeToggle = document.getElementById("mode-toggle");
 const statusEl = document.getElementById("scan-status");
@@ -147,6 +148,70 @@ function kameraFeinschliff() {
     .filter(Boolean).join(" · ");
 }
 
+/* ---------- Licht ----------
+ *
+ * Heikel genug für einen eigenen Abschnitt: Der einzige Weg zum
+ * Kameralicht führt über applyConstraints auf dem LAUFENDEN Strom – und
+ * genau das hat auf iOS schon einmal den Track beendet, die Kamera ging
+ * nach zwei Sekunden aus (Commit 708ef08, siehe kameraFeinschliff oben).
+ *
+ * Der Unterschied zu damals: applyConstraints wird hier nur aufgerufen,
+ * wenn das Gerät die Fähigkeit "torch" von sich aus meldet. Meldet es
+ * sie nicht, bleibt der Knopf verborgen und der Strom unangetastet –
+ * der Fall "wird trotzdem versucht" kann nicht eintreten. WebKit meldet
+ * torch derzeit nirgends, auf dem iPhone erscheint der Knopf also nicht.
+ * Das ist kein Fehler, sondern die Absicherung, die hier greift.
+ */
+
+let lichtAn = false;
+
+function lichtTrack() {
+  return videoEl.srcObject?.getVideoTracks?.()[0] || null;
+}
+
+/** Meldet das Gerät ein schaltbares Licht? */
+function lichtVerfuegbar(track) {
+  try {
+    return !!track?.getCapabilities?.().torch;
+  } catch {
+    // getCapabilities gibt es nicht auf jedem Gerät. Das ist kein
+    // Fehler, sondern schlicht "kein Licht".
+    return false;
+  }
+}
+
+function beschrifteLicht() {
+  torchBtn.textContent = lichtAn ? "Licht aus" : "Licht an";
+  torchBtn.setAttribute("aria-pressed", lichtAn ? "true" : "false");
+}
+
+/** Nach jedem Kamerastart: Knopf zeigen, wenn es etwas zu schalten gibt. */
+function lichtAnbieten() {
+  // Ein neuer Strom startet immer mit ausgeschaltetem Licht.
+  lichtAn = false;
+  const verfuegbar = lichtVerfuegbar(lichtTrack());
+  torchBtn.hidden = !verfuegbar;
+  if (verfuegbar) beschrifteLicht();
+}
+
+async function toggleLicht() {
+  const track = lichtTrack();
+  if (!lichtVerfuegbar(track)) return;
+
+  const ziel = !lichtAn;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: ziel }] });
+    lichtAn = ziel;
+    beschrifteLicht();
+  } catch (e) {
+    // Nicht stumm scheitern: sonst drückt der Nutzer weiter und nichts
+    // passiert. Knopf weg, Grund hinschreiben.
+    torchBtn.hidden = true;
+    lichtAn = false;
+    setStatus("Das Licht lässt sich an diesem Gerät nicht schalten.", { active: true });
+  }
+}
+
 /** Gemerkte Kamera; überlebt den Neustart der App. */
 const KAMERA_SPEICHER = "pr_kamera";
 
@@ -263,6 +328,7 @@ async function toggleScan() {
     });
 
     const kamera = kameraFeinschliff();
+    lichtAnbieten();
     await refreshCameraList(cameraSelect.value || undefined);
     setStatus(`Barcode aus etwa 20 cm anvisieren${kamera ? " · " + kamera : ""}`, { active: true });
   } catch (e) {
@@ -287,6 +353,9 @@ function stopScan() {
   scanning = false;
   frameEl.classList.remove("live");
   captureBtn.hidden = true;
+  // Der Knopf gehört zum laufenden Strom: ohne Kamera nichts zu schalten.
+  torchBtn.hidden = true;
+  lichtAn = false;
   scanBtn.textContent = mode === "barcode" ? "Barcode-Scan starten" : "Kamera starten";
 }
 
@@ -324,6 +393,7 @@ async function startCoverCamera() {
     scanBtn.textContent = "Kamera stoppen";
     captureBtn.hidden = false;
     const kamera = kameraFeinschliff();
+    lichtAnbieten();
     setStatus(`Cover gut ausgeleuchtet in den Rahmen halten, dann „Foto aufnehmen“.${kamera ? " · " + kamera : ""}`, { active: true });
     await refreshCameraList(cameraSelect.value || undefined);
   } catch (e) {
@@ -1317,6 +1387,7 @@ async function init() {
     else toggleCoverCamera();
   });
   captureBtn.addEventListener("click", captureCoverPhoto);
+  torchBtn.addEventListener("click", toggleLicht);
   loadRecentlySaved();
   refreshScanQuota();
 }

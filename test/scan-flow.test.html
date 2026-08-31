@@ -16,6 +16,7 @@
      Fehlen sie, wirft die Datei und der Klick-Listener am Ende wird nie
      registriert – Rendern geht dank Hoisting trotzdem, Klicks nicht. -->
 <button id="capture-btn" type="button"></button>
+<button id="torch-btn" type="button" hidden></button>
 <select id="camera-select"></select>
 <div id="mode-toggle"></div>
 <div class="notice" id="scan-notice" hidden></div>
@@ -1121,6 +1122,84 @@ test("Ist der Proxy einmal tot, wird er nicht bei jedem Scan neu versucht", asyn
 
   assert(!gesuchtePfade.some((u) => u.includes("discogs-suche")),
     "der zweite Scan kostet sonst jedes Mal eine tote Anfrage Wartezeit");
+});
+
+/* ---------- Licht ----------
+   Die Attrappe muss srcObject per defineProperty setzen: das echte
+   <video> nimmt dort nur eine MediaStream-Instanz an. */
+function kameraMitLicht(hatLicht, { schaltenScheitert = false } = {}) {
+  const angewandt = [];
+  const track = {
+    label: "Back Dual Wide Camera",
+    getSettings: () => ({ width: 1280, height: 720 }),
+    getCapabilities: () => (hatLicht ? { torch: true } : {}),
+    applyConstraints: async (c) => {
+      if (schaltenScheitert) throw new Error("nicht unterstützt");
+      angewandt.push(c);
+    },
+    addEventListener() {}, stop() {},
+  };
+  Object.defineProperty(document.getElementById("video"), "srcObject", {
+    value: { getVideoTracks: () => [track] }, writable: true, configurable: true,
+  });
+  return angewandt;
+}
+
+test("Ohne gemeldetes Licht bleibt der Knopf verborgen", async () => {
+  resetStub();
+  const angewandt = kameraMitLicht(false);
+
+  lichtAnbieten();
+
+  assert(document.getElementById("torch-btn").hidden, "kein gemeldetes Licht, kein Knopf");
+  await toggleLicht();
+  assertEqual(angewandt.length, 0,
+    "applyConstraints darf den laufenden Strom nicht anfassen – genau das hat auf iOS die Kamera beendet");
+});
+
+test("Meldet das Gerät ein Licht, erscheint der Knopf und schaltet", async () => {
+  resetStub();
+  const angewandt = kameraMitLicht(true);
+
+  lichtAnbieten();
+  const btn = document.getElementById("torch-btn");
+  assert(!btn.hidden, "gemeldetes Licht gehört angeboten");
+  assertEqual(btn.textContent, "Licht an");
+
+  await toggleLicht();
+  assertEqual(angewandt, [{ advanced: [{ torch: true }] }]);
+  assertEqual(btn.textContent, "Licht aus");
+  assertEqual(btn.getAttribute("aria-pressed"), "true");
+
+  await toggleLicht();
+  assertEqual(angewandt.length, 2);
+  assertEqual(angewandt[1], { advanced: [{ torch: false }] });
+  assertEqual(btn.textContent, "Licht an");
+});
+
+test("Scheitert das Schalten, verschwindet der Knopf mit einer Begründung", async () => {
+  resetStub();
+  kameraMitLicht(true, { schaltenScheitert: true });
+
+  lichtAnbieten();
+  await toggleLicht();
+
+  assert(document.getElementById("torch-btn").hidden,
+    "ein Knopf, der nichts tut, lässt den Nutzer weiterdrücken");
+  assert(document.getElementById("scan-status").textContent.includes("Licht"),
+    "der Grund gehört hingeschrieben");
+});
+
+test("Beim Stoppen der Kamera geht der Licht-Knopf mit", async () => {
+  resetStub();
+  kameraMitLicht(true);
+  lichtAnbieten();
+  assert(!document.getElementById("torch-btn").hidden, "Vorbedingung: Knopf ist da");
+
+  stopScan();
+
+  assert(document.getElementById("torch-btn").hidden,
+    "ohne laufenden Strom gibt es nichts zu schalten");
 });
 
 test("Der Suchtext nimmt Googles bestGuessLabel", async () => {

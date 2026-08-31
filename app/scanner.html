@@ -86,6 +86,11 @@
     <div class="row">
       <button class="btn-primary" style="height:52px;" id="scan-btn" type="button">Barcode-Scan starten</button>
       <button class="btn-secondary" style="height:52px;" id="capture-btn" type="button" hidden>Foto aufnehmen</button>
+      <!-- Erscheint nur, wenn das Gerät ein schaltbares Licht meldet.
+           Siehe den Abschnitt "Licht" in js/scanner.js: ohne diese
+           Bedingung liefe ein applyConstraints auf den laufenden
+           Kamerastrom, und das hat auf iOS schon die Kamera beendet. -->
+      <button class="btn-secondary" style="height:52px;" id="torch-btn" type="button" hidden aria-pressed="false">Licht an</button>
     </div>
     <div class="notice" id="scan-notice" role="status" aria-live="polite" hidden></div>
     <p class="status" id="scan-status" role="status" aria-live="polite"></p>
