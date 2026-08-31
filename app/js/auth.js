@@ -85,7 +85,7 @@ async function renderAccountRow(container, user) {
           <div class="user-label">${escapeHtml(user.email)}</div>
         </div>
       </div>
-      <div style="display:flex; gap:8px; flex:0 0 auto; align-items:center;">
+      <div class="user-actions">
         <span id="lang-switcher-slot"></span>
         ${isAdmin ? `<a class="btn-secondary small" href="admin.html">Admin</a>` : ""}
         <button class="btn-secondary small" type="button" data-action="edit-name">${displayName ? escapeHtml(t("account_change_username")) : escapeHtml(t("account_set_username"))}</button>

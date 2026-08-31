@@ -93,10 +93,10 @@ der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
   fordert je nach Gerät `simd-lstm`, `simd`, `lstm` oder die Grundfassung an.
   Die SIMD-Fassung deckt jedes aktuelle Gerät ab; `test/assets.js` weist bei
   jedem Lauf darauf hin, damit es nicht vergessen wird.
-- **Licht-Knopf auf iOS ungeklärt.** Er war lange sichtbar, weil
-  `.btn-secondary` das `hidden`-Attribut schlug — das ist behoben. Ob WebKit
-  `torch` wirklich meldet, zeigt erst der nächste Gerätetest. Meldet es das
-  nicht, bräuchte es `AVCaptureDevice.torchMode`, also nativen Swift-Code.
+- ~~Licht-Knopf auf iOS ungeklärt~~ — **geklärt am 31.08.2026:** der Knopf
+  erscheint auf dem iPhone, und seit `b39373f` tut er das nur, wenn das Gerät
+  `torch` meldet. WebKit gibt es also heraus; nativer Swift-Code ist nicht
+  nötig. Ob das Licht beim Drücken auch angeht, ist noch nicht bestätigt.
 - **Android: Start geprüft, Scanner nicht.** Das Debug-APK läuft im Emulator
   `Pixel_9_Pro`, der Anmeldebildschirm kommt vollständig hoch — Schriften,
   Sprachauswahl und Palette laden also aus dem Bundle. Ungeprüft bleibt alles
@@ -119,9 +119,11 @@ der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
   bereits committeten `db/roles.sql` und hätte geschadet (anderer
   Trigger-Name, Obergrenze wäre doppelt geprüft worden). Gelöscht. Der fehlende
   View `profiles_public` steht jetzt in `db/roles.sql`.
-- **Texterkennung** läuft vollständig lokal: Worker, WASM-Kern, die vom Worker
-  nachgeladene `.wasm.js` und die Sprachdaten. Keine Netz-Abhängigkeit mehr
-  ausser Discogs selbst.
+- **Texterkennung läuft — auf dem Gerät bestätigt.** Der Selbsttest auf dem
+  iPhone zeigt `Texterkennung  "ABBEY ROAD"` (31.08.2026, 11:16 Uhr). Worker,
+  WASM-Kern, die vom Worker nachgeladene `.wasm.js` und die Sprachdaten liegen
+  alle lokal; ausser Discogs geht nichts mehr ans Netz. `test/texterkennung.js`
+  hält das fest, die Kette war an einem Tag zweimal gerissen.
 - **Rebrand auf CollectView** ist vollständig — kein `Plattenregal` mehr im Repo.
 - **Android-Plattform** ist angelegt, inklusive Kameraberechtigung.
 - **Repo umbenannt** auf `github.com/Massim1701/collectview`. Der fehlende
