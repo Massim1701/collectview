@@ -176,6 +176,7 @@
 <script src="../app/js/i18n.js"></script>
 <script src="../app/js/ui.js"></script>
 <script src="../app/js/discogs.js"></script>
+<script src="../app/js/cover-erkennen.js"></script>
 <script src="../app/js/releases.js"></script>
 <script src="../app/js/scan-status.js"></script>
 <script src="../app/js/scan-limit.js"></script>
@@ -1120,6 +1121,23 @@ test("Ist der Proxy einmal tot, wird er nicht bei jedem Scan neu versucht", asyn
 
   assert(!gesuchtePfade.some((u) => u.includes("discogs-suche")),
     "der zweite Scan kostet sonst jedes Mal eine tote Anfrage Wartezeit");
+});
+
+test("Der Suchtext nimmt Googles bestGuessLabel", async () => {
+  assertEqual(coverSuchtext({ label: "abbey road beatles", entitaeten: [{ text: "The Beatles" }] }),
+    "abbey road beatles");
+});
+
+test("Ohne Label tun es die beiden stärksten Entitäten", async () => {
+  // Eine allein wäre meist nur der Interpret – und liefert bei Discogs
+  // dessen ganzes Werk statt der einen Platte.
+  assertEqual(coverSuchtext({ entitaeten: [{ text: "The Beatles" }, { text: "Abbey Road" }, { text: "Vinyl" }] }),
+    "The Beatles Abbey Road");
+});
+
+test("Ohne Erkennung bleibt der Suchtext leer – dann greift die Texterkennung", async () => {
+  assertEqual(coverSuchtext(null), "");
+  assertEqual(coverSuchtext({ label: "", entitaeten: [] }), "");
 });
 
 runTests();

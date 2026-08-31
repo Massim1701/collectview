@@ -344,6 +344,30 @@ function toggleCoverCamera() {
     meist irgendwo auf dem Cover, exakt ist die Erkennung aber nicht.
     Deshalb landet das Ergebnis editierbar in einem Suchfeld statt direkt
     in einer Discogs-Suche. */
+/**
+ * Fortschritt der Texterkennung anzeigen.
+ *
+ * Nötig, weil der erste Cover-Scan die Sprachdaten deu+eng (rund 30 MB)
+ * vom CDN nachlädt. Ohne Rückmeldung stand minutenlang unverändert
+ * "Text auf dem Cover wird gelesen …" da – im Mobilnetz nicht von einem
+ * Absturz zu unterscheiden. Ab dem zweiten Mal liegen die Daten in
+ * IndexedDB und die Ladephasen fallen weg.
+ */
+function coverFortschritt(m) {
+  const phase = {
+    "loading tesseract core": "Texterkennung wird geladen",
+    "loading language traineddata": "Sprachdaten werden geladen (einmalig, rund 30 MB)",
+    "initializing tesseract": "Texterkennung wird vorbereitet",
+    "initializing api": "Texterkennung wird vorbereitet",
+    "recognizing text": "Text auf dem Cover wird gelesen",
+  }[m.status];
+  // Unbekannte Zwischenmeldungen von tesseract.js nicht anzeigen: sie
+  // sind englisch, technisch und wechseln je nach Version.
+  if (!phase) return;
+  const prozent = m.progress > 0 ? ` ${Math.round(m.progress * 100)} %` : "";
+  setStatus(`${phase} …${prozent}`, { active: true, busy: true });
+}
+
 async function captureCoverPhoto() {
   if (!coverStream) return;
   captureBtn.disabled = true;
@@ -355,6 +379,26 @@ async function captureCoverPhoto() {
   canvas.getContext("2d").drawImage(videoEl, 0, 0);
 
   let guess = "";
+  let fehler = "";
+
+  // Stufe 1: das Bild wiedererkennen lassen. Schlägt fehl oder ist der
+  // Weg nicht eingerichtet, kommt unten die Texterkennung.
+  setStatus("Cover wird bestimmt …", { active: true, busy: true });
+  const erkannt = await coverErkennen(canvas);
+  guess = coverSuchtext(erkannt);
+
+  // Ein wiedererkanntes Cover ist sicher genug, um direkt zu suchen.
+  // Bisher musste nach dem Foto noch einmal gedrückt werden – wer die
+  // Kamera nur draufhielt, löste damit gar keine Abfrage aus.
+  if (guess) {
+    captureBtn.disabled = false;
+    setStatus("");
+    lookupCoverText(guess);
+    return;
+  }
+
+  // Stufe 2: Texterkennung im Browser.
+  setStatus("Text auf dem Cover wird gelesen …", { active: true, busy: true });
   try {
     // Worker und WASM-Kern liegen lokal (app/vendor) – ohne diese Pfade
     // holt tesseract.js sie zur Laufzeit vom CDN, und die App wäre dort
@@ -364,6 +408,7 @@ async function captureCoverPhoto() {
     const { data } = await Tesseract.recognize(canvas, "deu+eng", {
       workerPath: "./vendor/tesseract-worker.min.js",
       corePath: "./vendor/tesseract-core/",
+      logger: coverFortschritt,
     });
     guess = (data.text || "")
       .split("\n")
@@ -372,11 +417,14 @@ async function captureCoverPhoto() {
       .slice(0, 2)
       .join(" ");
   } catch (e) {
-    setStatus("Texterkennung fehlgeschlagen – Text von Hand eintragen.", { active: true });
+    // Nur merken, nicht anzeigen: das setStatus() am Ende hat die
+    // Meldung hier früher unmittelbar wieder gelöscht, und der Nutzer
+    // stand vor einem leeren Formular ohne Grund.
+    fehler = "Texterkennung fehlgeschlagen – Text von Hand eintragen.";
   }
 
   captureBtn.disabled = false;
-  setStatus("");
+  setStatus(fehler, { active: !!fehler });
   renderCoverGuessForm(guess);
 }
 

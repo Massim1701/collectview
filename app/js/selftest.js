@@ -10,6 +10,10 @@
 /** Testcode mit bekannter Antwort: Radiohead – OK Computer. */
 const SELFTEST_BARCODE = "724385522925";
 
+/** Bekannter Text für die Texterkennung. Kurz, groß, ohne Umlaute –
+    es soll die Kette geprüft werden, nicht die Grenzen von Tesseract. */
+const SELFTEST_OCR_TEXT = "ABBEY ROAD";
+
 /** Ein Schritt: Name, Prüfung. Wirft die Prüfung, gilt sie als fehlgeschlagen. */
 function selftestSchritte() {
   return [
@@ -65,6 +69,22 @@ function selftestSchritte() {
       return `${echte.length} von ${roh.length} passen`;
     }],
 
+    ["Cover-Bilder", async () => {
+      // Discogs liefert thumb und cover_image ausschließlich an
+      // authentifizierte Anfragen. Ohne die Edge Function discogs-suche
+      // (die den Token hält) kommen sie leer zurück, und die App zeigt
+      // überall nur Platzhalter. Genau das prüft dieser Schritt.
+      const res = await discogsSuche({ barcode: SELFTEST_BARCODE });
+      if (res.status === 429) throw new Error("Rate-Limit (25 pro Minute und IP)");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const daten = await res.json();
+      const mitBild = (daten.results || []).filter((r) => r.cover_image);
+      if (mitBild.length === 0) {
+        throw new Error("keine Bild-URLs – läuft die Edge Function discogs-suche mit DISCOGS_TOKEN?");
+      }
+      return `${mitBild.length} Treffer mit Bild`;
+    }],
+
     ["Kamera vorhanden", async () => {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error("getUserMedia fehlt – kein sicherer Kontext?");
       const geraete = await navigator.mediaDevices.enumerateDevices();
@@ -78,6 +98,61 @@ function selftestSchritte() {
       if (!ZXingBrowser.BrowserMultiFormatOneDReader) throw new Error("1D-Leser fehlt");
       const hints = scanHints();
       return "bereit, " + hints.get(HINT_POSSIBLE_FORMATS).length + " Formate";
+    }],
+
+    ["Bilderkennung", async () => {
+      // Absichtlich mit leerem Rumpf: die Funktion antwortet darauf mit
+      // 400, OHNE eine (abrechnungsrelevante) Vision-Anfrage zu stellen.
+      // Das genügt, um "nicht deployt", "kein Schlüssel" und "bereit"
+      // auseinanderzuhalten – ein Selbsttest darf nichts kosten.
+      const { data } = await sb.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) throw new Error("keine Sitzung");
+
+      const res = await fetch(COVER_PROXY, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      });
+
+      if (res.status === 404) throw new Error("Funktion cover-erkennen ist nicht deployt");
+      if (res.status === 503) throw new Error("GOOGLE_VISION_KEY ist nicht gesetzt");
+      if (res.status === 400) return "bereit";
+      return "antwortet (HTTP " + res.status + ")";
+    }],
+
+    ["Texterkennung", async () => {
+      if (typeof Tesseract === "undefined") throw new Error("tesseract.js nicht geladen");
+
+      // Bekannter Text auf weißem Grund, große Schrift, kein Rauschen.
+      // Scheitert Tesseract schon hier, liegt es nicht am Cover, sondern
+      // an der Kette selbst: Sprachdaten nicht geladen, Worker-Pfad
+      // falsch, WASM blockiert. Das ist der Unterschied, den man am
+      // Telefon sonst nicht sieht.
+      const c = document.createElement("canvas");
+      c.width = 640; c.height = 160;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillStyle = "#000000";
+      ctx.font = "bold 64px Helvetica, Arial, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.fillText(SELFTEST_OCR_TEXT, 24, 80);
+
+      const { data } = await Tesseract.recognize(c, "deu+eng", {
+        workerPath: "./vendor/tesseract-worker.min.js",
+        corePath: "./vendor/tesseract-core/",
+      });
+
+      const gelesen = (data.text || "").replace(/\s+/g, " ").trim();
+      if (!gelesen) throw new Error("nichts erkannt – Sprachdaten (rund 30 MB) geladen?");
+      if (!gelesen.toUpperCase().includes(SELFTEST_OCR_TEXT)) {
+        throw new Error(`las "${gelesen.slice(0, 40)}" statt "${SELFTEST_OCR_TEXT}"`);
+      }
+      return `"${gelesen.slice(0, 40)}"`;
     }],
   ];
 }
