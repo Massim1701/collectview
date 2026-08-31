@@ -35,6 +35,37 @@ async function fetchReleasesByBarcode(barcode) {
   return data || [];
 }
 
+/**
+ * Den Katalog aus einer Discogs-Antwort füllen.
+ *
+ * Bisher landete ein Tonträger nur dann im Katalog, wenn jemand ihn in
+ * seine Sammlung übernahm (saveToCollection). Wer scannte und sich
+ * dagegen entschied, hinterließ nichts – der Nächste mit derselben
+ * Platte fragte wieder Discogs.
+ *
+ * Und Discogs ist der Flaschenhals: 25 Anfragen pro Minute und IP, mit
+ * Token 60 für alle Nutzer zusammen. Jeder Eintrag hier spart jedem
+ * späteren Scan derselben Platte die Anfrage – und zwar dauerhaft, weil
+ * lookupBarcode den Katalog vor Discogs fragt.
+ *
+ * Die Kosten sind gedeckelt: gefüllt wird nur beim ERSTEN Scan eines
+ * Barcodes, jeder weitere kommt gar nicht mehr bis hierher.
+ *
+ * Läuft bewusst nebenher (der Aufrufer wartet nicht) und verschluckt
+ * Fehler: ein ungefüllter Katalog kostet Tempo, ist aber kein Grund,
+ * einen erfolgreichen Scan zu stören.
+ */
+async function katalogFuellen(items) {
+  for (const item of items || []) {
+    if (item && item.discogs_id !== null && item.discogs_id !== undefined) {
+      // Die zurückgegebene id am Treffer vermerken: saveToCollection
+      // nimmt sie dann (item.release_id || upsertRelease(item)) und
+      // schreibt denselben Eintrag nicht ein zweites Mal.
+      item.release_id = await upsertRelease(item);
+    }
+  }
+}
+
 /** Katalogeinträge zu mehreren Discogs-IDs – eine Abfrage, nicht acht. */
 async function fetchReleasesByDiscogsIds(ids) {
   const liste = [...new Set(ids.filter((v) => v !== null && v !== undefined))].map(String);

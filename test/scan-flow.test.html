@@ -1272,6 +1272,34 @@ test("Ein hidden-Element ist auch dann weg, wenn seine Klasse display setzt", as
   btn.hidden = true;
 });
 
+test("Ein Discogs-Treffer landet im Katalog – der nächste Scan spart die Anfrage", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([
+    discogsResult(1, "Nirvana - Nevermind", { barcode: ["724385522925"] }),
+  ]);
+
+  tippe("724385522925");
+  await tick(80);
+
+  const katalog = rpcAufrufe.filter((r) => r.name === "upsert_release");
+  assertEqual(katalog.length, 1,
+    "ohne das muss jeder weitere Nutzer denselben Barcode erneut bei Discogs holen");
+  assertEqual(katalog[0].args.daten.discogs_id, 1);
+});
+
+test("Ohne Discogs-Treffer wird auch nichts in den Katalog geschrieben", async () => {
+  resetStub();
+  if (scanning) stopScan();
+  fetchResponse = discogsAnswer([]);
+
+  tippe("724385522925");
+  await tick(80);
+
+  assertEqual(rpcAufrufe.filter((r) => r.name === "upsert_release").length, 0,
+    "ein leeres Ergebnis im Katalog wäre schlimmer als keins – es verdeckte spätere Treffer");
+});
+
 runTests();
 </script>
 </body>

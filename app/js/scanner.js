@@ -42,6 +42,16 @@ const codeInput = document.getElementById("code-input");
 /** Treffer und Statusdaten des laufenden Scans. */
 let currentScan = { barcode: null, results: [], statusData: emptyScanStatusData() };
 
+/**
+ * Der nebenher laufende Katalog-Schreibvorgang des aktuellen Scans.
+ *
+ * saveToCollection wartet darauf, bevor es selbst schreibt: wer sofort
+ * nach dem Treffer auf "Zur Sammlung" tippt, würde sonst denselben
+ * Eintrag ein zweites Mal anlegen. Warten kostet nichts – die Anfrage
+ * läuft zu dem Zeitpunkt längst.
+ */
+let katalogLaeuft = null;
+
 function setStatus(text, { active = false, busy = false } = {}) {
   statusEl.className = active ? "status active" : "status";
   statusEl.innerHTML = busy ? `<span class="spinner"></span>${escapeHtml(text)}` : escapeHtml(text);
@@ -1028,6 +1038,11 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     }
 
     await showScan(barcode, results, collectionByBarcode);
+
+    // Nebenher den Katalog füllen, damit der nächste Scan derselben
+    // Platte ohne Discogs auskommt. Ohne await: das Ergebnis steht
+    // bereits, darauf soll niemand warten.
+    katalogLaeuft = katalogFuellen(results);
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
   }
@@ -1269,6 +1284,12 @@ async function saveToCollection(item) {
   // Erst in den gemeinsamen Katalog, dann verknüpfen. Schlägt das fehl,
   // wird trotzdem gespeichert – ein fehlender Katalogeintrag darf
   // niemanden daran hindern, seine Platte einzutragen.
+  // Erst abwarten, ob der Katalog gerade ohnehin geschrieben wird –
+  // sonst legt ein schneller Tipp denselben Eintrag zweimal an.
+  if (katalogLaeuft) {
+    try { await katalogLaeuft; } catch { /* ein leerer Katalog hält niemanden auf */ }
+  }
+
   const releaseId = item.release_id || (await upsertRelease(item));
 
   const { error } = await sb.from("collection_items").insert({
