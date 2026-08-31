@@ -111,6 +111,14 @@ Syntaxprüfung einzelner Dateien: `node --check app/js/<datei>.js`.
   während das Element sichtbar bleibt, weil eine Klassenregel (`display:flex`)
   das `[hidden]`-Attribut schlägt. Immer zusätzlich einen Screenshot ansehen.
 
+## Was gerade offen ist
+
+**`OFFEN.md` ist die einzige verbindliche Liste** – vor jeder Übergabe lesen,
+nach jedem Zug aktualisieren. Sie steht im Repo und nicht in einer Datei
+neben dem Repo, weil drei Übergaben hintereinander eine längst erledigte
+Aufgabe erneut verlangten: die Listen lagen in `~/Downloads`, wo die jeweils
+andere Sitzung sie nicht sehen konnte.
+
 ## Zusammenarbeit: zwei Stränge, ein Arbeitsverzeichnis
 
 An diesem Repo arbeiten zwei Claude-Sitzungen – eine an der App, eine am
