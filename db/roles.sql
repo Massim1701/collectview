@@ -94,3 +94,16 @@ create policy profiles_update_admin on public.profiles
 drop policy if exists listings_update_own on public.marketplace_listings;
 create policy listings_update_own on public.marketplace_listings
   for update using (seller_id = auth.uid() or is_moderator(auth.uid()));
+
+-- Öffentliche Sicht auf Profile: id und Anzeigename, ausdrücklich ohne
+-- E-Mail und ohne Rolle. db.js liest darüber die Namen fremder Nutzer –
+-- fetchDisplayNames für Forum und Marktplatz, findUserByUsername für die
+-- Rollenvergabe. Über profiles selbst ginge das nicht: RLS lässt dort
+-- nur die eigene Zeile durch.
+--
+-- Stand bisher ausschließlich in der Datenbank, in keiner Datei. Bei
+-- einem Neuaufbau wären beide Aufrufe in db.js ins Leere gelaufen.
+create or replace view public.profiles_public as
+  select id, display_name from public.profiles;
+
+grant select on public.profiles_public to anon, authenticated;
