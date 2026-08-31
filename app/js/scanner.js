@@ -437,6 +437,77 @@ function toggleCoverCamera() {
  * Absturz zu unterscheiden. Ab dem zweiten Mal liegen die Daten in
  * IndexedDB und die Ladephasen fallen weg.
  */
+/* ---------- Welcher Text vom Cover taugt zur Suche? ----------
+ *
+ * Bisher wurden die ERSTEN zwei Zeilen genommen. Auf einer Plattenhülle
+ * steht oben aber selten der Interpret – dort stehen Labelnamen,
+ * "STEREO", Katalognummern, oder Tesseract hängt an einer Spiegelung in
+ * der Folie und liefert Buchstabensalat.
+ *
+ * Belegt an einem echten Scan: eine Hülle von Depeche Mode ergab
+ * "\ SPEAK & SPELL I u" – der Titel mit Müll an beiden Enden, und
+ * "DEPECHE MODE" fiel ganz heraus, obwohl es die größte Schrift auf dem
+ * Cover war.
+ *
+ * Interpret und Titel sind fast immer das GRÖSSTE auf der Hülle, nicht
+ * das Oberste. Tesseract liefert zu jeder Zeile eine Bounding-Box und
+ * einen Konfidenzwert – danach wird jetzt ausgewählt, und erst zum
+ * Schluss die Lesereihenfolge wiederhergestellt.
+ */
+
+/**
+ * Müll an den Rändern einer Zeile abschneiden.
+ *
+ * Vorsicht bei einzelnen Zeichen am Ende: "Kid A" von Radiohead ist ein
+ * echter Titel. Deshalb wird nur gekürzt, solange mindestens zwei
+ * Bestandteile übrig bleiben.
+ */
+function coverZeileSaeubern(roh) {
+  let text = String(roh || "").replace(/\s+/g, " ").trim();
+  text = text.replace(/^[^\p{L}\p{N}]+/u, "").replace(/[^\p{L}\p{N})\]]+$/u, "");
+
+  const teile = text.split(" ").filter(Boolean);
+  while (teile.length > 2 && teile[teile.length - 1].length === 1) teile.pop();
+  return teile.join(" ").trim();
+}
+
+/**
+ * Die zwei aussagekräftigsten Zeilen als Suchtext.
+ * `zeilen` ist data.lines aus tesseract.js.
+ */
+function coverTextWaehlen(zeilen, { maxZeilen = 2 } = {}) {
+  const kandidaten = (zeilen || [])
+    .map((z, i) => ({
+      reihenfolge: i,
+      text: coverZeileSaeubern(z && z.text),
+      konfidenz: Number(z && z.confidence) || 0,
+      hoehe: z && z.bbox ? (z.bbox.y1 - z.bbox.y0) : 0,
+    }))
+    // Drei Buchstaben Mindestmaß: "5", "·" oder "LP" tragen nichts zur
+    // Suche bei, kosten aber einen der beiden Plätze.
+    .filter((z) => (z.text.match(/\p{L}/gu) || []).length >= 3)
+    // Unter 55 liest Tesseract in aller Regel Rauschen.
+    .filter((z) => z.konfidenz >= 55);
+
+  if (kandidaten.length === 0) return "";
+
+  const groesste = Math.max(...kandidaten.map((z) => z.hoehe), 1);
+  return kandidaten
+    .slice()
+    .sort((a, b) => bewerte(b) - bewerte(a))
+    .slice(0, maxZeilen)
+    .sort((a, b) => a.reihenfolge - b.reihenfolge)
+    .map((z) => z.text)
+    .join(" ");
+
+  // Größe wiegt doppelt: sie unterscheidet Titel von Kleingedrucktem.
+  // Die Konfidenz korrigiert nach, damit eine große Fehllesung nicht
+  // eine kleine, sichere schlägt.
+  function bewerte(z) {
+    return (z.hoehe / groesste) * 2 + z.konfidenz / 100;
+  }
+}
+
 /* ---------- Rückmeldung im Sucher ----------
  *
  * Die Statuszeile steht unter dem Rahmen. Wer ein Cover anvisiert,
@@ -557,12 +628,18 @@ async function captureCoverPhoto() {
       gzip: false,   // die Daten liegen entpackt – siehe scripts/vendor.sh
       logger: coverFortschritt,
     });
-    guess = (data.text || "")
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l.length >= 3 && /[a-zA-ZäöüÄÖÜ]/.test(l))
-      .slice(0, 2)
-      .join(" ");
+    // Bevorzugt über die Zeilenstruktur; ohne die bleibt der alte Weg
+    // über den reinen Text, damit eine ältere tesseract.js-Fassung den
+    // Cover-Scan nicht lahmlegt.
+    guess = coverTextWaehlen(data.lines);
+    if (!guess) {
+      guess = (data.text || "")
+        .split("\n")
+        .map((l) => coverZeileSaeubern(l))
+        .filter((l) => l.length >= 3 && /[a-zA-ZäöüÄÖÜ]/.test(l))
+        .slice(0, 2)
+        .join(" ");
+    }
   } catch (e) {
     // Nur merken, nicht anzeigen: das setStatus() am Ende hat die
     // Meldung hier früher unmittelbar wieder gelöscht, und der Nutzer

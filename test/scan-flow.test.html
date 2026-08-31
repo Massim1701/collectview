@@ -1364,6 +1364,67 @@ test("Ohne Bild von der Kamera blitzt auch nichts", async () => {
   coverStream = null;
 });
 
+/* ---------- Auswahl des Cover-Texts ---------- */
+
+function zeile(text, hoehe, konfidenz) {
+  return { text, confidence: konfidenz, bbox: { x0: 0, y0: 0, x1: 400, y1: hoehe } };
+}
+
+test("Der echte Fehlschlag: Depeche Mode – Interpret fiel raus, Titel hatte Müll", async () => {
+  // Nachgebaut aus einem Scan am Gerät: gelesen wurde
+  // "\ SPEAK & SPELL I u", "DEPECHE MODE" fehlte ganz – obwohl es die
+  // größte Schrift auf der Hülle war. Die alte Auswahl nahm die ersten
+  // zwei Zeilen, hier also die Spiegelung und den verschmutzten Titel.
+  const zeilen = [
+    zeile("~ ,, |", 9, 41),                  // Spiegelung in der Folie
+    zeile("\\ SPEAK & SPELL I u", 30, 78),
+    zeile("DEPECHE MODE", 34, 92),
+    zeile("MUTE RECORDS STUMM 5 STEREO", 11, 88),
+  ];
+
+  assertEqual(coverTextWaehlen(zeilen), "SPEAK & SPELL DEPECHE MODE");
+});
+
+test("Kleingedrucktes verdrängt nicht den Titel", async () => {
+  const zeilen = [
+    zeile("MUTE RECORDS", 10, 95),
+    zeile("STEREO", 10, 96),
+    zeile("ABBEY ROAD", 40, 90),
+    zeile("THE BEATLES", 38, 91),
+  ];
+  assertEqual(coverTextWaehlen(zeilen), "ABBEY ROAD THE BEATLES");
+});
+
+test("Die Lesereihenfolge bleibt erhalten, auch wenn nach Größe gewählt wird", async () => {
+  const zeilen = [
+    zeile("THE BEATLES", 30, 90),   // oben, etwas kleiner
+    zeile("ABBEY ROAD", 44, 92),    // unten, größer
+  ];
+  // Nach Größe gewinnt "ABBEY ROAD" – ausgegeben wird trotzdem von oben
+  // nach unten, sonst steht der Titel vor dem Interpreten.
+  assertEqual(coverTextWaehlen(zeilen), "THE BEATLES ABBEY ROAD");
+});
+
+test("Rauschen mit niedriger Konfidenz fliegt raus", async () => {
+  const zeilen = [
+    zeile("kkk www", 40, 22),
+    zeile("NEVERMIND", 30, 93),
+  ];
+  assertEqual(coverTextWaehlen(zeilen), "NEVERMIND");
+});
+
+test("Einzelbuchstaben am Ende gehen weg – aber 'Kid A' bleibt ganz", async () => {
+  assertEqual(coverZeileSaeubern("\\ SPEAK & SPELL I u"), "SPEAK & SPELL");
+  assertEqual(coverZeileSaeubern("Kid A"), "Kid A",
+    "ein echter Titel darf nicht der Müllentfernung zum Opfer fallen");
+});
+
+test("Ohne brauchbare Zeilen bleibt der Vorschlag leer", async () => {
+  assertEqual(coverTextWaehlen([]), "");
+  assertEqual(coverTextWaehlen([zeile("~ .", 8, 30)]), "");
+  assertEqual(coverTextWaehlen(null), "");
+});
+
 runTests();
 </script>
 </body>
