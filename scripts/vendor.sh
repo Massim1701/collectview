@@ -15,7 +15,17 @@ cd "$(dirname "$0")/.."
 
 [ -d node_modules ] || { echo "node_modules fehlt – erst 'npm install'"; exit 1; }
 
-rm -rf app/vendor
+# Nur wegräumen, was dieses Skript auch wieder herstellt.
+#
+# Vorher stand hier "rm -rf app/vendor". Das nahm zwei Dinge mit, die
+# das Skript nicht kennt und nicht zurückbringt: app/vendor/fonts/
+# (kommt aus scripts/vendor-fonts.sh) und app/vendor/water.css (hat
+# überhaupt keine Quelle im Repo). Wer npm run vendor lief, stand danach
+# ohne Schriften da und musste sie über git checkout zurückholen.
+rm -rf app/vendor/tesseract-core app/vendor/tessdata
+rm -f  app/vendor/supabase.js app/vendor/zxing-browser.min.js \
+       app/vendor/tesseract.min.js app/vendor/tesseract-worker.min.js \
+       app/vendor/tesseract.min.js.LICENSE.txt
 mkdir -p app/vendor/tesseract-core
 
 cp node_modules/@supabase/supabase-js/dist/umd/supabase.js      app/vendor/supabase.js
