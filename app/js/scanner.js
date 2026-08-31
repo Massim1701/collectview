@@ -408,7 +408,12 @@ async function startCoverCamera() {
     captureBtn.hidden = false;
     const kamera = kameraFeinschliff();
     lichtAnbieten();
-    setStatus(`Cover gut ausgeleuchtet in den Rahmen halten, dann „Foto aufnehmen“.${kamera ? " · " + kamera : ""}`, { active: true });
+    // Nicht mehr "gut ausgeleuchtet": genau das lädt zu direktem Licht
+    // auf glänzender Folie ein, und eine Spiegelung überschreibt den
+    // Text, statt ihn nur abzudunkeln. Gemessen an einem nachgebauten
+    // Glanzlicht: ohne Spiegelung beide Zeilen erkannt, mit Spiegelung
+    // keine einzige – und keine Bildvorverarbeitung holt das zurück.
+    setStatus(`Cover formatfüllend halten, Spiegelungen vermeiden – Hülle leicht kippen.${kamera ? " · " + kamera : ""}`, { active: true });
     await refreshCameraList(cameraSelect.value || undefined);
   } catch (e) {
     setStatus("Kamera-Zugriff fehlgeschlagen: " + e.message);
@@ -655,8 +660,23 @@ async function captureCoverPhoto() {
 
 function renderCoverGuessForm(guess) {
   resultsCard.style.display = "block";
-  setResultsHead("Cover-Foto", "Erkannter Text – bei Bedarf korrigieren, dann suchen.");
-  resultsEl.innerHTML = `
+  setResultsHead("Cover-Foto", guess
+    ? "Erkannter Text – bei Bedarf korrigieren, dann suchen."
+    : "Kein Text erkannt – eintragen oder noch einmal auslösen.");
+
+  // Leeres Ergebnis ohne Erklärung lässt den Nutzer die nächste Platte
+  // probieren, obwohl es an der Aufnahme liegt. Spiegelungen in der
+  // Klarsichthülle sind mit Abstand die häufigste Ursache – nachgemessen
+  // an einem nachgebauten Glanzlicht, und in der Praxis bestätigt:
+  // dieselbe Hülle ohne Folie wurde sofort erkannt.
+  const hinweis = guess ? "" : `
+    <p class="manual-hint" style="text-align:left;">
+      Meist liegt es an Spiegelungen in der Klarsichthülle. Hülle leicht
+      kippen, seitliches Licht statt von vorn – oder die Platte kurz
+      herausnehmen, das hilft am zuverlässigsten.
+    </p>`;
+
+  resultsEl.innerHTML = hinweis + `
     <form id="cover-guess-form" class="manual-form">
       <input class="field" id="cover-guess-text" placeholder="Titel und/oder Interpret" value="${escapeHtml(guess)}">
       <div class="scan-actions">

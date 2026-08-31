@@ -1425,6 +1425,22 @@ test("Ohne brauchbare Zeilen bleibt der Vorschlag leer", async () => {
   assertEqual(coverTextWaehlen(null), "");
 });
 
+test("Ohne erkannten Text nennt die App den wahrscheinlichsten Grund", async () => {
+  renderCoverGuessForm("");
+  const text = document.getElementById("results").textContent;
+  assert(/Spiegelungen/.test(text),
+    "ein leeres Feld ohne Erklärung lässt den Nutzer die nächste Platte probieren");
+  assert(/herausnehmen/.test(text),
+    "der zuverlässigste Rat gehört dazu – in der Praxis bestätigt");
+});
+
+test("Mit erkanntem Text steht kein Spiegelungs-Hinweis im Weg", async () => {
+  renderCoverGuessForm("DEPECHE MODE SPEAK & SPELL");
+  const text = document.getElementById("results").textContent;
+  assert(!/Spiegelungen/.test(text), "ein Ratschlag zur falschen Zeit ist Lärm");
+  assertEqual(document.getElementById("cover-guess-text").value, "DEPECHE MODE SPEAK & SPELL");
+});
+
 runTests();
 </script>
 </body>
