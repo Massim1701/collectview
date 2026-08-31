@@ -27,6 +27,9 @@ const frameEl = document.getElementById("scan-frame");
 const scanBtn = document.getElementById("scan-btn");
 const captureBtn = document.getElementById("capture-btn");
 const torchBtn = document.getElementById("torch-btn");
+const frameBlitz = document.getElementById("frame-blitz");
+const frameArbeit = document.getElementById("frame-arbeit");
+const frameArbeitText = document.getElementById("frame-arbeit-text");
 const cameraSelect = document.getElementById("camera-select");
 const modeToggle = document.getElementById("mode-toggle");
 const statusEl = document.getElementById("scan-status");
@@ -366,6 +369,7 @@ function stopScan() {
   // Der Knopf gehört zum laufenden Strom: ohne Kamera nichts zu schalten.
   torchBtn.hidden = true;
   lichtAn = false;
+  verbergeAuswertung();
   scanBtn.textContent = mode === "barcode" ? "Barcode-Scan starten" : "Kamera starten";
 }
 
@@ -433,6 +437,46 @@ function toggleCoverCamera() {
  * Absturz zu unterscheiden. Ab dem zweiten Mal liegen die Daten in
  * IndexedDB und die Ladephasen fallen weg.
  */
+/* ---------- Rückmeldung im Sucher ----------
+ *
+ * Die Statuszeile steht unter dem Rahmen. Wer ein Cover anvisiert,
+ * schaut aber in den Rahmen – und sah dort während der ganzen Auswertung
+ * weiter das Livebild, als wäre nichts passiert. Drei Dinge ändern das:
+ * ein Blitz beim Auslösen, das eingefrorene Bild, und darauf die Phase.
+ */
+
+/** Kurz aufblitzen wie eine Kamera. */
+function blitzAusloesen() {
+  frameBlitz.hidden = false;
+  frameBlitz.classList.remove("ausgeloest");
+  // Erzwingt einen Umbruch, sonst startet dieselbe Animation nicht neu.
+  void frameBlitz.offsetWidth;
+  frameBlitz.classList.add("ausgeloest");
+}
+
+/** Bild einfrieren und sagen, was gerade läuft. */
+function zeigeAuswertung(text) {
+  // pause() hält den letzten Frame stehen – der Nutzer sieht genau das
+  // Bild, das gerade ausgewertet wird, statt eines weiterlaufenden
+  // Livebilds, das mit dem Ergebnis nichts zu tun hat.
+  try { videoEl.pause(); } catch { /* ohne Standbild geht es auch */ }
+  frameArbeitText.textContent = text;
+  frameArbeit.hidden = false;
+}
+
+/** Auswertungstext aktualisieren, ohne die Schicht neu aufzubauen. */
+function auswertungSagt(text) {
+  if (!frameArbeit.hidden) frameArbeitText.textContent = text;
+}
+
+/** Zurück zum Livebild. */
+function verbergeAuswertung() {
+  frameArbeit.hidden = true;
+  frameBlitz.hidden = true;
+  frameBlitz.classList.remove("ausgeloest");
+  if (coverStream) { try { videoEl.play(); } catch { /* egal */ } }
+}
+
 function coverFortschritt(m) {
   const phase = {
     "loading tesseract core": "Texterkennung wird geladen",
@@ -446,6 +490,7 @@ function coverFortschritt(m) {
   if (!phase) return;
   const prozent = m.progress > 0 ? ` ${Math.round(m.progress * 100)} %` : "";
   setStatus(`${phase} …${prozent}`, { active: true, busy: true });
+  auswertungSagt(`${phase}${prozent}`);
 }
 
 async function captureCoverPhoto() {
@@ -465,6 +510,8 @@ async function captureCoverPhoto() {
   }
 
   captureBtn.disabled = true;
+  blitzAusloesen();
+  zeigeAuswertung("Cover wird ausgewertet …");
 
   const canvas = document.createElement("canvas");
   canvas.width = videoEl.videoWidth;
@@ -485,6 +532,7 @@ async function captureCoverPhoto() {
   // Kamera nur draufhielt, löste damit gar keine Abfrage aus.
   if (guess) {
     captureBtn.disabled = false;
+    verbergeAuswertung();
     setStatus("");
     lookupCoverText(guess);
     return;
@@ -523,6 +571,7 @@ async function captureCoverPhoto() {
   }
 
   captureBtn.disabled = false;
+  verbergeAuswertung();
   setStatus(fehler, { active: !!fehler });
   renderCoverGuessForm(guess);
 }

@@ -34,6 +34,34 @@
   .scan-frame.live .placeholder{ display:none; }
   .placeholder{ padding:46px 20px; text-align:center; color:#B9B2A4; font-size:14.5px; display:flex; flex-direction:column; align-items:center; gap:10px; }
 
+  /* Rückmeldung IM Sucher.
+     Die Statuszeile steht unter dem Rahmen – wer ein Cover anvisiert,
+     schaut aber in den Rahmen und sah dort weiter das Livebild, als
+     wäre nichts passiert. */
+
+  /* Auslöser: kurz aufblitzen wie bei einer Kamera. Erst dadurch ist
+     überhaupt zu erkennen, dass ein Foto entstanden ist. */
+  .frame-blitz{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
+  .frame-blitz.ausgeloest{ animation:blitz .45s ease-out; }
+  @keyframes blitz{ from{ opacity:.85; } to{ opacity:0; } }
+
+  /* Während der Auswertung liegt das eingefrorene Bild darunter,
+     abgedunkelt, mit der aktuellen Phase darauf. */
+  .frame-arbeit{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:12px; padding:0 18px;
+    background:rgba(16,16,19,.66); color:#fff;
+    font-size:14.5px; font-weight:700; text-align:center; line-height:1.4;
+  }
+  .frame-arbeit .spinner{
+    width:24px; height:24px; border-width:3px; margin:0;
+    border-color:rgba(255,255,255,.28); border-top-color:#fff;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .frame-blitz.ausgeloest{ animation:none; }
+    .frame-arbeit .spinner{ animation-duration:2s; }
+  }
+
   .status{ font-size:14.5px; color:var(--text-muted); margin-top:14px; min-height:18px; line-height:1.5; }
   .status.active{ color:var(--accent-text); font-weight:700; }
 
@@ -76,6 +104,11 @@
       <div class="placeholder">
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="8" width="10" height="8" rx="1"/><path d="M4 8V6a2 2 0 0 1 2-2h2M20 8V6a2 2 0 0 0-2-2h-2M4 16v2a2 2 0 0 0 2 2h2M20 16v2a2 2 0 0 1-2 2h-2"/></svg>
         Kamera noch nicht aktiv
+      </div>
+      <div class="frame-blitz" id="frame-blitz" hidden></div>
+      <div class="frame-arbeit" id="frame-arbeit" hidden aria-live="polite">
+        <span class="spinner"></span>
+        <span id="frame-arbeit-text">Cover wird ausgewertet …</span>
       </div>
     </div>
 

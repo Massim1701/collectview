@@ -10,7 +10,7 @@
 
 <!-- DOM wie auf scanner.html, nur ohne Deko -->
 <div id="bottomnav"></div>
-<div id="scan-frame"><video id="video"></video></div>
+<div id="scan-frame"><video id="video"></video><div class="frame-blitz" id="frame-blitz" hidden></div><div class="frame-arbeit" id="frame-arbeit" hidden><span id="frame-arbeit-text"></span></div></div>
 <button id="scan-btn" type="button"></button>
 <!-- seit 729ad2b (Cover-Modus): scanner.js holt diese drei beim Laden.
      Fehlen sie, wirft die Datei und der Klick-Listener am Ende wird nie
@@ -1298,6 +1298,70 @@ test("Ohne Discogs-Treffer wird auch nichts in den Katalog geschrieben", async (
 
   assertEqual(rpcAufrufe.filter((r) => r.name === "upsert_release").length, 0,
     "ein leeres Ergebnis im Katalog wäre schlimmer als keins – es verdeckte spätere Treffer");
+});
+
+/* ---------- Rückmeldung im Sucher ---------- */
+
+test("Beim Auslösen friert das Bild ein und die Auswertung wird angezeigt", async () => {
+  resetStub();
+  const video = document.getElementById("video");
+  Object.defineProperty(video, "videoWidth",  { value: 640, configurable: true });
+  Object.defineProperty(video, "videoHeight", { value: 300, configurable: true });
+  Object.defineProperty(video, "srcObject", {
+    value: { getVideoTracks: () => [{ stop() {}, addEventListener() {} }] },
+    writable: true, configurable: true,
+  });
+  coverStream = video.srcObject;
+
+  // Nicht abwarten: mitten im Vorgang nachsehen, nicht danach.
+  const lauf = captureCoverPhoto();
+
+  assert(!document.getElementById("frame-arbeit").hidden,
+    "ohne Anzeige im Rahmen sieht der Nutzer nur weiterlaufendes Livebild");
+  assert(video.paused,
+    "das Standbild zeigt genau das Bild, das ausgewertet wird");
+  assert(document.getElementById("frame-blitz").classList.contains("ausgeloest"),
+    "der Blitz ist das Einzige, was 'ein Foto ist entstanden' unmissverständlich macht");
+
+  await lauf;
+  coverStream = null;
+});
+
+test("Nach der Auswertung ist die Anzeige wieder weg", async () => {
+  resetStub();
+  const video = document.getElementById("video");
+  Object.defineProperty(video, "videoWidth",  { value: 640, configurable: true });
+  Object.defineProperty(video, "videoHeight", { value: 300, configurable: true });
+  Object.defineProperty(video, "srcObject", {
+    value: { getVideoTracks: () => [{ stop() {}, addEventListener() {} }] },
+    writable: true, configurable: true,
+  });
+  coverStream = video.srcObject;
+
+  await captureCoverPhoto();
+
+  assert(document.getElementById("frame-arbeit").hidden,
+    "eine stehengebliebene Schicht verdeckt den Sucher dauerhaft");
+  assert(document.getElementById("frame-blitz").hidden);
+  coverStream = null;
+});
+
+test("Ohne Bild von der Kamera blitzt auch nichts", async () => {
+  resetStub();
+  const video = document.getElementById("video");
+  Object.defineProperty(video, "videoWidth",  { value: 0, configurable: true });
+  Object.defineProperty(video, "videoHeight", { value: 0, configurable: true });
+  Object.defineProperty(video, "srcObject", {
+    value: { getVideoTracks: () => [{ stop() {}, addEventListener() {} }] },
+    writable: true, configurable: true,
+  });
+  coverStream = video.srcObject;
+
+  await captureCoverPhoto();
+
+  assert(document.getElementById("frame-arbeit").hidden,
+    "ein Blitz ohne Aufnahme wäre eine Rückmeldung über etwas, das nicht stattfand");
+  coverStream = null;
 });
 
 runTests();
