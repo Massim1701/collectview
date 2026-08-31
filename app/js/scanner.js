@@ -506,6 +506,7 @@ async function captureCoverPhoto() {
       workerPath: "./vendor/tesseract-worker.min.js",
       corePath: "./vendor/tesseract-core/",
       langPath: "./vendor/tessdata/",
+      gzip: false,   // die Daten liegen entpackt – siehe scripts/vendor.sh
       logger: coverFortschritt,
     });
     guess = (data.text || "")

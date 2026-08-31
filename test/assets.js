@@ -94,6 +94,43 @@ for (const datei of sammle("app/js", ".js")) {
   }
 }
 
+/* ---------- Sprachdaten: heißen sie so, wie sie angefordert werden? ----------
+   Eigene Prüfung, weil hier zwei Dinge zusammenpassen müssen: die
+   Sprachen aus dem recognize()-Aufruf und die Endung, die sich aus
+   gzip: true|false ergibt.
+
+   Androids Asset-Verpackung entpackt .gz-Dateien beim Bauen und
+   streicht die Endung – deu.traineddata.gz heißt im APK
+   deu.traineddata. Die Datei ist also da, nur unter anderem Namen, und
+   die Texterkennung schlägt trotzdem fehl. Genau davor schützt das
+   hier. */
+
+for (const datei of sammle("app/js", ".js")) {
+  const text = fs.readFileSync(path.join(wurzel, datei), "utf8");
+
+  const langPfad = text.match(/langPath:\s*"([^"]+)"/);
+  if (!langPfad) continue;
+
+  const gzip = /gzip:\s*true/.test(text);
+  const endung = gzip ? ".traineddata.gz" : ".traineddata";
+
+  const sprachen = new Set();
+  for (const [, liste] of text.matchAll(/recognize\([^,]+,\s*"([a-z+]+)"/g)) {
+    liste.split("+").forEach((l) => sprachen.add(l));
+  }
+
+  for (const sprache of sprachen) {
+    geprueft += 1;
+    const ziel = path.resolve(wurzel, "app", langPfad[1], sprache + endung);
+    if (!fs.existsSync(ziel)) {
+      fehler.push(
+        `${datei}: Texterkennung verlangt "${sprache}${endung}" (gzip: ${gzip}), ` +
+        `aber ${path.relative(wurzel, ziel)} fehlt`,
+      );
+    }
+  }
+}
+
 /* ---------- Was der Tesseract-Worker selbst nachlädt ----------
    Der Worker entscheidet zur Laufzeit, welche Core-Datei er per
    importScripts holt – abhängig davon, ob das Gerät SIMD kann. Fehlt

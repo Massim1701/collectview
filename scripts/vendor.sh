@@ -50,10 +50,22 @@ cp node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js app/vendor/te
 # Fast-Modelle statt der Standardmodelle: 2,7 MB gegen 17 MB. Für ein
 # paar große Wörter auf einer Plattenhülle reicht das, und es hält das
 # App-Bundle klein.
+# Entpackt ablegen, nicht als .gz.
+#
+# Androids Asset-Verpackung entpackt .gz-Dateien beim Bauen und streicht
+# die Endung: aus deu.traineddata.gz wird im APK deu.traineddata.
+# tesseract.js fragt dann nach einer Datei, die es dort nicht mehr gibt,
+# und die Texterkennung schlägt auf Android vollständig fehl – derselbe
+# Fehler wie zuvor auf iOS, nur von der Build-Kette erzeugt.
+#
+# Unkomprimiert ist die einzige Fassung, die auf allen drei Wegen
+# (Browser, iOS-Bundle, APK) unverändert ankommt. Kostet 5,6 statt
+# 2,7 MB; das APK trug die entpackte Fassung ohnehin schon.
+# Dazu gehört gzip:false an beiden Tesseract-Aufrufen.
 mkdir -p app/vendor/tessdata
 for lang in eng deu; do
   curl -sfL "https://tessdata.projectnaptha.com/4.0.0_fast/$lang.traineddata.gz" \
-       -o "app/vendor/tessdata/$lang.traineddata.gz"
+    | gunzip > "app/vendor/tessdata/$lang.traineddata"
 done
 
 cp node_modules/tesseract.js/dist/tesseract.min.js.LICENSE.txt  app/vendor/
