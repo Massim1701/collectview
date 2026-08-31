@@ -27,6 +27,7 @@ const frameEl = document.getElementById("scan-frame");
 const scanBtn = document.getElementById("scan-btn");
 const captureBtn = document.getElementById("capture-btn");
 const torchBtn = document.getElementById("torch-btn");
+const frameStandbild = document.getElementById("frame-standbild");
 const frameBlitz = document.getElementById("frame-blitz");
 const frameArbeit = document.getElementById("frame-arbeit");
 const frameArbeitText = document.getElementById("frame-arbeit-text");
@@ -442,6 +443,92 @@ function toggleCoverCamera() {
  * Absturz zu unterscheiden. Ab dem zweiten Mal liegen die Daten in
  * IndexedDB und die Ladephasen fallen weg.
  */
+/* ---------- Mehrere Bilder statt einem ----------
+ *
+ * Eine Spiegelung überschreibt das Bild, sie dämpft es nicht – kein
+ * Filter holt zurück, was unter dem Glanzlicht liegt (gemessen: weder
+ * Graustufen noch Kontrastspreizung noch lokale Schwellwerte bringen
+ * auch nur eine Zeile zurück).
+ *
+ * Aber das Glanzlicht hängt am Haltewinkel und wandert bei der
+ * kleinsten Handbewegung. Genau daraus zieht Google Lens seinen Vorteil:
+ * es arbeitet auf dem laufenden Bild und nimmt den Moment, in dem die
+ * Stelle frei ist. Der Barcode-Scanner hier macht das längst so – der
+ * Cover-Weg nahm bisher genau ein Bild.
+ *
+ * Gemessen an einer Serie, in der das Glanzband über die Schrift
+ * wandert: das schlechteste Bild ergibt 0 von 2 Zeilen, das nach dieser
+ * Bewertung beste 2 von 2. Die Reihenfolge der Punkte sagt das
+ * OCR-Ergebnis exakt voraus.
+ */
+
+/** Wie viele Bilder, in welchem Abstand. Rund eine Sekunde insgesamt –
+    lang genug, dass die Hand das Glanzlicht verschiebt, kurz genug,
+    dass es sich nicht nach Warten anfühlt. */
+const SERIE_BILDER = 5;
+const SERIE_ABSTAND_MS = 220;
+
+/**
+ * Ein Bild bewerten: viel Struktur ist gut, ausgebrannte Flächen sind
+ * schlecht.
+ *
+ * Bewusst nur als VERGLEICH innerhalb einer Serie brauchbar, nicht als
+ * absolutes Urteil "hier ist eine Spiegelung". Das wäre nicht
+ * trennscharf: ein weisses Cover kommt auf 88 % helle Fläche, ein
+ * Glanzlicht auf 28 %. Innerhalb derselben Serie zeigt dasselbe Cover
+ * unter denselben Bedingungen – da trägt der Vergleich.
+ */
+function bewerteBild(canvas) {
+  const x = canvas.getContext("2d", { willReadFrequently: true });
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return 0;
+
+  const p = x.getImageData(0, 0, w, h).data;
+  let hell = 0, detail = 0, n = 0;
+
+  // Jede zweite Zeile und Spalte genügt und viertelt die Rechenzeit.
+  for (let y = 1; y < h; y += 2) {
+    for (let xx = 1; xx < w; xx += 2) {
+      const i = (y * w + xx) * 4;
+      const l = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2];
+      if (l > 235) hell++;
+      const links = 0.299 * p[i - 4] + 0.587 * p[i - 3] + 0.114 * p[i - 2];
+      const oben = 0.299 * p[i - w * 4] + 0.587 * p[i - w * 4 + 1] + 0.114 * p[i - w * 4 + 2];
+      detail += Math.abs(l - links) + Math.abs(l - oben);
+      n++;
+    }
+  }
+  if (!n) return 0;
+  return (detail / n) * (1 - hell / n);
+}
+
+/** Ein Standbild aus dem laufenden Video. */
+function bildAusVideo() {
+  const c = document.createElement("canvas");
+  c.width = videoEl.videoWidth;
+  c.height = videoEl.videoHeight;
+  c.getContext("2d").drawImage(videoEl, 0, 0);
+  return c;
+}
+
+/**
+ * Eine Serie aufnehmen und nach Brauchbarkeit sortiert zurückgeben,
+ * bestes Bild zuerst.
+ */
+async function nimmBilderserie(melde) {
+  const bilder = [];
+  for (let i = 0; i < SERIE_BILDER; i++) {
+    if (!coverStream) break;
+    const c = bildAusVideo();
+    if (c.width && c.height) bilder.push({ canvas: c, punkte: bewerteBild(c) });
+    if (melde) melde(i + 1, SERIE_BILDER);
+    if (i < SERIE_BILDER - 1) {
+      await new Promise((f) => setTimeout(f, SERIE_ABSTAND_MS));
+    }
+  }
+  return bilder.sort((a, b) => b.punkte - a.punkte);
+}
+
 /* ---------- Welcher Text vom Cover taugt zur Suche? ----------
  *
  * Bisher wurden die ERSTEN zwei Zeilen genommen. Auf einer Plattenhülle
@@ -532,12 +619,23 @@ function blitzAusloesen() {
 
 /** Bild einfrieren und sagen, was gerade läuft. */
 function zeigeAuswertung(text) {
-  // pause() hält den letzten Frame stehen – der Nutzer sieht genau das
-  // Bild, das gerade ausgewertet wird, statt eines weiterlaufenden
-  // Livebilds, das mit dem Ergebnis nichts zu tun hat.
-  try { videoEl.pause(); } catch { /* ohne Standbild geht es auch */ }
   frameArbeitText.textContent = text;
   frameArbeit.hidden = false;
+}
+
+/**
+ * Das Bild einfrieren, das tatsächlich ausgewertet wird.
+ *
+ * Nicht video.pause(): das zeigte den ZULETZT gesehenen Frame. Gewählt
+ * wird aber das beste aus der Serie, und das ist meistens ein anderes.
+ * Wer sich fragt, warum die Erkennung danebenlag, soll das Bild sehen,
+ * um das es ging.
+ */
+function zeigeStandbild(canvas) {
+  frameStandbild.width = canvas.width;
+  frameStandbild.height = canvas.height;
+  frameStandbild.getContext("2d").drawImage(canvas, 0, 0);
+  frameStandbild.hidden = false;
 }
 
 /** Auswertungstext aktualisieren, ohne die Schicht neu aufzubauen. */
@@ -549,8 +647,8 @@ function auswertungSagt(text) {
 function verbergeAuswertung() {
   frameArbeit.hidden = true;
   frameBlitz.hidden = true;
+  frameStandbild.hidden = true;
   frameBlitz.classList.remove("ausgeloest");
-  if (coverStream) { try { videoEl.play(); } catch { /* egal */ } }
 }
 
 function coverFortschritt(m) {
@@ -587,12 +685,23 @@ async function captureCoverPhoto() {
 
   captureBtn.disabled = true;
   blitzAusloesen();
-  zeigeAuswertung("Cover wird ausgewertet …");
+  zeigeAuswertung("Bild wird aufgenommen …");
 
-  const canvas = document.createElement("canvas");
-  canvas.width = videoEl.videoWidth;
-  canvas.height = videoEl.videoHeight;
-  canvas.getContext("2d").drawImage(videoEl, 0, 0);
+  // Serie statt Einzelbild – und dabei läuft das Video bewusst WEITER.
+  // Die kleine Handbewegung ist der ganze Punkt: sie verschiebt das
+  // Glanzlicht, und eines der Bilder trifft die Schrift frei.
+  setStatus("Cover im Rahmen lassen und leicht kippen …", { active: true, busy: true });
+  const serie = await nimmBilderserie((i, n) => auswertungSagt(`Bild ${i} von ${n}`));
+
+  if (serie.length === 0) {
+    captureBtn.disabled = false;
+    verbergeAuswertung();
+    setStatus("Die Kamera hat kein Bild geliefert. Noch einmal auslösen.", { active: true });
+    return;
+  }
+
+  const canvas = serie[0].canvas;
+  zeigeStandbild(canvas);
 
   let guess = "";
   let fehler = "";
@@ -600,6 +709,7 @@ async function captureCoverPhoto() {
   // Stufe 1: das Bild wiedererkennen lassen. Schlägt fehl oder ist der
   // Weg nicht eingerichtet, kommt unten die Texterkennung.
   setStatus("Cover wird bestimmt …", { active: true, busy: true });
+  auswertungSagt("Cover wird bestimmt …");
   const erkannt = await coverErkennen(canvas);
   guess = coverSuchtext(erkannt);
 
@@ -614,42 +724,48 @@ async function captureCoverPhoto() {
     return;
   }
 
-  // Stufe 2: Texterkennung im Browser.
+  // Stufe 2: Texterkennung im Browser – bestes Bild zuerst, bei leerem
+  // Ergebnis noch das zweitbeste. Mehr nicht: jeder weitere Durchgang
+  // kostet Sekunden und bringt nach der Bewertung kaum noch etwas.
   setStatus("Text auf dem Cover wird gelesen …", { active: true, busy: true });
-  try {
-    // Worker, WASM-Kern UND Sprachdaten liegen lokal (app/vendor).
-    // Ohne diese drei Pfade holt tesseract.js alles zur Laufzeit vom CDN
-    // – und genau daran ist die Texterkennung auf dem iPhone gescheitert:
-    // im WKWebView schlug der Abruf der Sprachdaten mit "NetworkError:
-    // Load failed" fehl, und zwar bei jedem Cover gleichermaßen.
-    //
-    // Dass es dafür keine 30 MB braucht, war die eigentliche Erkenntnis:
-    // die Fast-Modelle von deu+eng wiegen zusammen 2,7 MB und reichen für
-    // ein paar große Wörter auf einer Plattenhülle allemal.
-    const { data } = await Tesseract.recognize(canvas, "deu+eng", {
-      workerPath: "./vendor/tesseract-worker.min.js",
-      corePath: "./vendor/tesseract-core/",
-      langPath: "./vendor/tessdata/",
-      gzip: false,   // die Daten liegen entpackt – siehe scripts/vendor.sh
-      logger: coverFortschritt,
-    });
-    // Bevorzugt über die Zeilenstruktur; ohne die bleibt der alte Weg
-    // über den reinen Text, damit eine ältere tesseract.js-Fassung den
-    // Cover-Scan nicht lahmlegt.
-    guess = coverTextWaehlen(data.lines);
-    if (!guess) {
-      guess = (data.text || "")
-        .split("\n")
-        .map((l) => coverZeileSaeubern(l))
-        .filter((l) => l.length >= 3 && /[a-zA-ZäöüÄÖÜ]/.test(l))
-        .slice(0, 2)
-        .join(" ");
+  for (const kandidat of serie.slice(0, 2)) {
+    zeigeStandbild(kandidat.canvas);
+    try {
+      // Worker, WASM-Kern UND Sprachdaten liegen lokal (app/vendor).
+      // Ohne diese drei Pfade holt tesseract.js alles zur Laufzeit vom CDN
+      // – und genau daran ist die Texterkennung auf dem iPhone gescheitert:
+      // im WKWebView schlug der Abruf der Sprachdaten mit "NetworkError:
+      // Load failed" fehl, und zwar bei jedem Cover gleichermaßen.
+      //
+      // Dass es dafür keine 30 MB braucht, war die eigentliche Erkenntnis:
+      // die Fast-Modelle von deu+eng wiegen zusammen 2,7 MB und reichen für
+      // ein paar große Wörter auf einer Plattenhülle allemal.
+      const { data } = await Tesseract.recognize(kandidat.canvas, "deu+eng", {
+        workerPath: "./vendor/tesseract-worker.min.js",
+        corePath: "./vendor/tesseract-core/",
+        langPath: "./vendor/tessdata/",
+        gzip: false,   // die Daten liegen entpackt – siehe scripts/vendor.sh
+        logger: coverFortschritt,
+      });
+      // Bevorzugt über die Zeilenstruktur; ohne die bleibt der alte Weg
+      // über den reinen Text, damit eine ältere tesseract.js-Fassung den
+      // Cover-Scan nicht lahmlegt.
+      guess = coverTextWaehlen(data.lines);
+      if (!guess) {
+        guess = (data.text || "")
+          .split("\n")
+          .map((l) => coverZeileSaeubern(l))
+          .filter((l) => l.length >= 3 && /[a-zA-ZäöüÄÖÜ]/.test(l))
+          .slice(0, 2)
+          .join(" ");
+      }
+    } catch (e) {
+      // Nur merken, nicht anzeigen: das setStatus() am Ende hat die
+      // Meldung hier früher unmittelbar wieder gelöscht, und der Nutzer
+      // stand vor einem leeren Formular ohne Grund.
+      fehler = "Texterkennung fehlgeschlagen – Text von Hand eintragen.";
     }
-  } catch (e) {
-    // Nur merken, nicht anzeigen: das setStatus() am Ende hat die
-    // Meldung hier früher unmittelbar wieder gelöscht, und der Nutzer
-    // stand vor einem leeren Formular ohne Grund.
-    fehler = "Texterkennung fehlgeschlagen – Text von Hand eintragen.";
+    if (guess) break;
   }
 
   captureBtn.disabled = false;

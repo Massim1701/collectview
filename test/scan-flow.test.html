@@ -10,7 +10,7 @@
 
 <!-- DOM wie auf scanner.html, nur ohne Deko -->
 <div id="bottomnav"></div>
-<div id="scan-frame"><video id="video"></video><div class="frame-blitz" id="frame-blitz" hidden></div><div class="frame-arbeit" id="frame-arbeit" hidden><span id="frame-arbeit-text"></span></div></div>
+<div id="scan-frame"><video id="video"></video><canvas id="frame-standbild" hidden></canvas><div class="frame-blitz" id="frame-blitz" hidden></div><div class="frame-arbeit" id="frame-arbeit" hidden><span id="frame-arbeit-text"></span></div></div>
 <button id="scan-btn" type="button"></button>
 <!-- seit 729ad2b (Cover-Modus): scanner.js holt diese drei beim Laden.
      Fehlen sie, wirft die Datei und der Klick-Listener am Ende wird nie
@@ -1439,6 +1439,60 @@ test("Mit erkanntem Text steht kein Spiegelungs-Hinweis im Weg", async () => {
   const text = document.getElementById("results").textContent;
   assert(!/Spiegelungen/.test(text), "ein Ratschlag zur falschen Zeit ist Lärm");
   assertEqual(document.getElementById("cover-guess-text").value, "DEPECHE MODE SPEAK & SPELL");
+});
+
+/* ---------- Bildserie ---------- */
+
+/** Fläche mit wählbarem Anteil ausgebrannter Pixel und etwas Struktur. */
+function testflaeche(hellAnteil) {
+  const c = document.createElement("canvas");
+  c.width = 60; c.height = 60;
+  const x = c.getContext("2d");
+  // Struktur: abwechselnd dunkle und mittlere Streifen.
+  for (let y = 0; y < 60; y++) {
+    x.fillStyle = y % 2 ? "#202020" : "#909090";
+    x.fillRect(0, y, 60, 1);
+  }
+  // Ausgebrannte Fläche von oben.
+  x.fillStyle = "#ffffff";
+  x.fillRect(0, 0, 60, Math.round(60 * hellAnteil));
+  return c;
+}
+
+test("Ein Bild mit weniger ausgebrannter Fläche wird besser bewertet", async () => {
+  const wenig = bewerteBild(testflaeche(0.05));
+  const viel  = bewerteBild(testflaeche(0.60));
+  assert(wenig > viel,
+    `weniger Glanz muss besser punkten – ${wenig.toFixed(2)} gegen ${viel.toFixed(2)}`);
+});
+
+test("Ein strukturloses Bild punktet schlechter als ein strukturiertes", async () => {
+  const leer = document.createElement("canvas");
+  leer.width = 60; leer.height = 60;
+  const x = leer.getContext("2d");
+  x.fillStyle = "#808080"; x.fillRect(0, 0, 60, 60);
+
+  assert(bewerteBild(testflaeche(0.05)) > bewerteBild(leer),
+    "eine gleichförmige Fläche trägt keinen Text");
+});
+
+test("Ohne Bilddaten gibt die Bewertung null zurück statt zu werfen", async () => {
+  const leer = document.createElement("canvas");
+  leer.width = 0; leer.height = 0;
+  assertEqual(bewerteBild(leer), 0);
+});
+
+test("Das ausgewertete Bild wird im Sucher gezeigt, nicht der letzte Frame", async () => {
+  // zeigeStandbild übernimmt das übergebene Bild – video.pause() hätte
+  // den zuletzt gesehenen Frame gezeigt, und der ist nach der Serie
+  // meistens ein anderer als der gewählte.
+  const b = testflaeche(0.1);
+  zeigeStandbild(b);
+  const sb = document.getElementById("frame-standbild");
+  assert(!sb.hidden, "das ausgewertete Bild gehört sichtbar");
+  assertEqual(sb.width, 60);
+  verbergeAuswertung();
+  assert(sb.hidden, "danach gehört der Sucher wieder frei");
 });
 
 runTests();
