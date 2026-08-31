@@ -1219,6 +1219,28 @@ test("Ohne Erkennung bleibt der Suchtext leer – dann greift die Texterkennung"
   assertEqual(coverSuchtext({ label: "", entitaeten: [] }), "");
 });
 
+test("Ohne Bild von der Kamera wird gar nicht erst ausgewertet", async () => {
+  resetStub();
+  // Kamera läuft, liefert aber noch keine Metadaten: videoWidth ist 0.
+  const video = document.getElementById("video");
+  Object.defineProperty(video, "videoWidth",  { value: 0, configurable: true });
+  Object.defineProperty(video, "videoHeight", { value: 0, configurable: true });
+  Object.defineProperty(video, "srcObject", {
+    value: { getVideoTracks: () => [{ stop() {}, addEventListener() {} }] },
+    writable: true, configurable: true,
+  });
+  coverStream = video.srcObject;
+  gesuchtePfade = [];
+
+  await captureCoverPhoto();
+
+  assertEqual(gesuchtePfade.length, 0,
+    "eine 0x0-Fläche hätte Bild- und Texterkennung ein leeres Bild untergeschoben");
+  assert(document.getElementById("scan-status").textContent.includes("noch kein Bild"),
+    "der Grund gehört hingeschrieben, sonst sieht es aus wie ein unlesbares Cover");
+  coverStream = null;
+});
+
 runTests();
 </script>
 </body>

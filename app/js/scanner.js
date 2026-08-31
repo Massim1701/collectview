@@ -440,8 +440,21 @@ function coverFortschritt(m) {
 
 async function captureCoverPhoto() {
   if (!coverStream) return;
+
+  // Ohne Bilddaten gibt es nichts zu erkennen.
+  //
+  // videoWidth bleibt 0, solange der Strom noch keine Metadaten geliefert
+  // hat – auf iOS direkt nach dem Kamerastart regelmäßig der Fall. Ohne
+  // diese Prüfung entstand eine 0x0-Fläche: drawImage lief ins Leere,
+  // Bild- und Texterkennung bekamen ein leeres Bild und meldeten brav
+  // "nichts erkannt". Von außen sah das aus, als sei das Cover nicht
+  // lesbar, dabei war nie eines aufgenommen worden.
+  if (!videoEl.videoWidth || !videoEl.videoHeight) {
+    setStatus("Die Kamera liefert noch kein Bild. Kurz warten, dann erneut auslösen.", { active: true });
+    return;
+  }
+
   captureBtn.disabled = true;
-  setStatus("Text auf dem Cover wird gelesen …", { active: true, busy: true });
 
   const canvas = document.createElement("canvas");
   canvas.width = videoEl.videoWidth;
