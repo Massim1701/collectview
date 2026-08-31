@@ -1495,6 +1495,34 @@ test("Das ausgewertete Bild wird im Sucher gezeigt, nicht der letzte Frame", asy
   assert(sb.hidden, "danach gehört der Sucher wieder frei");
 });
 
+test("Die Bewertung urteilt nach dem Verkleinern genauso", async () => {
+  // Die Verkleinerung ist eine reine Tempo-Massnahme. Ändert sie die
+  // Rangfolge, ist sie keine Optimierung mehr, sondern ein Fehler.
+  const gross = document.createElement("canvas");
+  gross.width = 1200; gross.height = 1200;
+  const gx = gross.getContext("2d");
+  for (let y = 0; y < 1200; y += 4) {
+    gx.fillStyle = (y / 4) % 2 ? "#202020" : "#909090";
+    gx.fillRect(0, y, 1200, 4);
+  }
+  const glanz = document.createElement("canvas");
+  glanz.width = 1200; glanz.height = 1200;
+  glanz.getContext("2d").drawImage(gross, 0, 0);
+  const bx = glanz.getContext("2d");
+  bx.fillStyle = "#ffffff"; bx.fillRect(0, 0, 1200, 700);
+
+  assert(bewerteBild(gross) > bewerteBild(glanz),
+    "das Bild mit der ausgebrannten Fläche muss auch verkleinert schlechter punkten");
+});
+
+test("Aus der Serie werden nur die besten Vollbilder aufgehoben", async () => {
+  // Fünf Vollbilder gleichzeitig im Speicher sind auf einem
+  // Einsteigergerät kein Nichts.
+  assert(SERIE_BEHALTEN <= 2,
+    "mehr als zwei Durchgänge durch die Texterkennung gibt es ohnehin nicht");
+  assert(SERIE_BEHALTEN < SERIE_BILDER, "sonst wird nichts eingespart");
+});
+
 runTests();
 </script>
 </body>
