@@ -483,14 +483,19 @@ async function captureCoverPhoto() {
   // Stufe 2: Texterkennung im Browser.
   setStatus("Text auf dem Cover wird gelesen …", { active: true, busy: true });
   try {
-    // Worker und WASM-Kern liegen lokal (app/vendor) – ohne diese Pfade
-    // holt tesseract.js sie zur Laufzeit vom CDN, und die App wäre dort
-    // ohne Netz blind. Die Sprachdaten (langPath) bleiben bewusst am
-    // CDN: deu+eng wären rund 30 MB im Bundle. Sie werden einmal geladen
-    // und danach von tesseract.js in IndexedDB gehalten.
+    // Worker, WASM-Kern UND Sprachdaten liegen lokal (app/vendor).
+    // Ohne diese drei Pfade holt tesseract.js alles zur Laufzeit vom CDN
+    // – und genau daran ist die Texterkennung auf dem iPhone gescheitert:
+    // im WKWebView schlug der Abruf der Sprachdaten mit "NetworkError:
+    // Load failed" fehl, und zwar bei jedem Cover gleichermaßen.
+    //
+    // Dass es dafür keine 30 MB braucht, war die eigentliche Erkenntnis:
+    // die Fast-Modelle von deu+eng wiegen zusammen 2,7 MB und reichen für
+    // ein paar große Wörter auf einer Plattenhülle allemal.
     const { data } = await Tesseract.recognize(canvas, "deu+eng", {
       workerPath: "./vendor/tesseract-worker.min.js",
       corePath: "./vendor/tesseract-core/",
+      langPath: "./vendor/tessdata/",
       logger: coverFortschritt,
     });
     guess = (data.text || "")

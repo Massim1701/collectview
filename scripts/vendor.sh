@@ -28,6 +28,22 @@ cp node_modules/tesseract.js/dist/worker.min.js                 app/vendor/tesse
 cp node_modules/tesseract.js-core/tesseract-core-simd-lstm.js   app/vendor/tesseract-core/
 cp node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm app/vendor/tesseract-core/
 
+# Sprachdaten für die Texterkennung.
+#
+# Kommen nicht aus node_modules, sondern von dem CDN, das tesseract.js
+# sonst zur Laufzeit selbst befragen würde. Genau das ist im WKWebView
+# gescheitert ("NetworkError: Load failed"), womit die Cover-Erkennung
+# auf dem iPhone bei jedem Cover fehlschlug.
+#
+# Fast-Modelle statt der Standardmodelle: 2,7 MB gegen 17 MB. Für ein
+# paar große Wörter auf einer Plattenhülle reicht das, und es hält das
+# App-Bundle klein.
+mkdir -p app/vendor/tessdata
+for lang in eng deu; do
+  curl -sfL "https://tessdata.projectnaptha.com/4.0.0_fast/$lang.traineddata.gz" \
+       -o "app/vendor/tessdata/$lang.traineddata.gz"
+done
+
 cp node_modules/tesseract.js/dist/tesseract.min.js.LICENSE.txt  app/vendor/
 cp node_modules/tesseract.js-core/LICENSE                       app/vendor/tesseract-core/LICENSE
 

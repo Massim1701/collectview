@@ -47,10 +47,13 @@ bleiben. Neue Version einer Bibliothek: Version in `package.json` ändern,
 dann das jeweilige Skript laufen lassen – nie die Datei in `app/vendor/`
 von Hand anfassen.
 
-Einzige Ausnahme, die noch ans Netz geht: die Sprachdaten für die
-Texterkennung (`deu+eng`, rund 30 MB). Die lädt Tesseract beim ersten
-Cover-Scan nach und legt sie in IndexedDB ab. Alles andere – Login,
-Sammlung, Barcode-Scan – läuft ohne Netz an.
+**Seit `e33ff22` gibt es keine Ausnahme mehr: auch die Sprachdaten für
+die Texterkennung liegen lokal** (`app/vendor/tessdata/`, `deu+eng` als
+Fast-Modelle, zusammen 2,7 MB). Vorher holte tesseract.js sie beim ersten
+Cover-Scan vom CDN – im WKWebView scheiterte das mit `NetworkError: Load
+failed`, und die Cover-Erkennung ging auf dem iPhone bei jedem Cover
+fehl. Alle drei Pfade (`workerPath`, `corePath`, `langPath`) müssen
+gesetzt sein, sonst greift tesseract.js wieder ans Netz.
 
 `scripts/build-www.sh` ist ein Kopiervorgang, kein Build im üblichen Sinn:
 `app/` und `wireframes/` müssen beide mit, weil `app/*.html` auf

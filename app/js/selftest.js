@@ -145,6 +145,7 @@ function selftestSchritte() {
       const { data } = await Tesseract.recognize(c, "deu+eng", {
         workerPath: "./vendor/tesseract-worker.min.js",
         corePath: "./vendor/tesseract-core/",
+        langPath: "./vendor/tessdata/",
       });
 
       const gelesen = (data.text || "").replace(/\s+/g, " ").trim();
