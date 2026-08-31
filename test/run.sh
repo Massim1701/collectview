@@ -34,6 +34,19 @@ while IFS=$'\t' read -r status name detail; do
   esac
 done < <(node test/assets.js)
 
+# Dann die Texterkennung: existieren genügt nicht, Kern und Sprachdaten
+# müssen auch zusammenarbeiten. Läuft in Node statt im Browser, weil
+# --virtual-time-budget die Uhr vorspult, während die WASM-Übersetzung
+# echte Rechenzeit braucht.
+echo "── texterkennung.js"
+while IFS=$'\t' read -r status name detail; do
+  case "$status" in
+    PASS)    total=$((total+1)); printf '   \033[32m✓\033[0m %s\n' "$name" ;;
+    FAIL)    total=$((total+1)); failed=$((failed+1)); printf '   \033[31m✗\033[0m %s\n' "$name" ;;
+    HINWEIS) printf '   \033[33m!\033[0m %s\n' "$name" ;;
+  esac
+done < <(node test/texterkennung.js)
+
 for file in test/*.test.html; do
   [ -e "$file" ] || continue
   echo "── $(basename "$file")"
