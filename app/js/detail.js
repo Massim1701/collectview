@@ -317,6 +317,18 @@ async function init() {
     const release = await fetchRelease(item.discogs_id);
     if (release) render(item, release);
   } catch (e) {
+    // Kein Netz? Dann den Eintrag aus dem letzten Offline-Stand der
+    // Sammlung zeigen (ohne Discogs-Anreicherung -- die braucht Netz).
+    const cached = loadOfflineItem(user.id, itemId);
+    if (cached) {
+      render(cached, null);
+      const notice = document.createElement("div");
+      notice.className = "muted";
+      notice.style.cssText = "font-size:12.5px; margin:10px 20px 0; padding:8px 12px; background:var(--surface-2); border-radius:var(--radius-sm);";
+      notice.textContent = "Offline – zeigt den zuletzt gespeicherten Stand.";
+      shell.insertAdjacentElement("afterbegin", notice);
+      return;
+    }
     shell.setAttribute("aria-busy", "false");
     shell.innerHTML = `<div class="detail-body" style="padding-top:60px;">${errorState(e.message)}</div>`;
   }

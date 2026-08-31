@@ -159,15 +159,35 @@ async function init() {
 
   try {
     allItems = await fetchCollection();
+    saveOfflineCollection(user.id, allItems);
     renderChips();
     renderGrid();
     showFreeLimitHint(user, allItems.length);
   } catch (e) {
-    gridEl.innerHTML = "";
-    messageEl.innerHTML = errorState(e.message);
+    // Kein Netz? Dann den letzten gespeicherten Stand zeigen, statt nur
+    // eine Fehlermeldung -- dafuer gibt es den Offline-Cache.
+    const cached = loadOfflineCollection(user.id);
+    if (cached) {
+      allItems = cached.items;
+      renderChips();
+      renderGrid();
+      showOfflineNotice(cached.savedAt);
+    } else {
+      gridEl.innerHTML = "";
+      messageEl.innerHTML = errorState(e.message);
+    }
   }
 
   if (params.get("focus") === "suche") searchEl.focus();
+}
+
+/** Banner ueber der Sammlung: "Offline -- Stand vom ...". */
+function showOfflineNotice(savedAt) {
+  const el = document.createElement("div");
+  el.className = "muted";
+  el.style.cssText = "font-size:12.5px; margin:0 0 10px; padding:8px 12px; background:var(--surface-2); border-radius:var(--radius-sm);";
+  el.textContent = `Offline – zeigt den zuletzt gespeicherten Stand vom ${offlineStandText(savedAt)}.`;
+  gridEl.insertAdjacentElement("beforebegin", el);
 }
 
 /** Hinweis auf das Free-Limit (max. 5), solange kein Abo aktiv ist. */

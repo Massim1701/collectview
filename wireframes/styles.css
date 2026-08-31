@@ -456,3 +456,51 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
   .hero-headline{ font-size:var(--text-4xl); }
   .landing-wrap,.landing-nav-inner,.hero,.landing-section,.cta-band,.landing-footer{ padding-left:var(--space-5); padding-right:var(--space-5); }
 }
+
+/* =====================================================================
+   Rohe HTML-Elemente – von Water.css inspiriert (klassenloses CSS-
+   Framework), aber mit den eigenen Tokens statt fremder Farben/Radien.
+   Diese Elemente hatten bisher keine Styles, weil die App fast überall
+   eigene Klassen (list-card, chip, field ...) nutzt. table/code/blockquote
+   kommen aber z. B. in Feedback-Texten oder künftigen Admin-Ansichten vor
+   und sollen nicht auf den nackten Browser-Standard zurückfallen.
+   ===================================================================== */
+
+table{
+  width:100%; border-collapse:collapse; font-size:var(--text-sm);
+}
+th,td{
+  text-align:left; padding:var(--space-2) var(--space-3);
+  border-bottom:1px solid var(--border);
+}
+th{ font-weight:800; color:var(--text-muted); font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.03em; }
+tbody tr:hover{ background:var(--surface-2); }
+
+code,kbd,pre,samp{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.92em;
+}
+code,kbd,samp{
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius-xs); padding:.15em .45em;
+}
+pre{
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:var(--space-4); overflow-x:auto;
+}
+pre code{ background:none; border:none; padding:0; }
+
+blockquote{
+  margin:0; padding:var(--space-1) 0 var(--space-1) var(--space-5);
+  border-left:3px solid var(--accent); color:var(--text-muted);
+}
+
+hr{ border:none; border-top:1px solid var(--border); margin:var(--space-6) 0; }
+
+/* Eigener Pfeil statt der uneinheitlichen Browser-Vorgabe, analog Water.css. */
+select.field{
+  appearance:none; -webkit-appearance:none;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B6B76' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right var(--space-4) center; background-size:18px;
+  padding-right:calc(var(--space-4) * 2 + 18px);
+}
