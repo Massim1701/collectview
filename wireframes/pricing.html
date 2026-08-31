@@ -12,7 +12,7 @@
   .billing-toggle{ display:flex; justify-content:center; margin:34px 0 56px; }
   .plans-row{ display:flex; gap:28px; max-width:940px; margin:0 auto; padding:0 44px 100px; align-items:stretch; }
   .plan-card{ flex:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:34px 28px; display:flex; flex-direction:column; }
-  .plan-card.featured{ border-color:var(--accent); box-shadow:0 20px 50px -24px rgba(255,106,61,.32); position:relative; }
+  .plan-card.featured{ border-color:var(--accent); box-shadow:0 20px 50px -24px var(--accent-soft); position:relative; }
   .plan-badge{ position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:var(--accent); color:var(--accent-ink); font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:6px 16px; border-radius:999px; }
   .plan-name{ font-family:var(--font-display); font-style:italic; font-size:26px; margin-bottom:6px; }
   .plan-price{ font-size:38px; font-weight:800; margin:14px 0 2px; }
@@ -23,6 +23,20 @@
   .plan-features li svg{ flex:0 0 auto; margin-top:2px; stroke:var(--accent-text); }
   .plan-card .btn-primary, .plan-card .btn-secondary{ width:100%; height:48px; }
   .checkout-note{ max-width:560px; margin:0 auto; text-align:center; padding:0 44px 90px; color:var(--text-muted); font-size:13.5px; line-height:1.6; }
+
+  /* Unter 720px stapeln.
+     .plans-row war ein display:flex ohne Umbruch und ohne eine einzige
+     Media Query: auf dem Telefon standen die beiden Karten stur
+     nebeneinander, und die Plus-Karte lief samt Kaufknopf rechts aus
+     dem Bild. Aufgefallen im Android-Emulator.
+     Die Seite ist aus fünf Stellen der App verlinkt und wird deshalb
+     überwiegend auf Telefonen geöffnet, nicht am Rechner. */
+  @media (max-width: 720px) {
+    .pricing-hero{ padding:48px 20px 12px; }
+    .billing-toggle{ margin:26px 0 36px; }
+    .plans-row{ flex-direction:column; gap:20px; padding:0 20px 72px; }
+    .checkout-note{ padding:0 20px 64px; }
+  }
 </style>
 </head>
 <body style="background:var(--bg);">
