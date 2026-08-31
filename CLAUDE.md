@@ -66,6 +66,15 @@ gesetzt sein, sonst greift tesseract.js wieder ans Netz.
 CHROME=/pfad/zu/chrome ./test/run.sh
 ```
 
+**Vor den Browser-Tests läuft `test/assets.js`** (reines Node, kein
+Browser): es prüft, dass jede Datei existiert, auf die `app/` und
+`wireframes/` verweisen – `src`/`href` in HTML, `url()` in CSS,
+`workerPath`/`corePath`/`langPath` in JS, und die Core-Dateien, die der
+Tesseract-Worker per `importScripts` nachlädt. Diese Fehlerklasse können
+Browser-Tests nicht sehen: sie prüfen Logik, nicht das Ausgelieferte.
+Sie hat an einem Tag zweimal bis aufs Telefon durchgeschlagen
+(`app/js/discogs.js`, `tesseract-core-simd-lstm.wasm.js`).
+
 Der Runner startet selbst einen Server, fährt jede `test/*.test.html` in
 Headless Chrome und liest das Ergebnis base64-kodiert aus dem `<title>`.
 Kein npm, keine Abhängigkeiten. Eine einzelne Datei laufen lassen: die
