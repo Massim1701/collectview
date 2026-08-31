@@ -52,9 +52,9 @@ async function fetchIsSubscribed(userId) {
   return data?.subscription_status === "active";
 }
 
-/** Eigenes Profil (Benutzername). */
+/** Eigenes Profil (Benutzername, Rolle). */
 async function fetchMyProfile(userId) {
-  const { data, error } = await sb.from("profiles").select("display_name").eq("id", userId).maybeSingle();
+  const { data, error } = await sb.from("profiles").select("display_name, role").eq("id", userId).maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -81,6 +81,52 @@ async function fetchDisplayNames(userIds) {
   const map = {};
   (data || []).forEach((row) => { map[row.id] = row.display_name; });
   return map;
+}
+
+/** Ist der Nutzer Admin? (role = 'admin') */
+async function fetchIsAdmin(userId) {
+  const { data, error } = await sb.from("profiles").select("role").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data?.role === "admin";
+}
+
+/** Ist der Nutzer Moderator oder Admin? (darf fremde Angebote entfernen) */
+async function fetchIsModerator(userId) {
+  const { data, error } = await sb.from("profiles").select("role").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data?.role === "admin" || data?.role === "moderator";
+}
+
+/** Nutzer per Benutzername finden (für Admin-Rollenvergabe). Nur der öffentliche View, keine E-Mail. */
+async function findUserByUsername(name) {
+  const { data, error } = await sb
+    .from("profiles_public")
+    .select("id, display_name")
+    .ilike("display_name", name.trim())
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Alle Nutzer mit Admin-/Moderator-Rolle (nur für Admins sichtbar dank profiles_select_admin). */
+async function fetchStaffList() {
+  const { data, error } = await sb
+    .from("profiles")
+    .select("id, display_name, role")
+    .neq("role", "user")
+    .order("role");
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Rolle setzen. Die DB erzwingt: nur Admins dürfen das (RLS), max. 2 Admins
+ * und max. 3 Moderatoren (Trigger) – dessen Fehlermeldung kommt hier
+ * unverändert durch (z. B. "Maximal 2 Admins erlaubt.").
+ */
+async function setUserRole(userId, role) {
+  const { error } = await sb.from("profiles").update({ role }).eq("id", userId);
+  if (error) throw new Error(error.message.replace(/^.*?:\s*/, ""));
 }
 
 const FORMAT_FILTERS = [

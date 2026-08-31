@@ -70,6 +70,14 @@
   }
 
   const isOwner = listing.seller_id === user.id;
+  let isMod = false;
+  if (!isOwner) {
+    try {
+      isMod = await fetchIsModerator(user.id);
+    } catch (e) {
+      isMod = false;
+    }
+  }
 
   content.innerHTML = `
     <div class="ml-cover ${coverClass(listing.title)}"></div>
@@ -108,6 +116,13 @@
         <a class="btn-primary" href="../wireframes/pricing.html" style="display:inline-flex; align-items:center; height:44px; padding:0 20px;">Zu den Preisen</a>
       </div>
     `) : ""}
+
+    ${isMod && listing.status !== "removed" ? `
+      <div class="card" style="margin-top:14px;">
+        <div class="section-title">Moderation</div>
+        <button class="btn-secondary" id="mod-remove-listing" style="width:100%; height:46px;" data-i18n="detail_remove">Entfernen</button>
+      </div>
+    ` : ""}
   `;
 
   applyI18n(content);
@@ -152,6 +167,29 @@
       });
     } catch (e) {
       messagesEl.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
+    }
+  } else if (isMod) {
+    const modRemoveBtn = document.getElementById("mod-remove-listing");
+    if (modRemoveBtn) modRemoveBtn.addEventListener("click", async () => {
+      if (!confirm("Dieses Angebot als Moderator:in entfernen?")) return;
+      modRemoveBtn.disabled = true;
+      await setListingStatus(id, "removed");
+      location.href = "marketplace.html";
+    });
+    if (listing.status === "active" && subscribed) {
+      document.getElementById("send-msg").addEventListener("click", async () => {
+        const text = document.getElementById("msg-text").value.trim();
+        const errorEl = document.getElementById("msg-error");
+        errorEl.textContent = "";
+        if (!text) { errorEl.textContent = "Bitte eine Nachricht eingeben."; return; }
+        try {
+          await sendListingMessage(id, listing.seller_id, text);
+          document.getElementById("msg-text").value = "";
+          document.getElementById("sent-note").style.display = "block";
+        } catch (e) {
+          errorEl.textContent = e.message;
+        }
+      });
     }
   } else if (listing.status === "active" && subscribed) {
     document.getElementById("send-msg").addEventListener("click", async () => {

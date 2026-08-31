@@ -67,8 +67,11 @@ async function renderAccountRow(container, user) {
   if (!container || !user) return;
 
   let displayName = null;
+  let isAdmin = false;
   try {
-    displayName = (await fetchMyProfile(user.id))?.display_name || null;
+    const profile = await fetchMyProfile(user.id);
+    displayName = profile?.display_name || null;
+    isAdmin = profile?.role === "admin";
   } catch (e) {
     // Ohne Profil-Antwort bleibt nur die E-Mail als Anzeige.
   }
@@ -84,6 +87,7 @@ async function renderAccountRow(container, user) {
       </div>
       <div style="display:flex; gap:8px; flex:0 0 auto; align-items:center;">
         <span id="lang-switcher-slot"></span>
+        ${isAdmin ? `<a class="btn-secondary small" href="admin.html">Admin</a>` : ""}
         <button class="btn-secondary small" type="button" data-action="edit-name">${displayName ? escapeHtml(t("account_change_username")) : escapeHtml(t("account_set_username"))}</button>
         <button class="btn-secondary small" type="button" data-action="sign-out">${escapeHtml(t("account_logout"))}</button>
       </div>
