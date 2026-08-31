@@ -123,6 +123,54 @@
 }
 
 /* =====================================================================
+   Tonstudio-Theme fuer die Marketing-Seiten (Landingpage, Preise).
+   Fest verdrahtet auf <html data-theme="studio">, unabhaengig von
+   System-Darkmode und Jahreszeit -- das ist die Marken-Identitaet,
+   kein Nutzer-Setting. Rack-Optik: fast schwarz, ein greller Lime-Akzent,
+   Big Shoulders Display + IBM Plex Mono statt Instrument Serif/Manrope
+   fuer die Headline-Elemente (siehe .studio-headline in landing.html).
+   ===================================================================== */
+:root[data-theme="studio"]{
+  --bg:#0E0E10; --page-bg:#0E0E10; --surface:#17171A; --surface-2:#141416; --surface-3:#1D1D21;
+  --border:rgba(255,255,255,.10); --border-strong:rgba(255,255,255,.20);
+  --text:#F2F2F5; --text-muted:#B3B3BC; --text-faint:#6E6E76;
+  --accent:#C8FF4D; --accent-ink:#0B0B0D; --accent-soft:rgba(200,255,77,.16); --accent-text:#C8FF4D;
+  --danger:#E8483A; --danger-ink:#2A0904; --danger-soft:rgba(232,72,58,.16);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 4px 10px -4px rgba(0,0,0,.5);
+  --shadow-lg:0 18px 36px -18px rgba(0,0,0,.65);
+  --shadow-frame:0 30px 60px -24px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08);
+}
+
+/* Fester Hintergrund: ein <div class="studio-bg"> gleich nach <body>,
+   position:fixed statt background-attachment:fixed (das faellt auf
+   iOS Safari beim Scrollen sonst leicht auseinander). Bild steht still,
+   nur der Inhalt darueber scrollt. */
+[data-theme="studio"] body,
+body[data-theme="studio"]{ background:var(--bg); }
+.studio-bg{
+  position:fixed; inset:0; z-index:-1;
+  background-image:linear-gradient(180deg, rgba(9,9,10,.88) 0%, rgba(9,9,10,.94) 55%, rgba(9,9,10,.98) 100%), url('./assets/hero-studio.jpg');
+  background-size:cover; background-position:center 30%;
+}
+[data-theme="studio"] .rack-screw{ position:absolute; width:6px; height:6px; border-radius:999px; background:radial-gradient(circle at 35% 35%,#5A5A62,#1A1A1D); box-shadow:0 0 0 1px rgba(0,0,0,.5); }
+[data-theme="studio"] .studio-headline{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:.01em; }
+[data-theme="studio"] .studio-mono{ font-family:'IBM Plex Mono',monospace; }
+[data-theme="studio"] .brand{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; letter-spacing:.02em; text-transform:uppercase; display:inline-flex; align-items:center; gap:9px; }
+[data-theme="studio"] .brand::before{ content:""; width:8px; height:8px; border-radius:999px; background:var(--accent); box-shadow:0 0 8px 2px var(--accent-soft); }
+[data-theme="studio"] .hero-headline{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:64px; line-height:.96; letter-spacing:.01em; text-transform:uppercase; }
+[data-theme="studio"] .hero-headline em{ color:var(--accent); font-style:normal; }
+[data-theme="studio"] .studio-badge{ display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(200,255,77,.4); color:var(--accent); padding:7px 14px; border-radius:3px; font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; font-family:'IBM Plex Mono',monospace; margin-bottom:22px; }
+[data-theme="studio"] .studio-price{ font-size:12px; color:var(--text-faint); font-family:'IBM Plex Mono',monospace; }
+[data-theme="studio"] .studio-card{ background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:8px; padding:26px; width:100%; max-width:400px; position:relative; box-shadow:var(--shadow-frame); font-family:'IBM Plex Mono',monospace; color:var(--text); }
+[data-theme="studio"] .studio-card .title{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:22px; text-transform:uppercase; }
+[data-theme="studio"] .page-title,
+[data-theme="studio"] .section-heading,
+[data-theme="studio"] .cta-heading,
+[data-theme="studio"] .plan-name{ font-family:'Big Shoulders Display',sans-serif; font-style:normal; font-weight:700; text-transform:uppercase; letter-spacing:.01em; }
+@media (max-width:900px){ [data-theme="studio"] .hero-headline{ font-size:42px; } }
+
+/* =====================================================================
    Jahreszeiten-Akzentfarbe. Ein winziges Head-Skript auf jeder Seite
    setzt data-season auf <html> je nach aktuellem Monat (fruehling /
    sommer / herbst / winter) – die Basis-Tokens oben entsprechen Sommer,
