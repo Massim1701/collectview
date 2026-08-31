@@ -406,6 +406,17 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 }
 /* display:flex schlägt sonst das hidden-Attribut – ohne diese Zeile
    bleibt ein leerer Balken stehen. */
+/* Ein hidden-Attribut muss auch dann greifen, wenn eine Komponenten-
+   klasse display setzt – .btn-secondary ist inline-flex und schlug das
+   Attribut. Ergebnis: Elemente galten als versteckt und waren sichtbar.
+   Der Licht-Knopf stand deshalb dauerhaft da, auch ohne laufende Kamera
+   (0860b89), und davor traf es camera-select und capture-btn. Statt der
+   vierten Einzelregel steht die Regel jetzt einmal hier.
+
+   CLAUDE.md warnt genau davor: el.hidden === true kann zutreffen,
+   während das Element sichtbar bleibt. */
+[hidden]{ display:none !important; }
+
 .notice[hidden]{ display:none; }
 .notice > svg{ flex:0 0 auto; color:var(--accent-text); margin-top:1px; }
 .notice .notice-body{ min-width:0; display:flex; flex-direction:column; align-items:flex-start; }

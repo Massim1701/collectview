@@ -15,8 +15,8 @@
 <!-- seit 729ad2b (Cover-Modus): scanner.js holt diese drei beim Laden.
      Fehlen sie, wirft die Datei und der Klick-Listener am Ende wird nie
      registriert – Rendern geht dank Hoisting trotzdem, Klicks nicht. -->
-<button id="capture-btn" type="button"></button>
-<button id="torch-btn" type="button" hidden></button>
+<button class="btn-secondary" id="capture-btn" type="button"></button>
+<button class="btn-secondary" id="torch-btn" type="button" hidden></button>
 <select id="camera-select"></select>
 <div id="mode-toggle"></div>
 <div class="notice" id="scan-notice" hidden></div>
@@ -1124,6 +1124,18 @@ test("Ist der Proxy einmal tot, wird er nicht bei jedem Scan neu versucht", asyn
     "der zweite Scan kostet sonst jedes Mal eine tote Anfrage Wartezeit");
 });
 
+/**
+ * Wirklich unsichtbar – nicht nur mit gesetztem Attribut.
+ *
+ * el.hidden === true genügt nicht: .btn-secondary setzt
+ * display:inline-flex und schlug [hidden], der Knopf stand dauerhaft da
+ * (0860b89). Die alten Tests hier prüften nur das Attribut und haben
+ * genau das durchgelassen.
+ */
+function istUnsichtbar(el) {
+  return el.hidden && getComputedStyle(el).display === "none";
+}
+
 /* ---------- Licht ----------
    Die Attrappe muss srcObject per defineProperty setzen: das echte
    <video> nimmt dort nur eine MediaStream-Instanz an. */
@@ -1151,7 +1163,8 @@ test("Ohne gemeldetes Licht bleibt der Knopf verborgen", async () => {
 
   lichtAnbieten();
 
-  assert(document.getElementById("torch-btn").hidden, "kein gemeldetes Licht, kein Knopf");
+  assert(istUnsichtbar(document.getElementById("torch-btn")),
+    "kein gemeldetes Licht, kein Knopf – und zwar auch tatsächlich unsichtbar");
   await toggleLicht();
   assertEqual(angewandt.length, 0,
     "applyConstraints darf den laufenden Strom nicht anfassen – genau das hat auf iOS die Kamera beendet");
@@ -1184,7 +1197,7 @@ test("Scheitert das Schalten, verschwindet der Knopf mit einer Begründung", asy
   lichtAnbieten();
   await toggleLicht();
 
-  assert(document.getElementById("torch-btn").hidden,
+  assert(istUnsichtbar(document.getElementById("torch-btn")),
     "ein Knopf, der nichts tut, lässt den Nutzer weiterdrücken");
   assert(document.getElementById("scan-status").textContent.includes("Licht"),
     "der Grund gehört hingeschrieben");
@@ -1198,7 +1211,7 @@ test("Beim Stoppen der Kamera geht der Licht-Knopf mit", async () => {
 
   stopScan();
 
-  assert(document.getElementById("torch-btn").hidden,
+  assert(istUnsichtbar(document.getElementById("torch-btn")),
     "ohne laufenden Strom gibt es nichts zu schalten");
 });
 
@@ -1239,6 +1252,24 @@ test("Ohne Bild von der Kamera wird gar nicht erst ausgewertet", async () => {
   assert(document.getElementById("scan-status").textContent.includes("noch kein Bild"),
     "der Grund gehört hingeschrieben, sonst sieht es aus wie ein unlesbares Cover");
   coverStream = null;
+});
+
+test("Ein hidden-Element ist auch dann weg, wenn seine Klasse display setzt", async () => {
+  // Der Fall, der durchgerutscht ist: .btn-secondary bringt
+  // display:inline-flex mit und schlug das [hidden]-Attribut. Der
+  // Licht-Knopf war deshalb immer sichtbar, ein Druck davor tat nichts.
+  // Die Regel steht seitdem einmal in app.css statt als Einzelfall je Element.
+  const btn = document.getElementById("torch-btn");
+  btn.hidden = true;
+  assert(btn.classList.contains("btn-secondary"),
+    "Vorbedingung: die Attrappe trägt dieselbe Klasse wie die echte Seite");
+  assertEqual(getComputedStyle(btn).display, "none",
+    "sonst gilt das Element als versteckt und steht trotzdem da");
+
+  btn.hidden = false;
+  assert(getComputedStyle(btn).display !== "none",
+    "ohne hidden muss der Knopf natürlich wieder erscheinen");
+  btn.hidden = true;
 });
 
 runTests();
