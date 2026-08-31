@@ -14,32 +14,77 @@
 </head>
 <body style="background:var(--bg);">
 
-  <div class="landing-nav">
-    <div class="landing-nav-inner">
-      <div class="brand" style="font-size:22px;">CollectView</div>
-      <div class="landing-nav-links">
-        <a href="#features">Funktionen</a>
-        <a href="#how">So funktioniert's</a>
-        <a href="./pricing.html">Preise</a>
-        <a href="../app/login.html">Login</a>
-        <a href="../app/login.html"><button class="btn-primary" style="padding:12px 22px;">Kostenlos starten</button></a>
-      </div>
-    </div>
-  </div>
+  <style>
+    #studio-top{ position:relative; overflow:hidden; background:#0E0E10; color:#F2F2F2; }
+    #studio-top::before{ content:""; position:absolute; inset:0;
+      background-image:linear-gradient(100deg, rgba(9,9,10,.96) 0%, rgba(9,9,10,.88) 40%, rgba(9,9,10,.55) 68%, rgba(9,9,10,.82) 100%), url('./assets/hero-studio.jpg');
+      background-size:cover; background-position:center 35%; }
+    #studio-top .landing-nav-inner, #studio-top .hero{ position:relative; }
+    #studio-top .landing-nav{ border-bottom:1px solid rgba(255,255,255,.10); }
+    #studio-top .brand{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:24px; letter-spacing:.02em; text-transform:uppercase; display:flex; align-items:center; gap:9px; }
+    #studio-top .brand::before{ content:""; width:8px; height:8px; border-radius:999px; background:#C8FF4D; box-shadow:0 0 8px 2px rgba(200,255,77,.6); }
+    #studio-top .landing-nav-links a{ color:#B3B3BC; }
+    #studio-top .landing-nav-links a:hover{ color:#F2F2F2; }
+    #studio-top .btn-primary{ background:#C8FF4D; color:#0B0B0D; border-color:#C8FF4D; }
+    #studio-top .hero-headline{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:64px; line-height:.96; letter-spacing:.01em; text-transform:uppercase; margin:0 0 var(--space-6); }
+    #studio-top .hero-headline em{ color:#C8FF4D; font-style:normal; }
+    #studio-top .hero-copy{ color:#B3B3BC; }
+    #studio-top .studio-badge{ display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(200,255,77,.4); color:#C8FF4D; padding:7px 14px; border-radius:3px; font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; font-family:'IBM Plex Mono',monospace; margin-bottom:22px; }
+    #studio-top .studio-price{ font-size:12px; color:#6E6E76; font-family:'IBM Plex Mono',monospace; }
+    #studio-top .rack-screw{ position:absolute; width:6px; height:6px; border-radius:999px; background:radial-gradient(circle at 35% 35%,#5A5A62,#1A1A1D); box-shadow:0 0 0 1px rgba(0,0,0,.5); }
+    #studio-top .studio-card{ background:linear-gradient(180deg,#17171A,#131315); border:1px solid rgba(255,255,255,.10); border-radius:8px; padding:26px; width:100%; max-width:400px; position:relative; box-shadow:0 24px 50px rgba(0,0,0,.45); font-family:'IBM Plex Mono',monospace; color:#F2F2F2; }
+    #studio-top .studio-card .title{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:22px; text-transform:uppercase; }
+    @media (max-width:900px){ #studio-top .hero-headline{ font-size:42px; } }
+  </style>
 
-  <div class="hero">
-    <div class="landing-wrap hero-grid" style="padding:0;">
-      <div style="flex:1;">
-        <div class="hero-headline">Deine ganze Plattensammlung<br>in der Hosentasche</div>
-        <div class="hero-copy">Barcode scannen oder Cover fotografieren – CollectView erkennt deine Schallplatten und CDs automatisch, verlinkt sie direkt mit YouTube und Spotify zum Reinhören und legt sie in deiner persönlichen Sammlung ab.</div>
-        <div style="display:flex;gap:14px;">
-          <a href="../app/login.html"><button class="btn-primary" style="padding:16px 30px;font-size:15.5px;">App kostenlos starten</button></a>
-          <a href="#features"><button class="btn-secondary" style="padding:16px 30px;font-size:15.5px;">Mehr erfahren</button></a>
+  <div id="studio-top">
+    <div class="landing-nav">
+      <div class="landing-nav-inner">
+        <div class="brand">CollectView</div>
+        <div class="landing-nav-links">
+          <a href="#features">Funktionen</a>
+          <a href="#how">So funktioniert's</a>
+          <a href="./pricing.html">Preise</a>
+          <a href="../app/login.html">Login</a>
+          <a href="../app/login.html"><button class="btn-primary" style="padding:12px 22px;">Kostenlos starten</button></a>
         </div>
       </div>
-      <div class="hero-visual">
-        <div class="hero-photo">
-          <img src="./assets/hero-vinyl.jpg" alt="Schallplatte wird aus der Hülle gezogen">
+    </div>
+
+    <div class="hero">
+      <div class="landing-wrap hero-grid" style="padding:0;">
+        <div style="flex:1;">
+          <div class="studio-badge">● REC — Browser + App · 1 Konto</div>
+          <div class="hero-headline">Scan.<br>Erkannt.<br><em>Gehört.</em></div>
+          <div class="hero-copy">Barcode scannen oder Cover fotografieren – CollectView erkennt deine Schallplatten und CDs automatisch, verlinkt sie direkt mit YouTube und Spotify zum Reinhören und legt sie in deiner persönlichen Sammlung ab.</div>
+          <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
+            <a href="../app/login.html"><button class="btn-primary" style="padding:16px 30px;font-size:15.5px;">App kostenlos starten</button></a>
+            <span class="studio-price">5 Scans frei &middot; ab 2,91&nbsp;&euro;/Monat</span>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="studio-card">
+            <div class="rack-screw" style="top:10px;left:10px;"></div>
+            <div class="rack-screw" style="top:10px;right:10px;"></div>
+            <div class="rack-screw" style="bottom:10px;left:10px;"></div>
+            <div class="rack-screw" style="bottom:10px;right:10px;"></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <span style="width:7px;height:7px;border-radius:999px;background:#C8FF4D;box-shadow:0 0 6px 1px rgba(200,255,77,.7);"></span>
+              <div style="font-size:11px;color:#6E6E76;letter-spacing:.1em;text-transform:uppercase;">Treffer &middot; Barcode 075992277627</div>
+            </div>
+            <div style="display:flex;gap:16px;margin-bottom:20px;">
+              <div style="width:84px;height:84px;border-radius:4px;background:#C8FF4D;flex:0 0 auto;"></div>
+              <div style="min-width:0;">
+                <div class="title" style="margin-bottom:2px;">Rumours</div>
+                <div style="font-size:14px;color:#B3B3BC;margin-bottom:6px;">Fleetwood Mac</div>
+                <div style="font-size:12px;color:#6E6E76;">1977 &middot; Vinyl LP &middot; US</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <div style="flex:1;text-align:center;padding:11px 0;border:1px solid rgba(255,255,255,.14);border-radius:3px;font-size:12px;">Spotify</div>
+              <div style="flex:1;text-align:center;padding:11px 0;border:1px solid rgba(255,255,255,.14);border-radius:3px;font-size:12px;">YT Music</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
