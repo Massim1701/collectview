@@ -14,7 +14,7 @@ Stand: 01.09.2026
 
 ## Braucht Massimo — niemand sonst kommt da ran
 
-### 1. Edge Functions · alle drei deployt, Apple-Schlüssel blockiert
+### 1. Edge Functions · alle drei deployt, beide Stores geprüft
 
 **Alle drei Functions sind deployt** (01.09.2026). Keine antwortet ohne JWT.
 
@@ -34,49 +34,36 @@ vier `store_`-Spalten stehen in `profiles`, der Trigger
 `on_profiles_protect_subscription` hängt dran, und die RPCs sind für `anon`
 und `authenticated` gesperrt — nur `postgres` und `service_role` dürfen.
 
-#### Store-Zugangsdaten: Google trägt, Apple nicht
+#### Store-Zugangsdaten: gelöst, beide Stores tragen
 
 | Store | Stand |
 |---|---|
 | Google Play | **funktioniert.** Dienstkonto `abo-pruefen@collectview-507309…` holt ein Zugriffstoken (3599 s) mit Scope `androidpublisher`. |
-| Apple | **`401`, alle Varianten.** |
+| Apple | **funktioniert.** Neuer Key `5D6595N2G9` (alter `4L3Y2HPQU4` kann bei Bedarf noch widerrufen werden). |
 
-Beim Apple-Schlüssel liegt es nicht an der Umsetzung und nicht am Rebrand.
-Gegengeprüft am 01.09.2026:
+**Auflösung (01.09.2026):** Der alte Key war nie kaputt, und die
+Issuer-ID-Theorie war eine Sackgasse. Der wahre Grund für die `401` auf
+`api.storekit.itunes.apple.com`: **die App war noch nie eingereicht**
+(Abo-Gruppe stand auf „Prepare for Submission"). Apples Doku sagt dazu
+ausdrücklich: bekommt man auf der Produktions-URL einen `401`, kann das
+eine Sandbox-Transaktion sein — dann mit der Sandbox-Basis-URL erneut
+versuchen. Genau das ist der Fall: gegen
+`api.storekit-sandbox.itunes.apple.com` kam mit demselben Schlüssel ein
+sauberes `404 "Transaction id not found"` (bzw. `400 "Invalid transaction
+id"` bei der Test-ID `0`/`1`) — beides authentifizierte Antworten, kein
+`401`. Der Satz weiter unten „Ein unvollständiger App-Eintrag ergäbe `404`,
+nicht `401`" war also die falsche Prämisse: gilt für die App-*Metadaten*,
+nicht dafür, ob die App je einer Review vorgelegen hat.
 
-- Die ES256-Signatur ist korrekt — DER→roh zurückgewandelt und mit
-  `openssl dgst -verify` bestätigt (`Verified OK`).
-- Der private Schlüssel ist ein gültiger 256-Bit-EC-Schlüssel.
-- `bid` = `online.driftware.collectview` **und** die alte
-  `online.driftware.plattenregal` **und** ganz ohne `bid`: dreimal `401`.
-- Sandbox-Endpunkt: ebenfalls `401`.
-
-Auch die App Store **Connect** API (`api.appstoreconnect.apple.com/v1/apps`)
-lehnt dasselbe Paar mit `401 NOT_AUTHORIZED` ab. Das schließt die zuerst
-naheliegende Erklärung aus: ein Team-Schlüssel müsste dort funktionieren und
-nur bei StoreKit scheitern. Das Paar gilt also **nirgends**.
-
-Damit bleiben nur noch Gründe, die im Konto liegen, nicht im Code:
-
-1. `APPLE_ISSUER_ID` gehört zu einem anderen Team als der Schlüssel.
-2. Der Schlüssel `4L3Y2HPQU4` ist in App Store Connect widerrufen.
-3. Key-ID und `.p8` gehören nicht zusammen — die Datei stammt von einem
-   anderen Schlüssel als die eingetragene ID.
-
-Zu prüfen in App Store Connect → *Benutzer und Zugriff* → *Integrationen*:
-existiert `4L3Y2HPQU4` dort noch und ist aktiv, auf welcher Registerkarte
-steht er, und ist die Issuer-ID **von derselben Registerkarte** übernommen?
-Für die App Store Server API muss es ein Schlüssel der Registerkarte
-**In-App-Kauf** sein.
-
-**Was den `401` nicht erklärt:** App-Store-Metadaten. Screenshots,
-Beschreibung und ein angehängter Build spielen für die Server-API keine
-Rolle — die authentifiziert allein über den signierten JWT, vor jedem
-Zugriff auf einen App-Datensatz. Ein unvollständiger App-Eintrag ergäbe
-`404`, nicht `401`.
-
-Bis dahin: Google-Käufe würden durchlaufen, Apple-Käufe scheitern mit
-`502 Beleg konnte nicht geprüft werden`.
+**Fix in `abo-pruefen`:** `pruefeApple()` versucht erst Produktion, fällt
+bei `401` automatisch auf Sandbox zurück — aber nur, wenn der Sicherheits-
+schalter `APPLE_SANDBOX_ERLAUBT=true` gesetzt ist (aktuell an, für die
+Test-/TestFlight-Phase). **Vor dem echten Launch auf `false` setzen**
+(`.env` + `supabase secrets set`) — sonst kann sich jeder mit einem
+kostenlosen Apple-Sandbox-Tester-Account ein echtes Abo freischalten,
+weil Sandbox-Bestätigungen sonst genauso akzeptiert würden wie echte.
+Die Antwort trägt jetzt auch `umgebung` ("Production"/"Sandbox") zum
+Mitloggen.
 
 #### Zwei Fallen, die je eine Sitzung gekostet haben
 
