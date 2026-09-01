@@ -67,13 +67,15 @@ function qtyBadgeMarkup(item) {
 }
 
 /**
- * Listeneintrag ohne Cover – reiner Text, führt zur Detailseite.
- * Für lange Listen (z. B. die Sammlungsübersicht): Cover laden erst
- * auf der Detailseite, nicht vorher für jeden Eintrag.
+ * Listeneintrag mit Cover-Miniatur (44px, etwas kleiner als listCardMarkup) für die
+ * Sammlungsübersicht. Bild-Tag trägt loading="lazy": bei einer langen
+ * Liste laedt der Browser nur die Cover, die tatsaechlich in den
+ * sichtbaren Bereich gescrollt werden, nicht alle auf einmal.
  */
 function plainListRowMarkup(item) {
   return `
-    <a class="list-card list-card-plain" href="${detailHref(item)}">
+    <a class="list-card" href="${detailHref(item)}">
+      ${coverMarkup(item, { size: 44 })}
       <div style="min-width:0;">
         <div class="list-card-title">${escapeHtml(item.title)}</div>
         <div class="list-card-sub">${itemSubtitle(item)}</div>
