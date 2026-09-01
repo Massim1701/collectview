@@ -156,29 +156,33 @@ dieses Feld lesen beide Schranken. Es gab keinen Webhook, keinen Cron
 Die neue Function `abo-notify` nimmt **App Store Server Notifications V2**
 entgegen und ruft `abo_setzen` bzw. `abo_beenden`. Sie ist deployt, mit
 `--no-verify-jwt` (Apple schickt keinen Supabase-Token; der Schutz ist die
-Signatur). Nachgeprüft:
-
-- Die Function bootet — Apples npm-Bibliothek läuft in der Edge-Runtime.
-- Ein gefälschter Rumpf wird mit `INVALID_CERTIFICATE` abgewiesen. Die
-  Kettenprüfung gegen das im Repo festgenagelte Apple-Wurzelzertifikat
-  (`apple-root-ca.ts`) läuft also wirklich.
-
-Bewusst **nicht** beendet wird bei `DID_CHANGE_RENEWAL_STATUS` (Verlängerung
-abgeschaltet, Abo läuft bis Periodenende weiter) und `DID_FAIL_TO_RENEW`
-(Nachfrist). Das Ende meldet Apple danach als `EXPIRED`.
-
-**Was fehlt:** die URL muss in App Store Connect hinterlegt werden, unter
-*App-Informationen → App Store Server Notifications*, Sandbox-URL:
+Signatur). Die Sandbox-URL ist in App Store Connect eingetragen:
 
 ```
 https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/abo-notify
 ```
 
-Apple bestätigt das selbst — eine Probemeldung anzufordern beantwortet er
-derzeit mit `4040007 No App Store Server Notification URL found`. Sobald die
-URL steht, lässt sich der ganze Weg **ohne Gerät** testen: Probemeldung über
-`POST /inApps/v1/notifications/test` anfordern, dann in den Function-Logs
-nachsehen, ob „TEST-Notification empfangen und verifiziert" steht.
+**Ende zu Ende belegt (01.09.2026):** Apples echte Probemeldung wird
+angenommen (`200`, `TEST`), und **Apple selbst verbucht die Zustellung als
+`SUCCESS`**. Drei manipulierte Fassungen derselben Meldung werden abgewiesen:
+Inhalt auf `EXPIRED` geändert, Signatur verdreht, Kette gekürzt.
+
+**Apples eigene Bibliothek ist hier unbrauchbar** — sie prüft Ketten über
+Nodes `crypto.X509Certificate`, und Deno liefert davon nur eine Hülle: weder
+`.toString()` noch `.raw` sind implementiert. Die echte Meldung scheiterte
+deshalb mit `VERIFICATION_FAILURE`, während dieselbe Meldung lokal unter Node
+durchlief. Die Prüfung steht jetzt ausgeschrieben in `abo-notify`, gegen
+`@peculiar/x509`. Wer dort etwas ändert: die drei Angriffe von oben gehören
+danach erneut durchgespielt.
+
+Bewusst **nicht** beendet wird bei `DID_CHANGE_RENEWAL_STATUS` (Verlängerung
+abgeschaltet, Abo läuft bis Periodenende weiter) und `DID_FAIL_TO_RENEW`
+(Nachfrist). Das Ende meldet Apple danach als `EXPIRED`.
+
+**Vor dem Launch:** Die Produktions-URL ist absichtlich noch leer. Wenn sie
+gesetzt wird, braucht es dort dieselbe Adresse — und `APPLE_SANDBOX_ERLAUBT`
+gehört dann auf `false`, sonst schaltet ein Sandbox-Tester echte Abos frei.
+Die Apple-ID der App lautet `6807394925`.
 
 **Google fehlt hier noch:** dessen Gegenstück sind Real-time Developer
 Notifications über Pub/Sub — anderer Weg, noch nicht gebaut.
