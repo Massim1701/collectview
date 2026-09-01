@@ -34,6 +34,11 @@ const APPLE_KEY_ID = Deno.env.get("APPLE_KEY_ID");
 const APPLE_ISSUER_ID = Deno.env.get("APPLE_ISSUER_ID");
 const APPLE_PRIVATE_KEY = Deno.env.get("APPLE_PRIVATE_KEY"); // .p8, PEM
 const APPLE_BUNDLE_ID = Deno.env.get("APPLE_BUNDLE_ID") ?? "online.driftware.collectview";
+// Sicherheitsschalter: Sandbox-Käufe sind kostenlose Testkäufe. Vor dem
+// echten Launch MUSS das auf false stehen, sonst kann sich jeder mit
+// einem Sandbox-Tester-Account ein echtes Abo freischalten. Während der
+// Entwicklung/TestFlight-Phase explizit auf "true" setzen.
+const APPLE_SANDBOX_ERLAUBT = Deno.env.get("APPLE_SANDBOX_ERLAUBT") === "true";
 
 // Google: Dienstkonto mit Zugriff auf die Play Developer API, JSON als String.
 const GOOGLE_SERVICE_ACCOUNT = Deno.env.get("GOOGLE_PLAY_SERVICE_ACCOUNT");
@@ -114,11 +119,24 @@ async function pruefeApple(transaktion: string) {
     "ES256",
   );
 
-  const res = await fetch(
-    `https://api.storekit.itunes.apple.com/inApps/v1/subscriptions/${encodeURIComponent(transaktion)}`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-  if (!res.ok) throw new Error(`Apple antwortete mit ${res.status}`);
+  // Erst Produktion versuchen. Apple beantwortet eine Sandbox-Transaktion
+  // dort mit 401 (nicht 404) – laut Doku dann mit der Sandbox-Basis-URL
+  // erneut versuchen, statt das als Auth-Fehler zu werten. Sandbox nur,
+  // wenn APPLE_SANDBOX_ERLAUBT=true gesetzt ist (siehe oben).
+  const basisUrls = [
+    "https://api.storekit.itunes.apple.com",
+    ...(APPLE_SANDBOX_ERLAUBT ? ["https://api.storekit-sandbox.itunes.apple.com"] : []),
+  ];
+
+  let res: Response | null = null;
+  for (const basis of basisUrls) {
+    res = await fetch(
+      `${basis}/inApps/v1/subscriptions/${encodeURIComponent(transaktion)}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (res.status !== 401) break; // 404 (nicht gefunden) oder Erfolg -> richtige Umgebung getroffen
+  }
+  if (!res || !res.ok) throw new Error(`Apple antwortete mit ${res?.status}`);
 
   const daten = await res.json();
 
@@ -144,6 +162,7 @@ async function pruefeApple(transaktion: string) {
     produkt: String(nutzlast.productId ?? ""),
     transaktion: String(nutzlast.originalTransactionId ?? transaktion),
     laeuftBis: new Date(Number(nutzlast.expiresDate ?? 0)).toISOString(),
+    umgebung: String(nutzlast.environment ?? ""), // "Production" oder "Sandbox"
   };
 }
 
