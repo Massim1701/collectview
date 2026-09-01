@@ -203,7 +203,11 @@ async function aboWiederherstellen() {
 
   if (!kauf) throw new Error("Es wurde kein früherer Kauf gefunden.");
 
-  const transaktion = kauf.transaction || {};
+  // Product trägt selbst keine Transaktion – der Beleg steckt im lokalen
+  // Receipt, das restorePurchases() gerade gefüllt hat.
+  const transaktion = CdvPurchase.store.findInLocalReceipts(kauf);
+  if (!transaktion) throw new Error("Es wurde kein früherer Kauf gefunden.");
+
   const beleg = plattform === "apple"
     ? transaktion.transactionId
     : transaktion.purchaseId || transaktion.transactionId;
