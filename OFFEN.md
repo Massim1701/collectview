@@ -101,11 +101,7 @@ geht an Google. Das Projekt vermeidet Google-Fonts ausdrücklich aus diesem
 Grund – ein Foto wiegt schwerer als eine IP-Adresse. Der Weg gehört in die
 Datenschutzerklärung und sollte eine bewusste Handlung bleiben.
 
-### 2. In-App-Kauf · App-Seite steht, Store-Seite läuft bei Claude Web
-
-**Aufteilung, damit nichts doppelt gebaut wird:** Store-Produkte, Schlüssel und
-das Deployen der Functions macht **Claude Web**. Die App-Seite (Datenbank,
-Edge Function, Client) liegt bei **Claude Code**.
+### 2. In-App-Kauf · alles gebaut, es fehlen nur noch Store-Einträge
 
 **Diese Produkt-IDs müssen in beiden Stores zeichengenau so heißen** — die App
 fragt genau danach, ein Tippfehler äußert sich nur als „Produkt nicht
@@ -119,29 +115,73 @@ collectview.plus.jaehrlich
 Der Weg ist entschieden: **In-App-Kauf bei Apple und Google**. Stripe trägt im
 Store-Kontext nicht.
 
-Die Datenbankseite ist fertig (`db/abo.sql`, noch **nicht ausgeführt**) und die
-Edge Function `abo-pruefen` geschrieben. Was du anlegen musst:
+**Fertig und nachgeprüft (01.09.2026):**
 
-1. **App Store Connect**: Abo-Produkt anlegen, dazu einen In-App-Kauf-Schlüssel
-   (.p8) — er wird nur einmal zum Herunterladen angeboten.
-2. **Play Console**: dasselbe Abo-Produkt, dazu ein Dienstkonto mit Zugriff auf
-   die Play Developer API.
-3. Beide Schlüssel nach `supabase/.env` (Vorlage steht in `.env.beispiel`).
-4. `db/abo.sql` im SQL-Editor ausführen, Function deployen.
+- `db/abo.sql`, `db/scan-limit.sql`, `db/collection-limit.sql` sind gelaufen.
+- `abo-pruefen` ist deployt, die Apple-Credentials tragen (Sandbox antwortet
+  authentifiziert), Google ebenfalls.
+- `cordova-plugin-purchase@13.18.0` ist installiert und in beide nativen
+  Projekte gesynct. **Beide bauen**: iOS `BUILD SUCCEEDED` (StoreKit verlinkt,
+  Klasse `InAppPurchase` in der Binary), Android `BUILD SUCCESSFUL`
+  (`billing:9.0.0`).
+- `app/js/abo.js` wurde Aufruf für Aufruf gegen die Typdefinitionen von v13
+  abgeglichen. Dabei fiel ein echter Fehler auf: `aboWiederherstellen()` las
+  den Beleg aus `kauf.transaction`, eine Eigenschaft, die `Product` gar nicht
+  hat — Wiederherstellen hätte **immer** versagt. Behoben über
+  `store.findInLocalReceipts()`.
 
-**Ungeprüft:** die beiden Store-Abfragen in `abo-pruefen` sind gegen die
-Dokumentation geschrieben, aber nie gegen einen echten Kauf gelaufen. Das geht
-erst, wenn die Produkte in beiden Stores existieren.
+**Was noch fehlt, und nur Massimo kann es:**
 
-**Client-Seite steht** (`app/js/abo.js`, `wireframes/pricing.html`): Kaufknopf,
-Wiederherstellen-Knopf (von Apple für jede Abo-App verlangt), Anbindung an
-`abo-pruefen`, Fehlerbehandlung. 8 Tests decken die Serveranbindung ab.
+1. **App Store Connect**: die zwei Abo-Produkte anlegen, mit Preis und
+   Lokalisierung, Status mindestens „Ready to Submit".
+2. **Sandbox-Tester** unter *Benutzer und Zugriff → Sandbox*, auf dem Gerät
+   unter *Einstellungen → App Store → Sandbox-Account* anmelden.
+3. **Kauf auf einem echten Gerät.** Ein StoreKit-Configuration-File in Xcode
+   reicht **nicht**: lokale Testkäufe existieren auf Apples Servern nicht und
+   ergäben bei `abo-pruefen` wieder ein 404.
 
-**Was dort noch fehlt:** das Plugin `cordova-plugin-purchase` ist nicht
-installiert. Die zwei Funktionen, die damit sprechen (`storeKaufAusloesen`,
-`aboWiederherstellen`), sind gegen die Doku geschrieben und nie gelaufen — im
-Kopf der Datei so gekennzeichnet. Sie gehören als Erstes auf einem Gerät
-nachgeprüft, sobald die Store-Produkte existieren.
+**Falle beim Testen:** `www/` ist gitignored und wird erzeugt. Wer `app/js/*`
+ändert und direkt `npx cap sync` laufen lässt, spielt die alte Fassung aufs
+Gerät. Immer `bash scripts/build-www.sh && npx cap sync ios`.
+
+#### `abo-notify` · damit ein Abo auch wieder endet
+
+`abo-pruefen` schaltet frei, wenn der Client einen Beleg schickt. Danach fragte
+niemand mehr nach: Wer kündigte, dessen Zahlung scheiterte oder wer sein Geld
+zurückbekam, behielt `subscription_status = 'active'` **auf ewig** — und genau
+dieses Feld lesen beide Schranken. Es gab keinen Webhook, keinen Cron
+(`pg_cron` ist nicht installiert) und keine Prüfung beim App-Start;
+`subscription_renews_at` wurde geschrieben, aber von niemandem gelesen.
+
+Die neue Function `abo-notify` nimmt **App Store Server Notifications V2**
+entgegen und ruft `abo_setzen` bzw. `abo_beenden`. Sie ist deployt, mit
+`--no-verify-jwt` (Apple schickt keinen Supabase-Token; der Schutz ist die
+Signatur). Nachgeprüft:
+
+- Die Function bootet — Apples npm-Bibliothek läuft in der Edge-Runtime.
+- Ein gefälschter Rumpf wird mit `INVALID_CERTIFICATE` abgewiesen. Die
+  Kettenprüfung gegen das im Repo festgenagelte Apple-Wurzelzertifikat
+  (`apple-root-ca.ts`) läuft also wirklich.
+
+Bewusst **nicht** beendet wird bei `DID_CHANGE_RENEWAL_STATUS` (Verlängerung
+abgeschaltet, Abo läuft bis Periodenende weiter) und `DID_FAIL_TO_RENEW`
+(Nachfrist). Das Ende meldet Apple danach als `EXPIRED`.
+
+**Was fehlt:** die URL muss in App Store Connect hinterlegt werden, unter
+*App-Informationen → App Store Server Notifications*, Sandbox-URL:
+
+```
+https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/abo-notify
+```
+
+Apple bestätigt das selbst — eine Probemeldung anzufordern beantwortet er
+derzeit mit `4040007 No App Store Server Notification URL found`. Sobald die
+URL steht, lässt sich der ganze Weg **ohne Gerät** testen: Probemeldung über
+`POST /inApps/v1/notifications/test` anfordern, dann in den Function-Logs
+nachsehen, ob „TEST-Notification empfangen und verifiziert" steht.
+
+**Google fehlt hier noch:** dessen Gegenstück sind Real-time Developer
+Notifications über Pub/Sub — anderer Weg, noch nicht gebaut.
 
 ### 3. App Store Connect prüfen
 
