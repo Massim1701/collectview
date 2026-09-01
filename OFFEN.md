@@ -14,47 +14,55 @@ Stand: 01.09.2026
 
 ## Braucht Massimo — niemand sonst kommt da ran
 
-### 1. Edge Functions deployen · der einzige echte Blocker
+### 1. Edge Functions deployen · discogs-suche steht, zwei fehlen noch
 
-**Alle drei** Functions sind fertig, getestet und antworten mit `404`, weil
-sie nie deployt wurden — `discogs-suche`, `cover-erkennen` **und
-`abo-pruefen`** (am 01.09.2026 einzeln nachgemessen). Die Supabase-CLI ist
-mit einem **fremden Konto** angemeldet (Org `welove80sDE-sys's Org`, nur
-Projekt `bmoafuwdzbwxnrrmjakd`); jeder Zugriff auf `mevmpihydpksruhmzzwr`
-endet mit `403 … account does not have the necessary privileges`. Ein
-`supabase login` mit dem richtigen Konto ist der erste Schritt, alles
-andere scheitert vorher.
+**`discogs-suche` ist seit 01.09.2026 deployt und geprüft** — 50 Treffer,
+alle 50 mit `cover_image`, gegen vorher 50 von 50 *ohne*. Ohne JWT antwortet
+sie `401`, steht also nicht als offener Discogs-Zugang im Netz. Der
+`DISCOGS_TOKEN` liegt als Secret im Dashboard, nicht im Repo.
 
-Solange das so bleibt: **keine Cover-Bilder** (Discogs liefert Bild-URLs nur
-an authentifizierte Anfragen — gemessen: 50 Treffer, 50 ohne `cover_image`)
-und **keine Bilderkennung**.
+Damit sind die Cover-Bilder erledigt — überall, wo live bei Discogs gesucht
+wird. Am Client war nichts zu ändern: `discogsSuche()` bevorzugt von sich aus
+den Proxy und fiel nur zurück, weil er `404` lieferte.
 
-```bash
-cp supabase/.env.beispiel supabase/.env      # Schlüssel im Editor eintragen
-supabase login                               # Konto, dem das Projekt gehört
-supabase link --project-ref mevmpihydpksruhmzzwr
-supabase secrets set --env-file supabase/.env
-supabase functions deploy discogs-suche
-supabase functions deploy cover-erkennen
-supabase functions deploy abo-pruefen
-```
+**Noch nicht deployt**, weil beiden das nötige Secret fehlt — Deployen allein
+brächte nur Laufzeitfehler:
 
-Ohne `--no-verify-jwt` deployen: `app/js/discogs.js` schickt das Sitzungs-JWT
-plus `apikey` mit, die Voreinstellung `verify_jwt = true` ist also richtig und
-hält die Function davon ab, als offener Discogs-Zugang im Netz zu stehen.
-`SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` setzt Supabase selbst — aus
-`supabase/.env` braucht es sie nicht.
+| Function | fehlt |
+|---|---|
+| `cover-erkennen` | `GOOGLE_VISION_KEY` |
+| `abo-pruefen` | `APPLE_KEY_ID`, `APPLE_ISSUER_ID`, `APPLE_PRIVATE_KEY`, `GOOGLE_PLAY_SERVICE_ACCOUNT` |
 
-Prüfen, ob es gewirkt hat (erwartet: `200` und gefüllte `cover_image`):
-
-```bash
-curl -s -H "apikey: <anon key>" -H "Authorization: Bearer <anon key>" \
-  "https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/discogs-suche?q=Rumours"
-```
+Solange `cover-erkennen` fehlt: **keine Bilderkennung**.
 
 Der Vision-Schlüssel braucht ein Google-Cloud-Projekt mit **aktivierter Cloud
 Vision API** und **hinterlegter Abrechnung**, auch innerhalb der 1000
 Freianfragen pro Monat. Schlüssel auf diese eine API beschränken.
+
+#### Wie deployt wird — die Anmeldung ist die eigentliche Hürde
+
+`supabase login` **funktioniert in einer Agenten-Sitzung nicht**: ohne TTY
+bricht der Browser-Flow sofort ab mit `Cannot use automatic login flow inside
+non-TTY environments`. Das kostete eine ganze Sitzung, weil der Befehl
+scheinbar nichts tat — kein Fenster ging auf, der Keychain-Eintrag blieb alt.
+
+Der Keychain hält weiterhin das Konto `welove80sDE-sys`
+(`manca.massimo@gmail.com`), das nur `bmoafuwdzbwxnrrmjakd` sieht und auf
+`mevmpihydpksruhmzzwr` mit `403` läuft. **Nicht** per `supabase login`
+überschreiben — Claude Web hängt daran.
+
+Stattdessen liegt in `supabase/.env` (gitignoriert) ein Personal Access Token
+des Kontos, dem die Org Fornetta und das Projekt `plattenregal` gehören:
+
+```bash
+export SUPABASE_ACCESS_TOKEN=$(grep '^SUPABASE_ACCESS_TOKEN=' supabase/.env | cut -d= -f2-)
+supabase functions deploy <name> --project-ref mevmpihydpksruhmzzwr
+```
+
+Kein `--no-verify-jwt`: `app/js/discogs.js` schickt Sitzungs-JWT und `apikey`
+mit, die Voreinstellung `verify_jwt = true` ist richtig. `SUPABASE_URL` und
+`SUPABASE_SERVICE_ROLE_KEY` setzt Supabase selbst. Docker wird nicht
+gebraucht — die Warnung beim Deploy ist folgenlos.
 
 ### 2. In-App-Kauf · App-Seite steht, Store-Seite läuft bei Claude Web
 
