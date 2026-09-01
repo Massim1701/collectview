@@ -14,78 +14,60 @@ Stand: 01.09.2026
 
 ## Braucht Massimo — niemand sonst kommt da ran
 
-### 1. Edge Functions deployen · discogs-suche steht, zwei fehlen noch
+### 1. Edge Functions · zwei stehen, `abo-pruefen` fehlt noch
 
-**`discogs-suche` ist seit 01.09.2026 deployt und geprüft** — 50 Treffer,
-alle 50 mit `cover_image`, gegen vorher 50 von 50 *ohne*. Ohne JWT antwortet
-sie `401`, steht also nicht als offener Discogs-Zugang im Netz. Der
-`DISCOGS_TOKEN` liegt als Secret im Dashboard, nicht im Repo.
+**`discogs-suche` und `cover-erkennen` sind seit 01.09.2026 deployt und
+geprüft.** Beide antworten ohne JWT mit `401`, stehen also nicht offen im Netz.
 
-Damit sind die Cover-Bilder erledigt — überall, wo live bei Discogs gesucht
-wird. Am Client war nichts zu ändern: `discogsSuche()` bevorzugt von sich aus
-den Proxy und fiel nur zurück, weil er `404` lieferte.
+| Function | geprüft mit | Ergebnis |
+|---|---|---|
+| `discogs-suche` | „Fleetwood Mac Rumours" | 50 Treffer, **alle 50 mit `cover_image`** (vorher 0) |
+| `cover-erkennen` | echtes Rumours-Cover | `label: "Fleetwood Mac Rumours"` |
+| `cover-erkennen` | 1×1-Pixel | leeres `label` + Hinweis, kein geratener Treffer |
 
-**Noch nicht deployt**, weil beiden das nötige Secret fehlt — Deployen allein
-brächte nur Laufzeitfehler:
+Cover-Bilder und Bilderkennung sind damit erledigt. Am Client war nichts zu
+ändern: `discogsSuche()` schaltet selbst auf den Proxy um, und
+`cover-erkennen` behielt die Antwortform `{ label, entitaeten }`.
 
-| Function | fehlt |
-|---|---|
-| `cover-erkennen` | ein **gültiger** `GOOGLE_VISION_KEY` — siehe unten |
-| `abo-pruefen` | `APPLE_KEY_ID`, `APPLE_ISSUER_ID`, `APPLE_PRIVATE_KEY`, `GOOGLE_PLAY_SERVICE_ACCOUNT` |
+**Offen: `abo-pruefen`** – braucht `APPLE_KEY_ID`, `APPLE_ISSUER_ID`,
+`APPLE_PRIVATE_KEY` und `GOOGLE_PLAY_SERVICE_ACCOUNT`. Deployen ohne diese
+Secrets brächte nur eine Function, die zur Laufzeit scheitert.
 
-Solange `cover-erkennen` fehlt: **keine Bilderkennung**.
+#### Zwei Fallen, die je eine Sitzung gekostet haben
 
-**Der Wert, der am 01.09.2026 in `supabase/.env` stand, ist kein
-Cloud-API-Schlüssel** (Präfix `AQ.Ab8…`, 53 Zeichen). Gemessen gegen
-`vision.googleapis.com`:
-
-| Schlüssel | Antwort |
-|---|---|
-| erfundener, formgerechter `AIza…` | `400 API_KEY_INVALID` |
-| der hinterlegte `AQ.Ab8…` | `401 CREDENTIALS_MISSING` |
-
-Der erste Fall zeigt, dass Vision API-Schlüssel akzeptiert — der `?key=`-Weg
-der Function stimmt also. Der zweite heißt: Google erkennt den Wert nicht als
-Schlüssel und behandelt die Anfrage als anonym. Als Bearer-Token abgelehnt,
-`tokeninfo` sagt `invalid_token`. Vermutlich ein Schlüssel aus einem anderen
-Google-Produkt.
-
-Gebraucht wird ein API-Schlüssel aus der **Cloud Console** → *APIs & Dienste*
-→ *Anmeldedaten* → *Anmeldedaten erstellen* → *API-Schlüssel*: beginnt mit
-`AIza`, 39 Zeichen, im selben Projekt, in dem die **Cloud Vision API
-aktiviert** und **Abrechnung hinterlegt** ist. Danach auf diese eine API
-beschränken. Vor dem Deploy mit einem 1×1-Testbild gegen
-`images:annotate` prüfen — das kostet eine Anfrage und spart die Fehlersuche
-am Telefon.
-
-Der Vision-Schlüssel braucht ein Google-Cloud-Projekt mit **aktivierter Cloud
-Vision API** und **hinterlegter Abrechnung**, auch innerhalb der 1000
-Freianfragen pro Monat. Schlüssel auf diese eine API beschränken.
-
-#### Wie deployt wird — die Anmeldung ist die eigentliche Hürde
-
-`supabase login` **funktioniert in einer Agenten-Sitzung nicht**: ohne TTY
-bricht der Browser-Flow sofort ab mit `Cannot use automatic login flow inside
-non-TTY environments`. Das kostete eine ganze Sitzung, weil der Befehl
-scheinbar nichts tat — kein Fenster ging auf, der Keychain-Eintrag blieb alt.
-
-Der Keychain hält weiterhin das Konto `welove80sDE-sys`
-(`manca.massimo@gmail.com`), das nur `bmoafuwdzbwxnrrmjakd` sieht und auf
-`mevmpihydpksruhmzzwr` mit `403` läuft. **Nicht** per `supabase login`
-überschreiben — Claude Web hängt daran.
-
-Stattdessen liegt in `supabase/.env` (gitignoriert) ein Personal Access Token
-des Kontos, dem die Org Fornetta und das Projekt `plattenregal` gehören:
+**`supabase login` funktioniert in einer Agenten-Sitzung nicht.** Ohne TTY
+bricht der Browser-Flow sofort ab (`Cannot use automatic login flow inside
+non-TTY environments`) – und sieht dabei aus, als täte er gar nichts: kein
+Fenster geht auf, der Keychain-Eintrag bleibt alt. Der Keychain hält
+weiterhin das Konto `welove80sDE-sys` (`manca.massimo@gmail.com`), das nur
+`bmoafuwdzbwxnrrmjakd` sieht. **Nicht** überschreiben – Claude Web hängt
+daran. Stattdessen liegt in `supabase/.env` ein Personal Access Token des
+Kontos, dem die Org Fornetta und das Projekt `plattenregal` gehören:
 
 ```bash
 export SUPABASE_ACCESS_TOKEN=$(grep '^SUPABASE_ACCESS_TOKEN=' supabase/.env | cut -d= -f2-)
 supabase functions deploy <name> --project-ref mevmpihydpksruhmzzwr
 ```
 
-Kein `--no-verify-jwt`: `app/js/discogs.js` schickt Sitzungs-JWT und `apikey`
-mit, die Voreinstellung `verify_jwt = true` ist richtig. `SUPABASE_URL` und
-`SUPABASE_SERVICE_ROLE_KEY` setzt Supabase selbst. Docker wird nicht
-gebraucht — die Warnung beim Deploy ist folgenlos.
+Kein `--no-verify-jwt`: die Clients schicken Sitzungs-JWT und `apikey` mit.
+`SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` setzt Supabase selbst. Docker
+wird nicht gebraucht, die Warnung beim Deploy ist folgenlos. Secrets **einzeln**
+setzen, nie `--env-file supabase/.env` – darin steht auch der Access-Token.
+
+**Der Google-Schlüssel ist ein AI-Studio-Schlüssel, kein Cloud-Schlüssel.**
+Präfix `AQ.`, 53 Zeichen. `vision.googleapis.com` nimmt ihn nicht an (`401
+CREDENTIALS_MISSING`, während ein formgerechter `AIza…` dort `400
+API_KEY_INVALID` bekommt), `generativelanguage.googleapis.com` dagegen schon.
+Deshalb ruft `cover-erkennen` seit dem 01.09.2026 Gemini statt Cloud Vision
+auf – das sparte einen zweiten Schlüssel samt Cloud-Projekt und Abrechnung
+und liefert Interpret und Titel getrennt statt eines unscharfen
+`bestGuessLabel`. Ältere Flash-Modelle sind abgekündigt und antworten mit
+`404`; verwendet wird `gemini-3.6-flash`.
+
+**Noch zu entscheiden:** beim Cover-Scan verlässt ein Nutzerfoto das Gerät und
+geht an Google. Das Projekt vermeidet Google-Fonts ausdrücklich aus diesem
+Grund – ein Foto wiegt schwerer als eine IP-Adresse. Der Weg gehört in die
+Datenschutzerklärung und sollte eine bewusste Handlung bleiben.
 
 ### 2. In-App-Kauf · App-Seite steht, Store-Seite läuft bei Claude Web
 
@@ -138,6 +120,23 @@ der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
 ---
 
 ## Technisch offen
+
+### Ein Test ist rot — nicht aus der Function-Arbeit
+
+`./test/run.sh`: **1 von 181** schlägt fehl, in `duplikate.test.html`:
+
+```
+✗ Listeneintrag trägt das Badge, ohne die Zeile umzubauen
+  Klasse der Textliste fehlt – "list-card-plain" nicht enthalten
+```
+
+Er war schon vor der Function-Arbeit rot (auf unverändertem `HEAD`
+nachgeprüft, 01.09.2026) und gehört zur Sammlungsliste in `ui.js` — also
+in den anderen Strang. Vermutlich hat `0726d8d` (Cover-Miniaturen in der
+Listenansicht) die Zeile umgebaut, ohne `list-card-plain` mitzunehmen.
+Entweder trägt die Zeile die Klasse wieder, oder der Test beschreibt den
+alten Aufbau und muss nach.
+
 
 - **Nur eine von vier Tesseract-Core-Fassungen ist vendort.** Der Worker
   fordert je nach Gerät `simd-lstm`, `simd`, `lstm` oder die Grundfassung an.

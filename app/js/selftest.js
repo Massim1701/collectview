@@ -102,7 +102,7 @@ function selftestSchritte() {
 
     ["Bilderkennung", async () => {
       // Absichtlich mit leerem Rumpf: die Funktion antwortet darauf mit
-      // 400, OHNE eine (abrechnungsrelevante) Vision-Anfrage zu stellen.
+      // 400, OHNE eine (abrechnungsrelevante) Gemini-Anfrage zu stellen.
       // Das genügt, um "nicht deployt", "kein Schlüssel" und "bereit"
       // auseinanderzuhalten – ein Selbsttest darf nichts kosten.
       const { data } = await sb.auth.getSession();
@@ -120,7 +120,7 @@ function selftestSchritte() {
       });
 
       if (res.status === 404) throw new Error("Funktion cover-erkennen ist nicht deployt");
-      if (res.status === 503) throw new Error("GOOGLE_VISION_KEY ist nicht gesetzt");
+      if (res.status === 503) throw new Error("GEMINI_API_KEY ist nicht gesetzt");
       if (res.status === 400) return "bereit";
       return "antwortet (HTTP " + res.status + ")";
     }],

@@ -3,10 +3,11 @@
 
    Zwei Stufen, in dieser Reihenfolge:
 
-     1. Bilderkennung (Edge Function cover-erkennen, Google Vision Web
-        Detection): erkennt die Hülle als BILD wieder. Kommt auch bei
-        verzierter Schrift, gedrehtem Text oder Hüllen ganz ohne Text
-        zum Ziel – Led Zeppelin IV trägt keinen einzigen Buchstaben.
+     1. Bilderkennung (Edge Function cover-erkennen, Gemini): erkennt
+        die Hülle als BILD wieder und liefert Interpret und Titel
+        getrennt. Kommt auch bei verzierter Schrift, gedrehtem Text oder
+        Hüllen ganz ohne Text zum Ziel – Led Zeppelin IV trägt keinen
+        einzigen Buchstaben.
      2. Texterkennung im Browser (Tesseract): liest, was draufsteht.
         Braucht kein Netz nach dem ersten Mal und kostet nichts.
 
@@ -20,7 +21,7 @@ const COVER_PROXY = `${SUPABASE_URL}/functions/v1/cover-erkennen`;
 /** Einmal als nicht verfügbar erkannt, nicht bei jedem Foto neu fragen. */
 let coverErkennungAus = false;
 
-/** Canvas als base64-JPEG, ohne das data:-Präfix, das Vision nicht will. */
+/** Canvas als base64-JPEG, ohne das data:-Präfix, das die API nicht will. */
 function canvasAlsBase64(canvas, qualitaet = 0.82) {
   const url = canvas.toDataURL("image/jpeg", qualitaet);
   return url.slice(url.indexOf(",") + 1);
