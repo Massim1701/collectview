@@ -39,6 +39,7 @@ const I18N = {
     collection_sort_title: "Titel",
     collection_sort_artist: "Interpret",
     collection_empty: "Noch nichts in der Sammlung.",
+    collection_export_csv: "Als CSV exportieren",
 
     wishlist_title: "Wunschliste",
     wishlist_empty: "Die Wunschliste ist leer.",
@@ -107,6 +108,7 @@ const I18N = {
     collection_sort_title: "Title",
     collection_sort_artist: "Artist",
     collection_empty: "Nothing in your collection yet.",
+    collection_export_csv: "Export as CSV",
 
     wishlist_title: "Wishlist",
     wishlist_empty: "Your wishlist is empty.",
@@ -175,6 +177,7 @@ const I18N = {
     collection_sort_title: "Titolo",
     collection_sort_artist: "Artista",
     collection_empty: "Ancora nulla nella collezione.",
+    collection_export_csv: "Esporta come CSV",
 
     wishlist_title: "Lista dei desideri",
     wishlist_empty: "La lista dei desideri è vuota.",
@@ -243,6 +246,7 @@ const I18N = {
     collection_sort_title: "Tytuł",
     collection_sort_artist: "Wykonawca",
     collection_empty: "W kolekcji nic jeszcze nie ma.",
+    collection_export_csv: "Eksportuj jako CSV",
 
     wishlist_title: "Lista życzeń",
     wishlist_empty: "Lista życzeń jest pusta.",
@@ -311,6 +315,7 @@ const I18N = {
     collection_sort_title: "Título",
     collection_sort_artist: "Artista",
     collection_empty: "Todavía no hay nada en la colección.",
+    collection_export_csv: "Exportar como CSV",
 
     wishlist_title: "Lista de deseos",
     wishlist_empty: "La lista de deseos está vacía.",

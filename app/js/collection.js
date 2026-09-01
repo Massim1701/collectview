@@ -10,6 +10,7 @@ const messageEl = document.getElementById("grid-message");
 const chipsEl = document.getElementById("chips");
 const searchEl = document.getElementById("suche");
 const clearEl = document.getElementById("search-clear");
+const exportEl = document.getElementById("export-csv");
 const sortEl = document.getElementById("sortierung");
 const countEl = document.getElementById("result-count");
 
@@ -114,6 +115,66 @@ function renderGrid() {
   gridEl.innerHTML = html;
 }
 
+/* ---------- CSV-Export ----------
+   Exportiert die aktuell sichtbare (gefilterte/sortierte) Auswahl, nicht
+   zwingend die ganze Sammlung -- wer nach "Vinyl" filtert und exportiert,
+   erwartet eine CSV nur mit Vinyl. Semikolon als Trenner und ein BOM am
+   Anfang, weil Excel (v.a. auf Deutsch) Komma-getrennte UTF-8-Dateien ohne
+   BOM gern als eine einzige Spalte voller Sonderzeichen anzeigt. */
+
+const CSV_COLUMNS = [
+  { key: "title", label: "Titel" },
+  { key: "artist", label: "Interpret" },
+  { key: "format", label: "Format" },
+  { key: "year", label: "Jahr" },
+  { key: "country", label: "Land" },
+  { key: "barcode", label: "Barcode" },
+  { key: "quantity", label: "Anzahl" },
+  { key: "notes", label: "Notizen" },
+  { key: "created_at", label: "Hinzugefügt am" },
+];
+
+function csvField(value) {
+  const s = value === null || value === undefined ? "" : String(value);
+  const needsQuoting = s.indexOf(";") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1 || s.indexOf("\r") !== -1;
+  return needsQuoting ? '"' + s.split('"').join('""') + '"' : s;
+}
+
+function formatDateForCsv(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("de");
+}
+
+function buildCsv(items) {
+  const NEWLINE = "\r\n";
+  const header = CSV_COLUMNS.map((c) => csvField(c.label)).join(";");
+  const rows = items.map((item) =>
+    CSV_COLUMNS.map((c) => csvField(c.key === "created_at" ? formatDateForCsv(item[c.key]) : item[c.key])).join(";"),
+  );
+  return [header].concat(rows).join(NEWLINE);
+}
+
+function downloadCsv() {
+  const items = visibleItems();
+  if (items.length === 0) return;
+
+  const BOM = "﻿";
+  const csv = BOM + buildCsv(items);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  const datum = new Date().toISOString().slice(0, 10);
+  link.href = url;
+  link.download = "collectview-sammlung-" + datum + ".csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 /* ---------- Ereignisse ---------- */
 
 chipsEl.addEventListener("click", (e) => {
@@ -134,6 +195,8 @@ searchEl.addEventListener("input", () => {
     renderGrid();
   }, 140);
 });
+
+exportEl.addEventListener("click", downloadCsv);
 
 clearEl.addEventListener("click", () => {
   searchEl.value = "";
