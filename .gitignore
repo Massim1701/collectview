@@ -13,3 +13,6 @@ supabase/.env          # Schlüssel für die Edge Functions
 # Capacitor: aus app/ + wireframes/ gebaut, nicht von Hand gepflegt.
 # Alles unter ios/ regelt ios/.gitignore selbst.
 www/
+
+# Supabase-CLI: Arbeitsstand der Verknüpfung, wird beim Deploy angelegt.
+supabase/.temp/
