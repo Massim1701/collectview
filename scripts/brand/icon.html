@@ -4,44 +4,43 @@
 <style>
   html,body{ margin:0; padding:0; width:1024px; height:1024px; overflow:hidden; }
   /* Kein Alpha, keine runden Ecken: iOS maskiert selbst, und der App
-     Store weist Icons mit Transparenz ab. */
+     Store weist Icons mit Transparenz ab. Studio-Theme: dunkler
+     Hintergrund, Lime-Akzent (#C8FF4D) statt des alten Orange-Verlaufs. */
   .icon{
     width:1024px; height:1024px; position:relative;
-    background:linear-gradient(145deg, #FF8A5C 0%, #FF6A3D 45%, #F04E22 100%);
+    background:radial-gradient(circle at 30% 22%, #1A1A1F 0%, #0E0E10 62%);
   }
-  /* Weiche Aufhellung oben links, damit die Fläche nicht flach wirkt */
   .sheen{
     position:absolute; inset:0;
-    background:radial-gradient(circle at 26% 18%, rgba(255,255,255,.30), transparent 55%);
+    background:radial-gradient(circle at 26% 18%, rgba(200,255,77,.10), transparent 55%);
   }
   .disc{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:748px; height:748px; border-radius:50%;
     background:
-      /* Rillen: bewusst schwach, sie sollen bei 60px nicht zu Grau verschmieren */
       repeating-radial-gradient(circle at 50% 50%,
-        rgba(253,246,240,.00) 0px, rgba(253,246,240,.00) 9px,
-        rgba(253,246,240,.085) 9px, rgba(253,246,240,.085) 11px),
-      radial-gradient(circle at 34% 26%, #34343C 0%, #1C1C22 62%);
-    box-shadow:0 26px 60px rgba(60,16,0,.34);
+        rgba(200,255,77,.00) 0px, rgba(200,255,77,.00) 9px,
+        rgba(200,255,77,.06) 9px, rgba(200,255,77,.06) 11px),
+      radial-gradient(circle at 34% 26%, #242429 0%, #131316 62%);
+    box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 0 2px rgba(200,255,77,.14);
   }
-  /* Lichtkante über der Platte */
+  /* Lime-Lichtkante statt der alten weißen Glanzkante */
   .glint{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-32deg);
     width:748px; height:748px; border-radius:50%;
-    background:linear-gradient(105deg, transparent 34%, rgba(255,255,255,.16) 45%, transparent 53%);
+    background:linear-gradient(105deg, transparent 34%, rgba(200,255,77,.22) 45%, transparent 53%);
   }
   .label{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:268px; height:268px; border-radius:50%;
-    background:radial-gradient(circle at 38% 30%, #FFFFFF, #F6E7DC);
+    background:#C8FF4D;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:inset 0 0 0 3px rgba(28,28,34,.10);
+    box-shadow:0 0 46px 6px rgba(200,255,77,.35), inset 0 0 0 3px rgba(14,14,16,.12);
   }
-  /* Markenbuchstabe aus dem Schriftzug – Instrument Serif kursiv */
   .label span{
-    font-family:'Instrument Serif', Georgia, serif; font-style:italic;
-    font-size:190px; line-height:1; color:#1C1C22; margin-top:-14px; margin-left:-6px;
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    text-transform:uppercase; letter-spacing:.01em;
+    font-size:168px; line-height:1; color:#0E0E10; margin-top:6px;
   }
 </style></head>
 <body>
@@ -49,6 +48,6 @@
     <div class="sheen"></div>
     <div class="disc"></div>
     <div class="glint"></div>
-    <div class="label"><span>P</span></div>
+    <div class="label"><span>C</span></div>
   </div>
 </body></html>

@@ -1,9 +1,12 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-theme="studio">
 <head>
 <meta charset="utf-8">
 <script>(function(){var m=new Date().getMonth();var s=(m<2||m===11)?"winter":m<5?"fruehling":m<8?"sommer":"herbst";document.documentElement.dataset.season=s;})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" sizes="192x192" href="../app/favicon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../app/favicon-32.png">
+<link rel="apple-touch-icon" href="../app/apple-touch-icon-180.png">
 <title>Profil – CollectView</title>
 <!-- Schriften lokal, nicht von Google: die Wireframes wandern über
      scripts/build-www.sh mit ins App-Bundle, und ein Aufruf an
@@ -20,7 +23,7 @@
 
     <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:26px;">
       <div style="width:84px;height:84px;border-radius:999px;background:linear-gradient(150deg,#452A40,#C06A88);margin-bottom:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);"></div>
-      <div style="font-family:var(--font-display);font-style:italic;font-size:24px;">Max Mustermann</div>
+      <div style="font-family:var(--font-body);font-weight:700;font-size:22px;">Max Mustermann</div>
       <div style="font-size:13.5px;color:var(--text-muted);margin-top:2px;">max@beispiel.de</div>
     </div>
 

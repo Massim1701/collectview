@@ -156,9 +156,9 @@ body[data-theme="studio"]{ background:var(--bg); }
 [data-theme="studio"] .rack-screw{ position:absolute; width:6px; height:6px; border-radius:999px; background:radial-gradient(circle at 35% 35%,#5A5A62,#1A1A1D); box-shadow:0 0 0 1px rgba(0,0,0,.5); }
 [data-theme="studio"] .studio-headline{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:.01em; }
 [data-theme="studio"] .studio-mono{ font-family:'IBM Plex Mono',monospace; }
-[data-theme="studio"] .brand{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; letter-spacing:.02em; text-transform:uppercase; display:inline-flex; align-items:center; gap:9px; }
+[data-theme="studio"] .brand{ font-family:'Big Shoulders Display',sans-serif; font-style:normal; font-weight:800; letter-spacing:.02em; text-transform:uppercase; display:inline-flex; align-items:center; gap:9px; }
 [data-theme="studio"] .brand::before{ content:""; width:8px; height:8px; border-radius:999px; background:var(--accent); box-shadow:0 0 8px 2px var(--accent-soft); }
-[data-theme="studio"] .hero-headline{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:64px; line-height:.96; letter-spacing:.01em; text-transform:uppercase; }
+[data-theme="studio"] .hero-headline{ font-family:'Big Shoulders Display',sans-serif; font-style:normal; font-weight:800; font-size:64px; line-height:.96; letter-spacing:.01em; text-transform:uppercase; }
 [data-theme="studio"] .hero-headline em{ color:var(--accent); font-style:normal; }
 [data-theme="studio"] .studio-badge{ display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(200,255,77,.4); color:var(--accent); padding:7px 14px; border-radius:3px; font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; font-family:'IBM Plex Mono',monospace; margin-bottom:22px; }
 [data-theme="studio"] .studio-price{ font-size:12px; color:var(--text-faint); font-family:'IBM Plex Mono',monospace; }
@@ -167,7 +167,13 @@ body[data-theme="studio"]{ background:var(--bg); }
 [data-theme="studio"] .page-title,
 [data-theme="studio"] .section-heading,
 [data-theme="studio"] .cta-heading,
+[data-theme="studio"] .detail-title,
 [data-theme="studio"] .plan-name{ font-family:'Big Shoulders Display',sans-serif; font-style:normal; font-weight:700; text-transform:uppercase; letter-spacing:.01em; }
+[data-theme="studio"] .stat-value{ font-family:'Big Shoulders Display',sans-serif; font-style:normal; font-weight:700; }
+[data-theme="studio"] .alpha-heading{ font-family:'Big Shoulders Display',sans-serif; font-style:normal; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+[data-theme="studio"] .ml-price{ font-family:var(--font-body); font-style:normal; font-weight:800; }
+[data-theme="studio"] .step-num{ font-family:'Big Shoulders Display',sans-serif; font-style:normal; font-weight:700; }
+[data-theme="studio"] .gallery-title{ font-family:'Big Shoulders Display',sans-serif; font-style:normal; font-weight:700; text-transform:uppercase; letter-spacing:.01em; }
 @media (max-width:900px){ [data-theme="studio"] .hero-headline{ font-size:42px; } }
 
 /* =====================================================================
@@ -177,23 +183,23 @@ body[data-theme="studio"]{ background:var(--bg); }
    hier kommen nur die drei anderen Jahreszeiten als Override dazu.
    Getrennt fuer Hell- und Dunkelmodus, damit der Kontrast stimmt.
    ===================================================================== */
-:root[data-season="fruehling"]{
+:root[data-season="fruehling"]:not([data-theme="studio"]){
   --accent:#4FAE7C; --accent-2:#FF8FB4; --accent-ink:#06281A;
   --accent-soft:rgba(79,174,124,.14); --accent-text:#2C7350;
 }
-:root[data-season="herbst"]{
+:root[data-season="herbst"]:not([data-theme="studio"]){
   --accent:#E08A3C; --accent-2:#B0472F; --accent-ink:#2A1607;
   --accent-soft:rgba(224,138,60,.14); --accent-text:#A85E1E;
 }
-:root[data-season="winter"]{
+:root[data-season="winter"]:not([data-theme="studio"]){
   --accent:#4C6FFF; --accent-2:#38BDF8; --accent-ink:#06102E;
   --accent-soft:rgba(76,111,255,.14); --accent-text:#2E48C9;
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"])[data-season="fruehling"]{ --accent:#57C88C; --accent-ink:#04140D; --accent-soft:rgba(87,200,140,.18); --accent-text:#7BE0AA; }
-  :root:not([data-theme="light"])[data-season="sommer"]{ --accent:#2DD4C0; --accent-ink:#03211D; --accent-soft:rgba(45,212,192,.18); --accent-text:#5CE8D8; }
-  :root:not([data-theme="light"])[data-season="herbst"]{ --accent:#F0A85E; --accent-ink:#241305; --accent-soft:rgba(240,168,94,.18); --accent-text:#F5C48C; }
-  :root:not([data-theme="light"])[data-season="winter"]{ --accent:#6E8CFF; --accent-ink:#080D22; --accent-soft:rgba(110,140,255,.18); --accent-text:#A9BAFF; }
+  :root:not([data-theme="light"]):not([data-theme="studio"])[data-season="fruehling"]{ --accent:#57C88C; --accent-ink:#04140D; --accent-soft:rgba(87,200,140,.18); --accent-text:#7BE0AA; }
+  :root:not([data-theme="light"]):not([data-theme="studio"])[data-season="sommer"]{ --accent:#2DD4C0; --accent-ink:#03211D; --accent-soft:rgba(45,212,192,.18); --accent-text:#5CE8D8; }
+  :root:not([data-theme="light"]):not([data-theme="studio"])[data-season="herbst"]{ --accent:#F0A85E; --accent-ink:#241305; --accent-soft:rgba(240,168,94,.18); --accent-text:#F5C48C; }
+  :root:not([data-theme="light"]):not([data-theme="studio"])[data-season="winter"]{ --accent:#6E8CFF; --accent-ink:#080D22; --accent-soft:rgba(110,140,255,.18); --accent-text:#A9BAFF; }
 }
 :root[data-theme="dark"][data-season="fruehling"]{ --accent:#57C88C; --accent-ink:#04140D; --accent-soft:rgba(87,200,140,.18); --accent-text:#7BE0AA; }
 :root[data-theme="dark"][data-season="sommer"]{ --accent:#2DD4C0; --accent-ink:#03211D; --accent-soft:rgba(45,212,192,.18); --accent-text:#5CE8D8; }
