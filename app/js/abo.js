@@ -154,6 +154,67 @@ async function storeKaufAusloesen(produktId) {
   });
 }
 
+/* ---------- Preise ----------
+
+   Fest eingetragene Preise sind in einer Store-App falsch, sobald sie
+   irgendwo hängen: der Store rechnet in 173 Regionen ab, in eigener
+   Währung und je nach Land mit oder ohne Steuer. Am 01.09.2026 stand in
+   der App 3,99 €, während Google in Deutschland 4,79 € abbuchte. Wer
+   den Preis anzeigt, muss ihn deshalb vom Store nehmen – der weiss als
+   Einziger, was der Kunde wirklich zahlt. */
+
+/**
+ * Was ein Jahresabo pro Monat kostet – für die Zeile "entspricht
+ * 2,91 €/Monat". Rechnet in Mikro-Einheiten, weil der Store so liefert.
+ *
+ * Gibt "" zurück, wenn sich nichts Sinnvolles sagen lässt; die
+ * Oberfläche lässt die Zeile dann weg, statt "NaN" zu zeigen.
+ */
+function monatsAequivalent(preisMikros, waehrung, sprache) {
+  const mikros = Number(preisMikros);
+  if (!Number.isFinite(mikros) || mikros <= 0 || !waehrung) return "";
+
+  try {
+    return new Intl.NumberFormat(sprache || navigator.language || "de-DE", {
+      style: "currency",
+      currency: waehrung,
+    }).format(mikros / 12 / 1_000_000);
+  } catch {
+    // Unbekannter Währungscode – lieber nichts sagen als etwas Falsches.
+    return "";
+  }
+}
+
+/**
+ * Die echten Preise beim Store erfragen.
+ *
+ * Gibt null zurück, wenn es keinen Store gibt (Browser) oder er die
+ * Produkte nicht kennt – dann bleibt die Seite bei ihren Platzhaltern.
+ */
+async function storePreise() {
+  if (!storeVerfuegbar()) return null;
+
+  try {
+    await storeStarten();
+  } catch {
+    return null;
+  }
+
+  const preise = {};
+  for (const [zyklus, id] of Object.entries(ABO_PRODUKTE)) {
+    const p = CdvPurchase.store.get(id)?.pricing;
+    if (p?.price) {
+      preise[zyklus] = {
+        text: p.price,
+        mikros: Number(p.priceMicros) || 0,
+        waehrung: p.currency || "",
+      };
+    }
+  }
+
+  return Object.keys(preise).length ? preise : null;
+}
+
 /* ---------- Was die Oberfläche aufruft ---------- */
 
 /**

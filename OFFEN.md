@@ -38,7 +38,7 @@ und `authenticated` gesperrt — nur `postgres` und `service_role` dürfen.
 
 | Store | Stand |
 |---|---|
-| Google Play | **funktioniert.** Dienstkonto `abo-pruefen@collectview-507309…` holt ein Zugriffstoken (3599 s) mit Scope `androidpublisher`. |
+| Google Play | **funktioniert, jetzt wirklich.** Der `subscriptions`-Aufruf antwortet `200` und listet beide Produkte. Bis zum 01.09.2026 stand hier „funktioniert", belegt mit einem geholten Zugriffstoken — das war wertlos: Google stellt das Token immer aus, auch wenn die API im Projekt abgeschaltet ist. Sie war es (`403 SERVICE_DISABLED`), inzwischen freigeschaltet. **Ein Token ist kein Zugang; erst ein echter Aufruf zählt.** |
 | Apple | **funktioniert.** Neuer Key `5D6595N2G9` (alter `4L3Y2HPQU4` kann bei Bedarf noch widerrufen werden). |
 
 **Auflösung (01.09.2026):** Der alte Key war nie kaputt, und die
@@ -240,6 +240,29 @@ Der Testschalter ist wieder entfernt.
 5. Probemeldung aus der Play Console schicken und in den Function-Logs
    „TEST-Notification von Google empfangen" suchen.
 
+
+### 2b. Preise · die App zeigte einen anderen Preis, als der Store abbucht
+
+**Gefunden am 01.09.2026:** `wireframes/pricing.html` hatte `3,99 €` und
+`34,90 €` fest eingetragen. Die Play-API meldet für Deutschland aber
+`4,79 €` und `41,99 €` — vermutlich netto eingetragen, brutto abgerechnet
+(3,99 × 1,19 ≈ 4,75, von Google auf 4,79 gerundet). Der Kunde hätte also
+mehr gezahlt, als in der App stand. Das fällt in der Review auf.
+
+Dazu: feste Preise können in **173 Regionen** gar nicht stimmen — ein Kunde
+in Japan sah „3,99 €".
+
+**Behoben, was den Code angeht:** Die Preisseite nimmt den Preis jetzt vom
+Store (`storePreise()` in `app/js/abo.js`), samt Währung und Steuer des
+jeweiligen Landes. Die festen Werte sind nur noch Platzhalter für den
+Browser, wo es keinen Store gibt. Der Monatsäquivalent-Text wird aus dem
+Jahrespreis gerechnet (`monatsAequivalent()`, drei Tests).
+
+**Entschieden:** Der Kunde soll **3,99 €** zahlen.
+
+**Offen — Web / Play Console:** die Play-Preise so setzen, dass beim Kunden
+`3,99 €` bzw. `34,90 €` ankommen (also der Bruttopreis, nicht netto).
+Apple-Produkte sind noch nicht angelegt und werden gleich passend gesetzt.
 
 ### 3. App Store Connect prüfen
 

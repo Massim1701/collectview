@@ -128,11 +128,41 @@
 <script>
   const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
+  /* Platzhalter für den Browser, wo es keinen Store gibt. In der App
+     werden sie unten durch die echten Store-Preise ersetzt – fest
+     eingetragene Preise stimmen sonst nur in Deutschland und nur so
+     lange, bis jemand sie in der Console ändert. */
   const PRICES = {
     monthly: { amount: "3,99 €", unit: "/ Monat", note: "monatlich kündbar" },
-    yearly: { amount: "34,90 €", unit: "/ Jahr", note: "entspricht 2,91 €/Monat · jährlich kündbar" },
+    yearly: { amount: "34,90 €", unit: "/ Jahr", note: "jährlich kündbar" },
   };
   let cycle = "monthly";
+
+  function zeigePreis() {
+    const p = PRICES[cycle];
+    document.getElementById("plus-price").innerHTML = `${p.amount} <span>${p.unit}</span>`;
+    document.getElementById("plus-note").textContent = p.note;
+  }
+
+  /* Die echten Preise nachladen, sobald der Store da ist. Schlägt es
+     fehl, bleibt die Seite bei den Platzhaltern stehen – ein fehlender
+     Preis ist ärgerlich, ein falscher ist schlimmer. */
+  (async () => {
+    try {
+      const echt = await storePreise();
+      if (!echt) return;
+
+      if (echt.monatlich) PRICES.monthly.amount = echt.monatlich.text;
+      if (echt.jaehrlich) {
+        PRICES.yearly.amount = echt.jaehrlich.text;
+        const proMonat = monatsAequivalent(echt.jaehrlich.mikros, echt.jaehrlich.waehrung);
+        PRICES.yearly.note = proMonat
+          ? `entspricht ${proMonat}/Monat · jährlich kündbar`
+          : "jährlich kündbar";
+      }
+      zeigePreis();
+    } catch { /* Platzhalter bleiben stehen */ }
+  })();
 
   document.getElementById("billing-toggle").addEventListener("click", (ev) => {
     const item = ev.target.closest(".segmented-item");
@@ -140,9 +170,7 @@
     document.querySelectorAll("#billing-toggle .segmented-item").forEach((el) => el.classList.remove("active"));
     item.classList.add("active");
     cycle = item.dataset.cycle;
-    const p = PRICES[cycle];
-    document.getElementById("plus-price").innerHTML = `${p.amount} <span>${p.unit}</span>`;
-    document.getElementById("plus-note").textContent = p.note;
+    zeigePreis();
   });
 
   const note = document.getElementById("upgrade-note");

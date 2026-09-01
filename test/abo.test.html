@@ -129,6 +129,35 @@ test("Die Produkt-IDs sind die, die in den Stores angelegt werden", async () => 
   assertEqual(ABO_PRODUKTE.jaehrlich, "collectview.plus.jaehrlich");
 });
 
+/* ---------- Preisanzeige ----------
+
+   Am 01.09.2026 stand in der App 3,99 €, wahrend Google in Deutschland
+   4,79 € abbuchte: der Preis war fest eingetragen. Seitdem kommt er vom
+   Store. Was hier geprueft wird, ist die einzige Rechnung, die dabei
+   noch selbst gemacht wird. */
+
+test("Monatspreis aus dem Jahrespreis, in der Währung des Stores", () => {
+  // 41,99 € im Jahr sind 3,4991… € im Monat.
+  const proMonat = monatsAequivalent(41_990_000, "EUR", "de-DE");
+  assertIncludes(proMonat, "3,50");
+  assertIncludes(proMonat, "€");
+});
+
+test("Fremde Währung wird nicht nach Euro umgerechnet", () => {
+  // Der Store rechnet in 173 Regionen ab. Wer hier Euro anzeigt, luegt.
+  const proMonat = monatsAequivalent(120_000_000, "JPY", "de-DE");
+  assert(!proMonat.includes("€"), "Yen darf nicht als Euro erscheinen");
+  assertIncludes(proMonat, "10");
+});
+
+test("Ohne brauchbare Angabe bleibt die Zeile leer, statt NaN zu zeigen", () => {
+  assertEqual(monatsAequivalent(0, "EUR"), "");
+  assertEqual(monatsAequivalent(null, "EUR"), "");
+  assertEqual(monatsAequivalent(41_990_000, ""), "");
+  assertEqual(monatsAequivalent("keine Zahl", "EUR"), "");
+  assertEqual(monatsAequivalent(41_990_000, "XYZ123"), "");
+});
+
 runTests();
 </script>
 </body>
