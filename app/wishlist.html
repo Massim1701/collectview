@@ -42,10 +42,12 @@
   </div>
 
   <form id="wl-search-form" class="card" style="margin-bottom:14px;">
-    <div class="ln-row">
-      <input class="field" id="wl-search-input" placeholder="Bei Discogs suchen – Titel und/oder Interpret" autocomplete="off">
-      <button class="btn-primary" type="submit" style="flex:0 0 auto; padding:0 20px;">Suchen</button>
+    <div class="ln-row" style="margin-bottom:10px;">
+      <input class="field" id="wl-search-artist" placeholder="Interpret" autocomplete="off">
+      <input class="field" id="wl-search-title" placeholder="Titel" autocomplete="off">
     </div>
+    <button class="btn-primary" type="submit" style="width:100%; height:44px;">Bei Discogs suchen</button>
+    <div class="note" style="margin-top:8px;">Eins von beiden reicht auch – je mehr ausgefüllt ist, desto genauer der Treffer.</div>
     <div class="err" id="wl-search-error" style="margin-top:10px;"></div>
   </form>
   <div id="wl-search-results" style="margin-bottom:22px;"></div>
@@ -88,7 +90,8 @@
   const addToggle = document.getElementById("add-toggle");
   const addForm = document.getElementById("add-form");
   const searchForm = document.getElementById("wl-search-form");
-  const searchInput = document.getElementById("wl-search-input");
+  const searchArtistInput = document.getElementById("wl-search-artist");
+  const searchTitleInput = document.getElementById("wl-search-title");
   const searchError = document.getElementById("wl-search-error");
   const searchResultsEl = document.getElementById("wl-search-results");
   let lastSearchResults = [];
@@ -118,14 +121,28 @@
 
   searchForm.addEventListener("submit", async (ev) => {
     ev.preventDefault();
-    const text = searchInput.value.trim();
+    const artist = searchArtistInput.value.trim();
+    const title = searchTitleInput.value.trim();
+    const text = [artist, title].filter(Boolean).join(" ");
     searchError.textContent = "";
-    if (!text) return;
+    if (!text) { searchError.textContent = "Bitte Interpret und/oder Titel eingeben."; return; }
     searchResultsEl.innerHTML = skeletonGrid(2);
     try {
       lastSearchResults = await searchDiscogsForWishlist(text);
+      let hinweis = "";
+      // Interpret + Titel zusammen treffen Discogs' Schreibweise nicht immer
+      // exakt (Zusatz im Titel, andere Reihenfolge, Sonderzeichen). Bevor
+      // wir "keine Treffer" melden, erst mit nur dem Interpret nachfragen –
+      // genau der Fall, den ein Nutzer gemeldet hat: kombiniert 0 Treffer,
+      // nur Interpret 8 Treffer.
+      if (!lastSearchResults.length && artist && title) {
+        lastSearchResults = await searchDiscogsForWishlist(artist);
+        if (lastSearchResults.length) {
+          hinweis = `<div class="note" style="margin-bottom:10px;">Kein Treffer für „${escapeHtml(artist)} ${escapeHtml(title)}“ – hier alle Treffer nur für „${escapeHtml(artist)}“:</div>`;
+        }
+      }
       searchResultsEl.innerHTML = lastSearchResults.length
-        ? lastSearchResults.map((item, i) => wishlistSearchResultMarkup(item, i)).join("")
+        ? hinweis + lastSearchResults.map((item, i) => wishlistSearchResultMarkup(item, i)).join("")
         : `<div class="muted">Keine Treffer bei Discogs.</div>`;
     } catch (e) {
       searchResultsEl.innerHTML = "";
@@ -152,7 +169,8 @@
         barcode: item.barcode,
       });
       searchResultsEl.innerHTML = "";
-      searchInput.value = "";
+      searchArtistInput.value = "";
+      searchTitleInput.value = "";
       renderWishlist();
     } catch (e) {
       btn.disabled = false;
