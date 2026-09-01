@@ -8,7 +8,7 @@ DB abgleichen" verlangten, obwohl das längst erledigt war: die Listen lagen
 in `~/Downloads/*.md`, wo die jeweils andere Sitzung sie nicht sehen konnte.
 Beide Sitzungen sehen den Code — also gehört die Liste in den Code.
 
-Stand: 31.08.2026
+Stand: 01.09.2026
 
 ---
 
@@ -16,9 +16,14 @@ Stand: 31.08.2026
 
 ### 1. Edge Functions deployen · der einzige echte Blocker
 
-Beide Functions sind fertig, getestet und antworten mit `404`, weil sie nie
-deployt wurden. Die Supabase-CLI ist mit einem **fremden Konto** angemeldet
-(`bmoafuwdzbwxnrrmjakd`) und sieht das Projekt `mevmpihydpksruhmzzwr` nicht.
+**Alle drei** Functions sind fertig, getestet und antworten mit `404`, weil
+sie nie deployt wurden — `discogs-suche`, `cover-erkennen` **und
+`abo-pruefen`** (am 01.09.2026 einzeln nachgemessen). Die Supabase-CLI ist
+mit einem **fremden Konto** angemeldet (Org `welove80sDE-sys's Org`, nur
+Projekt `bmoafuwdzbwxnrrmjakd`); jeder Zugriff auf `mevmpihydpksruhmzzwr`
+endet mit `403 … account does not have the necessary privileges`. Ein
+`supabase login` mit dem richtigen Konto ist der erste Schritt, alles
+andere scheitert vorher.
 
 Solange das so bleibt: **keine Cover-Bilder** (Discogs liefert Bild-URLs nur
 an authentifizierte Anfragen — gemessen: 50 Treffer, 50 ohne `cover_image`)
@@ -31,6 +36,20 @@ supabase link --project-ref mevmpihydpksruhmzzwr
 supabase secrets set --env-file supabase/.env
 supabase functions deploy discogs-suche
 supabase functions deploy cover-erkennen
+supabase functions deploy abo-pruefen
+```
+
+Ohne `--no-verify-jwt` deployen: `app/js/discogs.js` schickt das Sitzungs-JWT
+plus `apikey` mit, die Voreinstellung `verify_jwt = true` ist also richtig und
+hält die Function davon ab, als offener Discogs-Zugang im Netz zu stehen.
+`SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` setzt Supabase selbst — aus
+`supabase/.env` braucht es sie nicht.
+
+Prüfen, ob es gewirkt hat (erwartet: `200` und gefüllte `cover_image`):
+
+```bash
+curl -s -H "apikey: <anon key>" -H "Authorization: Bearer <anon key>" \
+  "https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/discogs-suche?q=Rumours"
 ```
 
 Der Vision-Schlüssel braucht ein Google-Cloud-Projekt mit **aktivierter Cloud
