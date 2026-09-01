@@ -274,6 +274,29 @@ Geprüft wird jetzt, dass die Miniatur `loading="lazy"` trägt. Das ist die
 Zusicherung, auf die es ankommt: eine Sammlung mit 400 Platten soll beim
 Öffnen nicht 400 Cover holen.
 
+### ~~Cover blieben grau~~ — erledigt am 01.09.2026
+
+Beide Einträge in der Sammlung zeigten nur den Platzhalter. Ursache war
+**nicht** die Cover-Erkennung, sondern das Datum: sie wurden am 31.08.2026
+angelegt, einen Tag bevor `discogs-suche` Bilder lieferte (vorher 0 von 50).
+`cover_url` wurde deshalb als `NULL` gespeichert — und das Cover wird nur
+beim Hinzufügen mitgeschrieben, niemand trägt es je nach. Die Einträge
+wären dauerhaft grau geblieben, obwohl das Bild bei Discogs längst liegt.
+
+`scripts/cover-nachtragen.mjs` holt fehlende Cover über die `discogs_id`
+nach. Ohne Argument zeigt es nur an, mit `--schreiben` füllt es — und zwar
+nur `NULL`-Felder, ein vorhandenes Bild wird nie überschrieben. Beide
+Einträge haben jetzt ein Cover, die URLs liefern `200`.
+
+Das Skript bleibt nützlich: dieselbe Lücke entsteht bei jedem Eintrag neu,
+den Discogs gerade ohne Bild führt.
+
+**Merkposten für die Fehlersuche:** `coverMarkup()` trägt
+`onerror="this.remove()"`. Ein Cover, dessen URL nicht lädt, sieht damit
+exakt aus wie eines, das nie gesetzt wurde. Wer graue Kacheln sucht, muss
+beide Fälle unterscheiden — erst in der Datenbank nachsehen, dann die URL
+abrufen.
+
 - **Nur eine von vier Tesseract-Core-Fassungen ist vendort.** Der Worker
   fordert je nach Gerät `simd-lstm`, `simd`, `lstm` oder die Grundfassung an.
   Die SIMD-Fassung deckt jedes aktuelle Gerät ab; `test/assets.js` weist bei
