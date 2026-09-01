@@ -156,11 +156,24 @@ dieses Feld lesen beide Schranken. Es gab keinen Webhook, keinen Cron
 Die neue Function `abo-notify` nimmt **App Store Server Notifications V2**
 entgegen und ruft `abo_setzen` bzw. `abo_beenden`. Sie ist deployt, mit
 `--no-verify-jwt` (Apple schickt keinen Supabase-Token; der Schutz ist die
-Signatur). Die Sandbox-URL ist in App Store Connect eingetragen:
+Signatur). In App Store Connect steht als **Sandbox**-URL seit dem
+Domain-Umzug:
 
 ```
-https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/abo-notify
+https://collectview.site/apple/abo-notify
 ```
+
+Dahinter liegt ein Cloudflare Worker (Supabase Custom Domains gibt es erst ab
+Pro), der POST unverändert an
+`https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/abo-notify`
+durchreicht — durchreichen, nicht umleiten: auf eine Weiterleitung darf man
+sich hier nicht verlassen. Unabhängig nachgemessen: 0 Redirects, echte
+Meldung `200`, drei manipulierte `400`, `GET` `405`, Apples Zustellprotokoll
+`SUCCESS`. Dass die signierte Meldung durchgeht, beweist zugleich, dass der
+Worker den Rumpf byte-identisch weitergibt.
+
+Auf derselben Domain liegen `/support` und `/datenschutz` — beide verlangt
+Apple für die Einreichung.
 
 **Ende zu Ende belegt (01.09.2026):** Apples echte Probemeldung wird
 angenommen (`200`, `TEST`), und **Apple selbst verbucht die Zustellung als
