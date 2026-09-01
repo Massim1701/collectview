@@ -30,10 +30,33 @@ brächte nur Laufzeitfehler:
 
 | Function | fehlt |
 |---|---|
-| `cover-erkennen` | `GOOGLE_VISION_KEY` |
+| `cover-erkennen` | ein **gültiger** `GOOGLE_VISION_KEY` — siehe unten |
 | `abo-pruefen` | `APPLE_KEY_ID`, `APPLE_ISSUER_ID`, `APPLE_PRIVATE_KEY`, `GOOGLE_PLAY_SERVICE_ACCOUNT` |
 
 Solange `cover-erkennen` fehlt: **keine Bilderkennung**.
+
+**Der Wert, der am 01.09.2026 in `supabase/.env` stand, ist kein
+Cloud-API-Schlüssel** (Präfix `AQ.Ab8…`, 53 Zeichen). Gemessen gegen
+`vision.googleapis.com`:
+
+| Schlüssel | Antwort |
+|---|---|
+| erfundener, formgerechter `AIza…` | `400 API_KEY_INVALID` |
+| der hinterlegte `AQ.Ab8…` | `401 CREDENTIALS_MISSING` |
+
+Der erste Fall zeigt, dass Vision API-Schlüssel akzeptiert — der `?key=`-Weg
+der Function stimmt also. Der zweite heißt: Google erkennt den Wert nicht als
+Schlüssel und behandelt die Anfrage als anonym. Als Bearer-Token abgelehnt,
+`tokeninfo` sagt `invalid_token`. Vermutlich ein Schlüssel aus einem anderen
+Google-Produkt.
+
+Gebraucht wird ein API-Schlüssel aus der **Cloud Console** → *APIs & Dienste*
+→ *Anmeldedaten* → *Anmeldedaten erstellen* → *API-Schlüssel*: beginnt mit
+`AIza`, 39 Zeichen, im selben Projekt, in dem die **Cloud Vision API
+aktiviert** und **Abrechnung hinterlegt** ist. Danach auf diese eine API
+beschränken. Vor dem Deploy mit einem 1×1-Testbild gegen
+`images:annotate` prüfen — das kostet eine Anfrage und spart die Fehlersuche
+am Telefon.
 
 Der Vision-Schlüssel braucht ein Google-Cloud-Projekt mit **aktivierter Cloud
 Vision API** und **hinterlegter Abrechnung**, auch innerhalb der 1000
