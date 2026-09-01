@@ -251,22 +251,28 @@ der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
 
 ## Technisch offen
 
-### Ein Test ist rot — nicht aus der Function-Arbeit
+### ~~Ein Test ist rot~~ — erledigt am 01.09.2026
 
-`./test/run.sh`: **1 von 181** schlägt fehl, in `duplikate.test.html`:
+`./test/run.sh`: **182 von 182 grün.**
 
-```
-✗ Listeneintrag trägt das Badge, ohne die Zeile umzubauen
-  Klasse der Textliste fehlt – "list-card-plain" nicht enthalten
-```
+Die Beschreibung hier war in zwei Punkten falsch und hat in die Irre
+geführt: Der Test steht nicht in `duplikate.test.html` (die Datei gibt es
+nicht), sondern in `test/quantity.test.html`. Und `list-card-plain` ist
+nicht verlorengegangen — die Klasse ist ein Modifikator für Listen **ohne**
+Cover und wird weiterhin von `admin.js` benutzt.
 
-Er war schon vor der Function-Arbeit rot (auf unverändertem `HEAD`
-nachgeprüft, 01.09.2026) und gehört zur Sammlungsliste in `ui.js` — also
-in den anderen Strang. Vermutlich hat `0726d8d` (Cover-Miniaturen in der
-Listenansicht) die Zeile umgebaut, ohne `list-card-plain` mitzunehmen.
-Entweder trägt die Zeile die Klasse wieder, oder der Test beschreibt den
-alten Aufbau und muss nach.
+Richtig war nur der Verdacht auf `0726d8d`: seit den Cover-Miniaturen trägt
+`plainListRowMarkup()` die Klasse `list-card` und rendert eine 44px-Miniatur.
+Das war Absicht. Der Test beschrieb den Aufbau davor — er hat nichts
+gefunden, sondern nur nicht mitbekommen, dass die Zeile bewusst umgebaut
+wurde.
 
+Nachgezogen. Dabei ist eine wertlose Zusicherung durch eine echte ersetzt
+worden: `assert(!html.includes("<img"))` hielt nur deshalb, weil der
+Testeintrag zufällig kein Cover hatte — mit Cover wäre sie umgefallen.
+Geprüft wird jetzt, dass die Miniatur `loading="lazy"` trägt. Das ist die
+Zusicherung, auf die es ankommt: eine Sammlung mit 400 Platten soll beim
+Öffnen nicht 400 Cover holen.
 
 - **Nur eine von vier Tesseract-Core-Fassungen ist vendort.** Der Worker
   fordert je nach Gerät `simd-lstm`, `simd`, `lstm` oder die Grundfassung an.

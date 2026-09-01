@@ -190,15 +190,29 @@ test("Badge erscheint erst ab 2 Exemplaren", () => {
   assertIncludes(qtyBadgeMarkup({ quantity: 3 }), "×3");
 });
 
-test("Listeneintrag trägt das Badge, ohne die Zeile umzubauen", () => {
+test("Listeneintrag trägt das Badge neben der Cover-Miniatur", () => {
   const item = { id: "a", title: "Kid A", artist: "Radiohead", quantity: 2 };
   const html = plainListRowMarkup(item);
-  assertIncludes(html, "list-card-plain", "Klasse der Textliste fehlt");
+  assertIncludes(html, "list-card", "Klasse des Listeneintrags fehlt");
   assertIncludes(html, "×2");
   assertIncludes(html, "Kid A");
-  assert(!html.includes("<img"), "die Liste darf weiterhin kein Cover laden");
   assert(!plainListRowMarkup({ id: "b", title: "OK", quantity: 1 }).includes("qty-badge"),
     "bei 1 darf kein Badge im Markup stehen");
+});
+
+/* Die Zeile trug früher bewusst kein Cover; seit den Miniaturen in der
+   Listenansicht tut sie es. Die Zusicherung, die dabei zählt, ist eine
+   andere geworden: nicht "kein Bild", sondern "nicht alle Bilder auf
+   einmal" – sonst holt eine Sammlung mit 400 Platten beim Öffnen 400
+   Cover. */
+test("Cover in der Liste wird erst beim Scrollen geladen", () => {
+  const mitCover = plainListRowMarkup({
+    id: "c", title: "Kid A", cover_url: "https://example.invalid/a.jpg",
+  });
+  assertIncludes(mitCover, "<img", "mit Cover gehört ein Bild in die Zeile");
+  assertIncludes(mitCover, 'loading="lazy"', "sonst lädt die ganze Liste sofort");
+  assert(!plainListRowMarkup({ id: "d", title: "Ohne Cover" }).includes("<img"),
+    "ohne Cover darf kein leeres Bild-Tag entstehen");
 });
 
 runTests();
