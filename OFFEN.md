@@ -197,8 +197,49 @@ gesetzt wird, braucht es dort dieselbe Adresse — und `APPLE_SANDBOX_ERLAUBT`
 gehört dann auf `false`, sonst schaltet ein Sandbox-Tester echte Abos frei.
 Die Apple-ID der App lautet `6807394925`.
 
-**Google fehlt hier noch:** dessen Gegenstück sind Real-time Developer
-Notifications über Pub/Sub — anderer Weg, noch nicht gebaut.
+#### `abo-notify-google` · dasselbe für Play
+
+Gebaut und deployt (`--no-verify-jwt`). Der Bau ist **einfacher** als bei
+Apple, und zwar aus einem Grund, der im Code steht: Apple signiert seine
+Meldungen, der Inhalt ist damit die Wahrheit — deshalb dort eine Tabelle,
+welche Meldung was bedeutet. Google signiert den Inhalt **nicht**; die
+Meldung sagt nur „an diesem Kauf hat sich etwas geändert". Also fragen wir
+danach die Play Developer API und richten uns nach deren Antwort. Googles
+dreizehn Ereignistypen kommen deshalb im Code gar nicht vor — keiner davon
+trifft eine Entscheidung. Nebeneffekt: eine erfundene Meldung erreicht
+nichts, sie führt nur dazu, dass wir bei Google nachfragen und den wahren
+Zustand hinschreiben.
+
+Die Play-Abfrage liegt jetzt in `supabase/functions/_shared/google-play.ts`,
+damit Kaufprüfung und Meldungen dieselbe Quelle benutzen. **Achtung:**
+`abo-pruefen` hat davon noch seine eigene Kopie — zusammenführen steht aus,
+siehe unten.
+
+Nachgeprüft: `GET` → `405`; leerer Rumpf → `400`; Probemeldung → `200`;
+fremder `packageName` → `400`; unbekannter Kauf-Token → `200 kein Profil`.
+Die Autorisierung wurde mit einem vorübergehend gesetzten
+`GOOGLE_PUBSUB_AUDIENCE` geprüft: ohne Token `401`, mit gefälschtem Token
+`401` (Log: `kid unbekannt` — Googles echte Schlüsselliste wurde geholt).
+Der Testschalter ist wieder entfernt.
+
+**Was zum Scharfschalten fehlt — Google Cloud und Play Console:**
+
+1. Pub/Sub-Topic anlegen und
+   `google-play-developer-notifications@system.gserviceaccount.com` darauf
+   die Rolle *Pub/Sub Publisher* geben.
+2. Play Console → *Monetarisierung → Monetarisierungs-Setup → Real-time
+   developer notifications*: den Topic-Namen eintragen.
+3. Push-Abo auf dem Topic anlegen, Ziel:
+   `https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/abo-notify-google`
+   (oder hübscher über den Worker, dann bräuchte der eine Route
+   `/google/abo-notify` analog zu Apple). **Mit OIDC-Token**, ausgestellt
+   auf ein Dienstkonto.
+4. Dessen Adresse als `GOOGLE_PUBSUB_EMAIL` setzen — erst dann erzwingt die
+   Function die Autorisierung. Solange sie fehlt, nimmt die Function jede
+   Zustellung an und schreibt das in jedes Log. **Vor dem Launch setzen.**
+5. Probemeldung aus der Play Console schicken und in den Function-Logs
+   „TEST-Notification von Google empfangen" suchen.
+
 
 ### 3. App Store Connect prüfen
 
