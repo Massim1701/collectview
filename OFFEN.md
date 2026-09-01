@@ -51,13 +51,29 @@ Gegengeprüft am 01.09.2026:
   `online.driftware.plattenregal` **und** ganz ohne `bid`: dreimal `401`.
 - Sandbox-Endpunkt: ebenfalls `401`.
 
-Bleibt der Schlüsseltyp. Die App Store Server API
-(`api.storekit.itunes.apple.com`) nimmt **nur In-App-Kauf-Schlüssel** an:
-App Store Connect → *Benutzer und Zugriff* → *Integrationen* →
-**In-App-Kauf**. Ein Team-Schlüssel von der Registerkarte *App Store Connect
-API* wird dort mit `401` abgewiesen, egal wie richtig alles andere ist.
-**Wichtig: die Issuer-ID von derselben Registerkarte nehmen** – die der
-Team-Schlüssel ist eine andere, und die Mischung ergibt genau dieses Bild.
+Auch die App Store **Connect** API (`api.appstoreconnect.apple.com/v1/apps`)
+lehnt dasselbe Paar mit `401 NOT_AUTHORIZED` ab. Das schließt die zuerst
+naheliegende Erklärung aus: ein Team-Schlüssel müsste dort funktionieren und
+nur bei StoreKit scheitern. Das Paar gilt also **nirgends**.
+
+Damit bleiben nur noch Gründe, die im Konto liegen, nicht im Code:
+
+1. `APPLE_ISSUER_ID` gehört zu einem anderen Team als der Schlüssel.
+2. Der Schlüssel `4L3Y2HPQU4` ist in App Store Connect widerrufen.
+3. Key-ID und `.p8` gehören nicht zusammen — die Datei stammt von einem
+   anderen Schlüssel als die eingetragene ID.
+
+Zu prüfen in App Store Connect → *Benutzer und Zugriff* → *Integrationen*:
+existiert `4L3Y2HPQU4` dort noch und ist aktiv, auf welcher Registerkarte
+steht er, und ist die Issuer-ID **von derselben Registerkarte** übernommen?
+Für die App Store Server API muss es ein Schlüssel der Registerkarte
+**In-App-Kauf** sein.
+
+**Was den `401` nicht erklärt:** App-Store-Metadaten. Screenshots,
+Beschreibung und ein angehängter Build spielen für die Server-API keine
+Rolle — die authentifiziert allein über den signierten JWT, vor jedem
+Zugriff auf einen App-Datensatz. Ein unvollständiger App-Eintrag ergäbe
+`404`, nicht `401`.
 
 Bis dahin: Google-Käufe würden durchlaufen, Apple-Käufe scheitern mit
 `502 Beleg konnte nicht geprüft werden`.
