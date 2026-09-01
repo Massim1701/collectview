@@ -28,20 +28,18 @@
    ===================================================================== */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { Buffer } from "node:buffer";
-import {
-  Environment,
-  SignedDataVerifier,
-} from "npm:@apple/app-store-server-library@3.1.0";
+import "npm:reflect-metadata@0.2.2";
+import * as x509 from "npm:@peculiar/x509@2.0.0";
 import { APPLE_ROOT_CA_G3 } from "./apple-root-ca.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BUNDLE_ID = Deno.env.get("APPLE_BUNDLE_ID") ?? "online.driftware.collectview";
-// Die numerische App-ID aus App Store Connect. Erst nötig, wenn die App
-// live ist – für Produktions-Notifications verlangt Apples Bibliothek
-// sie. Solange sie fehlt, werden nur Sandbox-Meldungen angenommen.
-const APP_APPLE_ID = Number(Deno.env.get("APPLE_APP_APPLE_ID") ?? "") || undefined;
+// Sicherheitsschalter, gleiche Bedeutung wie in abo-pruefen: Sandbox-
+// Käufe sind kostenlos. Steht er nicht auf true, werden Sandbox-
+// Meldungen zwar geprüft, aber nicht umgesetzt – sonst schaltet sich ein
+// Sandbox-Tester nach dem Launch ein echtes Abo frei.
+const SANDBOX_ERLAUBT = Deno.env.get("APPLE_SANDBOX_ERLAUBT") === "true";
 
 /* ---------- Was welche Meldung bedeutet ----------
 
@@ -75,64 +73,113 @@ const BEENDEN = new Set([
   "REVOKE",               // Familienfreigabe entzogen
 ]);
 
-const pruefer = new Map<string, SignedDataVerifier>();
+/* ---------- Signaturprüfung ----------
 
-/** Prüfer je Umgebung, einmal gebaut. */
-function holePruefer(umgebung: Environment): SignedDataVerifier {
-  const schluessel = String(umgebung);
-  const da = pruefer.get(schluessel);
-  if (da) return da;
+   Warum nicht Apples eigene Bibliothek: die prüft Ketten über Nodes
+   crypto.X509Certificate. Deno liefert davon nur eine Hülle – weder
+   .toString() noch .raw sind implementiert, die Prüfung scheitert mit
+   VERIFICATION_FAILURE, obwohl an der Signatur nichts falsch ist.
+   Dieselbe Meldung lief lokal unter Node anstandslos durch. Statt
+   Löcher einzeln zu stopfen, steht die Prüfung hier ausgeschrieben,
+   gegen eine Bibliothek, die in Deno wirklich läuft.
 
-  // enableOnlineChecks = false: die Kette wird vollständig gegen das
-  // festgenagelte Wurzelzertifikat geprüft, nur der Widerrufsstatus
-  // (OCSP) wird nicht online abgefragt. Das spart einen Netzweg, der
-  // sonst bei jeder Meldung scheitern könnte.
-  const neu = new SignedDataVerifier(
-    [Buffer.from(APPLE_ROOT_CA_G3)],
-    false,
-    umgebung,
-    BUNDLE_ID,
-    APP_APPLE_ID,
+   Geprüft wird dasselbe wie bei Apple:
+     1. ES256, Kette aus genau 3 Zertifikaten.
+     2. Die mitgeschickte Wurzel MUSS Byte für Byte unsere sein.
+     3. Zwischenzertifikat von der Wurzel, Blatt vom Zwischenzertifikat
+        signiert – jeweils gültig zum Zeitpunkt der Meldung.
+     4. Apples Zweck-OIDs auf beiden Zertifikaten. Ohne die Prüfung
+        genügte irgendein von Apple ausgestelltes Zertifikat.
+     5. Die JWS-Signatur selbst, mit dem Schlüssel des Blatts. */
+
+const OID_ZWISCHEN = "1.2.840.113635.100.6.2.1";
+const OID_BLATT = "1.2.840.113635.100.6.11.1";
+
+const vonB64 = (t: string): Uint8Array =>
+  Uint8Array.from(
+    atob(t.replace(/-/g, "+").replace(/_/g, "/")),
+    (z) => z.charCodeAt(0),
   );
-  pruefer.set(schluessel, neu);
-  return neu;
-}
+
+const alsText = (t: string): string => new TextDecoder().decode(vonB64(t));
+
+const gleicheBytes = (a: Uint8Array, b: Uint8Array): boolean =>
+  a.length === b.length && a.every((z, i) => z === b[i]);
 
 /**
- * Umgebung aus dem noch UNGEPRÜFTEN Rumpf lesen.
+ * Ein von Apple signiertes JWS prüfen und den Inhalt zurückgeben.
  *
- * Das ist harmlos und nötig: die Bibliothek will vorab wissen, gegen
- * welche Umgebung sie prüft. Wer hier lügt, gewinnt nichts – die
- * anschließende Signaturprüfung vergleicht die Umgebung mit dem
- * signierten Inhalt und schlägt fehl, wenn beides nicht zusammenpasst.
+ * Wirft bei allem, was nicht stimmt. Der Rückgabewert ist erst dann
+ * etwas wert, wenn diese Funktion ohne Ausnahme zurückkehrt.
  */
-function umgebungRaten(signedPayload: string): Environment {
-  try {
-    const mitte = signedPayload.split(".")[1];
-    const roh = JSON.parse(atob(mitte.replace(/-/g, "+").replace(/_/g, "/")));
-    return roh?.data?.environment === "Production"
-      ? Environment.PRODUCTION
-      : Environment.SANDBOX;
-  } catch {
-    return Environment.SANDBOX;
+async function pruefeUndLies(jws: string): Promise<Record<string, unknown>> {
+  const [kopfB64, rumpfB64, sigB64] = jws.split(".");
+  if (!kopfB64 || !rumpfB64 || !sigB64) throw new Error("kein JWS");
+
+  const kopf = JSON.parse(alsText(kopfB64));
+  if (kopf.alg !== "ES256") throw new Error(`Algorithmus ${kopf.alg}`);
+
+  const kette = kopf.x5c;
+  if (!Array.isArray(kette) || kette.length !== 3) {
+    throw new Error("Kette hat nicht genau 3 Zertifikate");
   }
+
+  const blatt = new x509.X509Certificate(vonB64(kette[0]));
+  const zwischen = new x509.X509Certificate(vonB64(kette[1]));
+  const wurzel = new x509.X509Certificate(APPLE_ROOT_CA_G3);
+
+  // Die Wurzel aus der Meldung zählt nicht – unsere zählt. Der Vergleich
+  // stellt nur sicher, dass die Kette überhaupt auf sie hinausläuft.
+  if (!gleicheBytes(new Uint8Array(wurzel.rawData), vonB64(kette[2]))) {
+    throw new Error("Wurzel der Meldung ist nicht Apples Wurzel");
+  }
+
+  const rumpf = JSON.parse(alsText(rumpfB64));
+  const stand = new Date(Number(rumpf.signedDate ?? Date.now()));
+
+  if (!await zwischen.verify({ publicKey: wurzel.publicKey, date: stand })) {
+    throw new Error("Zwischenzertifikat nicht von Apples Wurzel");
+  }
+  if (!await blatt.verify({ publicKey: zwischen.publicKey, date: stand })) {
+    throw new Error("Blatt nicht vom Zwischenzertifikat");
+  }
+  if (!zwischen.getExtension(OID_ZWISCHEN)) {
+    throw new Error("Zwischenzertifikat ohne Apple-OID");
+  }
+  if (!blatt.getExtension(OID_BLATT)) {
+    throw new Error("Blatt ohne Apple-OID");
+  }
+
+  const ok = await crypto.subtle.verify(
+    { name: "ECDSA", hash: "SHA-256" },
+    await blatt.publicKey.export(),
+    vonB64(sigB64),
+    new TextEncoder().encode(`${kopfB64}.${rumpfB64}`),
+  );
+  if (!ok) throw new Error("Signatur stimmt nicht");
+
+  return rumpf;
 }
 
 /**
  * Grund einer fehlgeschlagenen Prüfung lesbar machen.
  *
- * Apples VerificationException trägt ihren Grund in `status`, nicht in
- * `message` – ein blankes catch protokolliert sonst eine leere Zeile
- * und man weiß im Ernstfall nicht, ob die Signatur falsch war, die
- * Umgebung nicht passte oder die Bibliothek selbst hochging.
+ * Unsere eigenen Fehler tragen ihn in `message`; was aus der
+ * Zertifikatsbibliothek kommt, versteckt ihn gern eine Ebene tiefer in
+ * `cause`. Ohne beides steht im Log eine nichtssagende Zeile – und
+ * genau daran hat die Fehlersuche hier schon einmal gehangen.
  */
 function grund(e: unknown): string {
   if (e && typeof e === "object") {
     const status = (e as { status?: unknown }).status;
     const name = (e as { name?: unknown }).name;
     const nachricht = (e as { message?: unknown }).message;
-    return [name, status, nachricht].filter(Boolean).join(" / ") ||
-      String(e);
+    // Der eigentliche Grund steckt fast immer in `cause` – ohne die
+    // steht im Log nur "status 1" und man rät.
+    const ursache = (e as { cause?: unknown }).cause;
+    const teile = [name, status, nachricht].filter(Boolean);
+    if (ursache) teile.push(`cause: ${grund(ursache)}`);
+    return teile.join(" / ") || String(e);
   }
   return String(e);
 }
@@ -159,14 +206,30 @@ Deno.serve(async (req) => {
   // Ab hier gilt nur noch, was die Signatur deckt.
   let meldung;
   try {
-    meldung = await holePruefer(umgebungRaten(signedPayload))
-      .verifyAndDecodeNotification(signedPayload);
+    meldung = await pruefeUndLies(signedPayload);
   } catch (e) {
     // 400, nicht 500: eine Meldung, die wir nicht verifizieren können,
     // wird auch beim zehnten Versuch nicht echt. Apple soll sie nicht
     // endlos wiederholen.
     console.error("Signatur nicht gültig:", grund(e));
     return json({ error: "Signatur nicht gültig." }, 400);
+  }
+
+  // Apples Bibliothek prüfte das intern mit; jetzt steht es sichtbar da.
+  // Ohne diese Zeile würde eine gültig signierte Meldung zu einer
+  // FREMDEN App unsere Abos umschalten.
+  const daten = (meldung.data ?? {}) as Record<string, unknown>;
+  if (daten.bundleId !== BUNDLE_ID) {
+    console.error(`Meldung für fremde App: ${String(daten.bundleId)}`);
+    return json({ error: "Andere App." }, 400);
+  }
+
+  const umgebung = String(daten.environment ?? "");
+  if (umgebung === "Sandbox" && !SANDBOX_ERLAUBT) {
+    // Geprüft und echt, aber ein kostenloser Testkauf. Quittieren, damit
+    // Apple nicht wiederholt – umsetzen wäre ein geschenktes Abo.
+    console.log("Sandbox-Meldung ignoriert (APPLE_SANDBOX_ERLAUBT ist aus).");
+    return json({ ok: true, gemacht: "nichts (Sandbox gesperrt)" });
   }
 
   const art = String(meldung.notificationType ?? "");
@@ -186,7 +249,7 @@ Deno.serve(async (req) => {
     return json({ ok: true, art, gemacht: "nichts" });
   }
 
-  const signierteTransaktion = meldung.data?.signedTransactionInfo;
+  const signierteTransaktion = daten.signedTransactionInfo as string | undefined;
   if (!signierteTransaktion) {
     console.log(`${art} ohne Transaktion – nichts zu tun.`);
     return json({ ok: true, art, gemacht: "nichts" });
@@ -194,14 +257,22 @@ Deno.serve(async (req) => {
 
   let transaktion;
   try {
-    transaktion = await holePruefer(umgebungRaten(signedPayload))
-      .verifyAndDecodeTransaction(signierteTransaktion);
+    transaktion = await pruefeUndLies(signierteTransaktion);
   } catch (e) {
     console.error("Transaktion nicht prüfbar:", grund(e));
     return json({ error: "Transaktion nicht prüfbar." }, 400);
   }
 
-  const beleg = transaktion.originalTransactionId;
+  // Auch die Transaktion gehört zu unserer App – sonst könnte eine
+  // gültig signierte fremde Transaktion mitgeschickt werden.
+  if (transaktion.bundleId !== BUNDLE_ID) {
+    console.error(`Transaktion für fremde App: ${String(transaktion.bundleId)}`);
+    return json({ error: "Andere App." }, 400);
+  }
+
+  const beleg = typeof transaktion.originalTransactionId === "string"
+    ? transaktion.originalTransactionId
+    : "";
   if (!beleg) return json({ ok: true, art, gemacht: "nichts" });
 
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
