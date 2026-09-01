@@ -55,12 +55,24 @@ Deno.serve(async (req) => {
     return json({ error: "barcode oder q wird erwartet." }, 400);
   }
 
-  // Nur die beiden Suchparameter durchreichen, nichts sonst: der Proxy
-  // soll keine beliebigen Discogs-Endpunkte offenlegen.
+  // Nur eine feste Liste an Suchparametern durchreichen, nichts sonst:
+  // der Proxy soll keine beliebigen Discogs-Endpunkte offenlegen. page/
+  // per_page kamen mit der Wunschlisten-Seitensteuerung dazu (Wunschliste
+  // zeigt fest 10 Treffer pro Seite) – beide werden auf einen sinnvollen
+  // Bereich begrenzt, damit niemand über die Query z. B. per_page=10000
+  // schickt.
   const ziel = new URL("https://api.discogs.com/database/search");
   if (barcode) ziel.searchParams.set("barcode", barcode);
   if (q) ziel.searchParams.set("q", q);
   ziel.searchParams.set("type", "release");
+
+  const page = parseInt(url.searchParams.get("page") || "", 10);
+  if (Number.isInteger(page) && page >= 1) ziel.searchParams.set("page", String(page));
+
+  const perPage = parseInt(url.searchParams.get("per_page") || "", 10);
+  if (Number.isInteger(perPage) && perPage >= 1 && perPage <= 50) {
+    ziel.searchParams.set("per_page", String(perPage));
+  }
 
   let res: Response;
   try {

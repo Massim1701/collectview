@@ -95,6 +95,10 @@
   const searchError = document.getElementById("wl-search-error");
   const searchResultsEl = document.getElementById("wl-search-results");
   let lastSearchResults = [];
+  let lastSearchQuery = { artist: "", title: "" };
+  let lastSearchPage = 1;
+  let lastSearchHasMore = false;
+  let lastSearchUsedArtistOnly = false;
 
   async function renderNotifications() {
     try {
@@ -119,34 +123,71 @@
     }
   }
 
+  /** Baut den Text für eine Seite auf – eigene Funktion, weil sowohl der
+      Formular-Submit (Seite 1) als auch die Weiter/Zurück-Buttons (gleicher
+      Text, andere Seite) dieselbe Suche auslösen. */
+  async function runSearch(text, page, { usedArtistOnly = false } = {}) {
+    searchResultsEl.innerHTML = skeletonGrid(2);
+    searchError.textContent = "";
+    try {
+      const { items, hasMore } = await searchDiscogsForWishlist(text, page);
+      lastSearchResults = items;
+      lastSearchPage = page;
+      lastSearchHasMore = hasMore;
+      lastSearchUsedArtistOnly = usedArtistOnly;
+
+      // Interpret + Titel zusammen treffen Discogs' Schreibweise nicht immer
+      // exakt (Zusatz im Titel, andere Reihenfolge, Sonderzeichen). Bevor
+      // wir "keine Treffer" melden, erst mit nur dem Interpret nachfragen –
+      // genau der Fall, den ein Nutzer gemeldet hat: kombiniert 0 Treffer,
+      // nur Interpret 8 Treffer. Nur auf Seite 1 versucht, sonst würde ein
+      // "Nächste Seite" mitten in der Ausweich-Suche landen.
+      let hinweis = "";
+      if (!items.length && page === 1 && lastSearchQuery.artist && lastSearchQuery.title && !usedArtistOnly) {
+        return runSearch(lastSearchQuery.artist, 1, { usedArtistOnly: true });
+      }
+      if (usedArtistOnly && items.length) {
+        hinweis = `<div class="note" style="margin-bottom:10px;">Kein Treffer für „${escapeHtml(lastSearchQuery.artist)} ${escapeHtml(lastSearchQuery.title)}“ – hier Treffer nur für „${escapeHtml(lastSearchQuery.artist)}“:</div>`;
+      }
+
+      searchResultsEl.innerHTML = items.length
+        ? hinweis + items.map((item, i) => wishlistSearchResultMarkup(item, i)).join("") + searchPagerMarkup()
+        : `<div class="muted">Keine Treffer bei Discogs.</div>`;
+    } catch (e) {
+      searchResultsEl.innerHTML = "";
+      searchError.textContent = e.message;
+    }
+  }
+
+  /** "Seite 2" plus Vor/Zurück – nur die Knöpfe zeigen, die gerade gehen. */
+  function searchPagerMarkup() {
+    if (lastSearchPage === 1 && !lastSearchHasMore) return "";
+    return `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:14px;">
+        <button type="button" class="btn-secondary small" id="wl-search-prev"${lastSearchPage <= 1 ? " disabled" : ""}>← Vorherige</button>
+        <span class="note" style="margin:0;">Seite ${lastSearchPage}</span>
+        <button type="button" class="btn-secondary small" id="wl-search-next"${lastSearchHasMore ? "" : " disabled"}>Nächste →</button>
+      </div>`;
+  }
+
   searchForm.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const artist = searchArtistInput.value.trim();
     const title = searchTitleInput.value.trim();
     const text = [artist, title].filter(Boolean).join(" ");
-    searchError.textContent = "";
     if (!text) { searchError.textContent = "Bitte Interpret und/oder Titel eingeben."; return; }
-    searchResultsEl.innerHTML = skeletonGrid(2);
-    try {
-      lastSearchResults = await searchDiscogsForWishlist(text);
-      let hinweis = "";
-      // Interpret + Titel zusammen treffen Discogs' Schreibweise nicht immer
-      // exakt (Zusatz im Titel, andere Reihenfolge, Sonderzeichen). Bevor
-      // wir "keine Treffer" melden, erst mit nur dem Interpret nachfragen –
-      // genau der Fall, den ein Nutzer gemeldet hat: kombiniert 0 Treffer,
-      // nur Interpret 8 Treffer.
-      if (!lastSearchResults.length && artist && title) {
-        lastSearchResults = await searchDiscogsForWishlist(artist);
-        if (lastSearchResults.length) {
-          hinweis = `<div class="note" style="margin-bottom:10px;">Kein Treffer für „${escapeHtml(artist)} ${escapeHtml(title)}“ – hier alle Treffer nur für „${escapeHtml(artist)}“:</div>`;
-        }
-      }
-      searchResultsEl.innerHTML = lastSearchResults.length
-        ? hinweis + lastSearchResults.map((item, i) => wishlistSearchResultMarkup(item, i)).join("")
-        : `<div class="muted">Keine Treffer bei Discogs.</div>`;
-    } catch (e) {
-      searchResultsEl.innerHTML = "";
-      searchError.textContent = e.message;
+    lastSearchQuery = { artist, title };
+    runSearch(text, 1);
+  });
+
+  searchResultsEl.addEventListener("click", (ev) => {
+    const searchText = lastSearchUsedArtistOnly
+      ? lastSearchQuery.artist
+      : [lastSearchQuery.artist, lastSearchQuery.title].filter(Boolean).join(" ");
+    if (ev.target.closest("#wl-search-next")) {
+      runSearch(searchText, lastSearchPage + 1, { usedArtistOnly: lastSearchUsedArtistOnly });
+    } else if (ev.target.closest("#wl-search-prev")) {
+      runSearch(searchText, lastSearchPage - 1, { usedArtistOnly: lastSearchUsedArtistOnly });
     }
   });
 

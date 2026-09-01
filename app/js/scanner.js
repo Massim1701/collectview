@@ -1514,6 +1514,7 @@ function renderResult(item) {
         <div class="scan-result-title">${escapeHtml(item.title)}</div>
         <div class="scan-result-artist">${escapeHtml(item.artist || "Unbekannter Interpret")}</div>
         <div class="scan-result-meta">${[item.year, item.format, item.country].filter(Boolean).map(escapeHtml).join(" · ")}</div>
+        ${item.barcode ? `<div class="scan-result-barcode">Barcode: <span class="scan-result-barcode-num">${escapeHtml(item.barcode)}</span></div>` : ""}
       </div>
     </div>
     ${scanStatusMarkup(status)}

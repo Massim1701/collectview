@@ -50,10 +50,19 @@ function wlNormalizeResult(r) {
   };
 }
 
-/** Sucht bei Discogs; wirft bei Rate-Limit einen Fehler mit erkennbarer
-    .rateLimited-Markierung, damit der Aufrufer eine passende Meldung zeigt. */
-async function searchDiscogsForWishlist(text) {
-  const res = await discogsSuche({ q: text });
+/** Feste Seitengröße für die Wunschlisten-Suche: 10 Treffer pro Seite. */
+const WL_SEARCH_PAGE_SIZE = 10;
+
+/**
+ * Sucht bei Discogs, Seite für Seite (10 pro Seite). Wirft bei Rate-Limit
+ * einen Fehler mit erkennbarer .rateLimited-Markierung, damit der
+ * Aufrufer eine passende Meldung zeigt. Gibt neben den Treffern auch
+ * mit, ob eine weitere Seite existiert – Discogs' eigene Pagination
+ * (data.pagination.pages) sagt das zuverlässiger, als aus 10 Treffern
+ * zu raten (die letzte Seite kann zufällig auch genau 10 voll sein).
+ */
+async function searchDiscogsForWishlist(text, page = 1) {
+  const res = await discogsSuche({ q: text, page, per_page: WL_SEARCH_PAGE_SIZE });
   if (res.status === 429) {
     const err = new Error("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht. Kurz warten und nochmal versuchen.");
     err.rateLimited = true;
@@ -61,7 +70,11 @@ async function searchDiscogsForWishlist(text) {
   }
   if (!res.ok) throw new Error(`Discogs antwortete mit ${res.status}`);
   const data = await res.json();
-  return (data.results || []).slice(0, 8).map(wlNormalizeResult);
+  return {
+    items: (data.results || []).slice(0, WL_SEARCH_PAGE_SIZE).map(wlNormalizeResult),
+    page,
+    hasMore: page < (data.pagination?.pages || 1),
+  };
 }
 
 /** Karte für einen Discogs-Suchtreffer, mit "Hinzufügen" statt Entfernen-Button. */
@@ -110,6 +123,7 @@ function wishlistCardMarkup(item) {
       <div style="min-width:0;">
         <div class="list-card-title">${escapeHtml(item.title)}</div>
         <div class="list-card-sub">${itemSubtitle(item)}</div>
+        ${item.barcode ? `<div class="scan-result-barcode">Barcode: <span class="scan-result-barcode-num">${escapeHtml(item.barcode)}</span></div>` : ""}
       </div>
       <button type="button" class="wishlist-remove" data-id="${escapeHtml(item.id)}" aria-label="Von Wunschliste entfernen"
         style="background:none;border:0;color:var(--text-muted);cursor:pointer;padding:6px;">
