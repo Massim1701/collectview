@@ -14,24 +14,53 @@ Stand: 01.09.2026
 
 ## Braucht Massimo — niemand sonst kommt da ran
 
-### 1. Edge Functions · zwei stehen, `abo-pruefen` fehlt noch
+### 1. Edge Functions · alle drei deployt, Apple-Schlüssel blockiert
 
-**`discogs-suche` und `cover-erkennen` sind seit 01.09.2026 deployt und
-geprüft.** Beide antworten ohne JWT mit `401`, stehen also nicht offen im Netz.
+**Alle drei Functions sind deployt** (01.09.2026). Keine antwortet ohne JWT.
 
 | Function | geprüft mit | Ergebnis |
 |---|---|---|
 | `discogs-suche` | „Fleetwood Mac Rumours" | 50 Treffer, **alle 50 mit `cover_image`** (vorher 0) |
 | `cover-erkennen` | echtes Rumours-Cover | `label: "Fleetwood Mac Rumours"` |
-| `cover-erkennen` | 1×1-Pixel | leeres `label` + Hinweis, kein geratener Treffer |
+| `cover-erkennen` | 1×1-Pixel | leeres `label`, kein geratener Treffer |
+| `abo-pruefen` | GET / ohne JWT / falsches JWT | `405` / `401` / `401` |
 
-Cover-Bilder und Bilderkennung sind damit erledigt. Am Client war nichts zu
-ändern: `discogsSuche()` schaltet selbst auf den Proxy um, und
-`cover-erkennen` behielt die Antwortform `{ label, entitaeten }`.
+Am Client war nichts zu ändern: `discogsSuche()` schaltet selbst auf den
+Proxy um, und `cover-erkennen` behielt die Antwortform `{ label, entitaeten }`.
 
-**Offen: `abo-pruefen`** – braucht `APPLE_KEY_ID`, `APPLE_ISSUER_ID`,
-`APPLE_PRIVATE_KEY` und `GOOGLE_PLAY_SERVICE_ACCOUNT`. Deployen ohne diese
-Secrets brächte nur eine Function, die zur Laufzeit scheitert.
+**`db/abo.sql` ist gelaufen** (01.09.2026, über die Management-API). Geprüft:
+`abo_setzen`, `abo_beenden` und `protect_subscription_fields` existieren, die
+vier `store_`-Spalten stehen in `profiles`, der Trigger
+`on_profiles_protect_subscription` hängt dran, und die RPCs sind für `anon`
+und `authenticated` gesperrt — nur `postgres` und `service_role` dürfen.
+
+#### Store-Zugangsdaten: Google trägt, Apple nicht
+
+| Store | Stand |
+|---|---|
+| Google Play | **funktioniert.** Dienstkonto `abo-pruefen@collectview-507309…` holt ein Zugriffstoken (3599 s) mit Scope `androidpublisher`. |
+| Apple | **`401`, alle Varianten.** |
+
+Beim Apple-Schlüssel liegt es nicht an der Umsetzung und nicht am Rebrand.
+Gegengeprüft am 01.09.2026:
+
+- Die ES256-Signatur ist korrekt — DER→roh zurückgewandelt und mit
+  `openssl dgst -verify` bestätigt (`Verified OK`).
+- Der private Schlüssel ist ein gültiger 256-Bit-EC-Schlüssel.
+- `bid` = `online.driftware.collectview` **und** die alte
+  `online.driftware.plattenregal` **und** ganz ohne `bid`: dreimal `401`.
+- Sandbox-Endpunkt: ebenfalls `401`.
+
+Bleibt der Schlüsseltyp. Die App Store Server API
+(`api.storekit.itunes.apple.com`) nimmt **nur In-App-Kauf-Schlüssel** an:
+App Store Connect → *Benutzer und Zugriff* → *Integrationen* →
+**In-App-Kauf**. Ein Team-Schlüssel von der Registerkarte *App Store Connect
+API* wird dort mit `401` abgewiesen, egal wie richtig alles andere ist.
+**Wichtig: die Issuer-ID von derselben Registerkarte nehmen** – die der
+Team-Schlüssel ist eine andere, und die Mischung ergibt genau dieses Bild.
+
+Bis dahin: Google-Käufe würden durchlaufen, Apple-Käufe scheitern mit
+`502 Beleg konnte nicht geprüft werden`.
 
 #### Zwei Fallen, die je eine Sitzung gekostet haben
 
