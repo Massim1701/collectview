@@ -41,7 +41,16 @@
     <h2 class="section-title" style="margin:0;">Meine Wunschliste</h2>
   </div>
 
-  <button class="btn-secondary wl-add-toggle" type="button" id="add-toggle">+ Tonträger zur Wunschliste hinzufügen</button>
+  <form id="wl-search-form" class="card" style="margin-bottom:14px;">
+    <div class="ln-row">
+      <input class="field" id="wl-search-input" placeholder="Bei Discogs suchen – Titel und/oder Interpret" autocomplete="off">
+      <button class="btn-primary" type="submit" style="flex:0 0 auto; padding:0 20px;">Suchen</button>
+    </div>
+    <div class="err" id="wl-search-error" style="margin-top:10px;"></div>
+  </form>
+  <div id="wl-search-results" style="margin-bottom:22px;"></div>
+
+  <button class="btn-secondary wl-add-toggle" type="button" id="add-toggle">+ Tonträger von Hand eintragen</button>
 
   <form id="add-form" class="card">
     <input class="field" id="wl-title" placeholder="Titel *" required style="margin-bottom:10px;">
@@ -62,6 +71,7 @@
 
 <script src="./vendor/supabase.js"></script>
 <script src="./config.js"></script>
+<script src="./js/discogs.js"></script>
 <script src="./js/i18n.js"></script>
 <script src="./js/ui.js"></script>
 <script src="./js/auth.js"></script>
@@ -77,6 +87,11 @@
   const wlList = document.getElementById("wl-list");
   const addToggle = document.getElementById("add-toggle");
   const addForm = document.getElementById("add-form");
+  const searchForm = document.getElementById("wl-search-form");
+  const searchInput = document.getElementById("wl-search-input");
+  const searchError = document.getElementById("wl-search-error");
+  const searchResultsEl = document.getElementById("wl-search-results");
+  let lastSearchResults = [];
 
   async function renderNotifications() {
     try {
@@ -100,6 +115,51 @@
       wlList.innerHTML = errorState(e.message);
     }
   }
+
+  searchForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const text = searchInput.value.trim();
+    searchError.textContent = "";
+    if (!text) return;
+    searchResultsEl.innerHTML = skeletonGrid(2);
+    try {
+      lastSearchResults = await searchDiscogsForWishlist(text);
+      searchResultsEl.innerHTML = lastSearchResults.length
+        ? lastSearchResults.map((item, i) => wishlistSearchResultMarkup(item, i)).join("")
+        : `<div class="muted">Keine Treffer bei Discogs.</div>`;
+    } catch (e) {
+      searchResultsEl.innerHTML = "";
+      searchError.textContent = e.message;
+    }
+  });
+
+  searchResultsEl.addEventListener("click", async (ev) => {
+    const btn = ev.target.closest(".wishlist-search-add");
+    if (!btn) return;
+    const item = lastSearchResults[parseInt(btn.dataset.index, 10)];
+    if (!item) return;
+    btn.disabled = true;
+    btn.textContent = "Wird hinzugefügt …";
+    try {
+      await addWishlistItem({
+        user_id: user.id,
+        discogs_id: item.discogs_id,
+        title: item.title,
+        artist: item.artist,
+        format: item.format,
+        year: item.year,
+        cover_url: item.cover_url,
+        barcode: item.barcode,
+      });
+      searchResultsEl.innerHTML = "";
+      searchInput.value = "";
+      renderWishlist();
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = "Hinzufügen";
+      searchError.textContent = e.message;
+    }
+  });
 
   addToggle.addEventListener("click", () => {
     addForm.classList.toggle("open");

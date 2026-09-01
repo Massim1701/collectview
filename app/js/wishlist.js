@@ -24,6 +24,59 @@ async function removeWishlistItem(id) {
   if (error) throw error;
 }
 
+/* ---------- Discogs-Suche zum Befüllen der Wunschliste ----------
+   Eigene, kleine Kopie von scanner.js' splitTitle/normalizeResult statt
+   scanner.js hier mitzuladen: wishlist.html braucht weder Kamera noch
+   Scan-Limit, nur die Textsuche. Gleiche Feldnamen wie dort, damit ein
+   Discogs-Treffer von hier und vom Scanner identisch in wishlist_items
+   landen (discogs_id, cover_url, barcode) – so erkennt scan-status.js
+   später denselben Eintrag wieder, egal woher er kam. */
+function wlSplitTitle(fullTitle) {
+  const idx = fullTitle.indexOf(" - ");
+  if (idx === -1) return ["", fullTitle];
+  return [fullTitle.slice(0, idx), fullTitle.slice(idx + 3)];
+}
+
+function wlNormalizeResult(r) {
+  const [artist, title] = wlSplitTitle(r.title || "");
+  return {
+    discogs_id: r.id,
+    title,
+    artist,
+    format: (r.format || []).join(", "),
+    year: r.year ? parseInt(r.year, 10) : null,
+    cover_url: r.cover_image || r.thumb || null,
+    barcode: null,
+  };
+}
+
+/** Sucht bei Discogs; wirft bei Rate-Limit einen Fehler mit erkennbarer
+    .rateLimited-Markierung, damit der Aufrufer eine passende Meldung zeigt. */
+async function searchDiscogsForWishlist(text) {
+  const res = await discogsSuche({ q: text });
+  if (res.status === 429) {
+    const err = new Error("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht. Kurz warten und nochmal versuchen.");
+    err.rateLimited = true;
+    throw err;
+  }
+  if (!res.ok) throw new Error(`Discogs antwortete mit ${res.status}`);
+  const data = await res.json();
+  return (data.results || []).slice(0, 8).map(wlNormalizeResult);
+}
+
+/** Karte für einen Discogs-Suchtreffer, mit "Hinzufügen" statt Entfernen-Button. */
+function wishlistSearchResultMarkup(item, index) {
+  return `
+    <div class="list-card" data-index="${index}">
+      ${coverMarkup(item, { size: 56 })}
+      <div style="min-width:0;">
+        <div class="list-card-title">${escapeHtml(item.title)}</div>
+        <div class="list-card-sub">${itemSubtitle(item)}</div>
+      </div>
+      <button type="button" class="btn-primary small wishlist-search-add" data-index="${index}">Hinzufügen</button>
+    </div>`;
+}
+
 async function fetchNotifications(userId) {
   const { data, error } = await sb
     .from("notifications")
