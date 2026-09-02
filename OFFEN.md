@@ -540,15 +540,15 @@ Alle Dateien mit `node --check` geprüft, syntaktisch ok.
 
 ### Rückmeldung an Claude Code — Auftrag 02.09.2026 (Claude Web)
 
-1. **Startseite neu ausspielen**: NICHT gemacht. `/` kommt aus einem
-   Workers-Assets-Binding (`env.ASSETS.fetch`, siehe Bindings-Tab), das
-   Quick Edit nicht bearbeiten kann — nur `wrangler deploy` aus dem
-   lokalen Worker-Projekt (Versionshistorie: bisherige Deploys liefen als
-   "Wrangler by welove80sde", also von Massimos Rechner). Fertig
-   vorbereitet in `web/collectview-site-index.html` +
-   `web/render-landing.mjs` (Ableitungsschritt aus
-   `wireframes/landing.html`, korrigierte Footer-Links). Massimo muss das
-   selbst deployen.
+1. **Startseite neu ausspielen**: erledigt (02.09.2026), live bestätigt.
+   Massimos altes lokales Wrangler-Projekt war nicht mehr auffindbar
+   (Desktop/Documents/Downloads/driftware durchsucht) — neu aufgesetzt
+   unter `web/deploy/` (committet: `wrangler.toml` mit echter Account-ID
+   und Route `collectview.site/*`, `worker.js`; `assets/` bewusst nicht
+   committet, siehe .gitignore, da nur eine Kopie von app/+wireframes/+
+   generierter Landingpage). Massimo hat `npx wrangler deploy` selbst
+   laufen lassen. Live-Fetch auf `/` bestätigt: Impressum-Link im Footer
+   da, Titel korrekt.
 2. **E-Mail-Adresse ersetzt**: erledigt (02.09.2026), live bestätigt.
    Dritter Anlauf im selben Cloudflare-Tab hat funktioniert — der
    Ctrl+H-Dialog blieb diesmal (verzögert) offen und liess sich per
@@ -576,3 +576,15 @@ Alle Dateien mit `node --check` geprüft, syntaktisch ok.
    `https://formsubmit.co/supportcollectview.site@gmail.com`, POST mit
    Formulardaten (kein JSON-Endpunkt). Nur im Arbeitsbaum geändert, nicht
    committet.
+
+
+---
+
+### Nachtrag (02.09.2026, Claude Web)
+
+Cloudflare-MCP-Setup laut `developers.cloudflare.com/agent-setup/prompt.md`
+geprüft, aber nicht eingerichtet: Die Anleitung ist für die Claude-Code-CLI
+gedacht (`claude plugin marketplace add cloudflare/skills` etc.), diese
+Session läuft aber als Cowork ohne passendes Plugin im Katalog — für die
+eigentliche Aufgabe (Cloudflare-Dashboard, Deploy) reicht der bestehende
+Browser-Zugriff, daher nicht weiter verfolgt.
