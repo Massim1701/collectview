@@ -17,19 +17,45 @@
   var inserts = [];
   var nextError = null;
 
+  var meldungen = [];
+
+  /* Bildet den echten Aufruf nach: insert(...).select("id").single().
+     Der Stub muss der Wirklichkeit folgen – als er das nicht tat, war er
+     gruen, waehrend die App an .select is not a function scheiterte. */
   var sb = {
     from(table) {
       return {
-        async insert(row) {
+        insert(row) {
           inserts.push({ table, row });
-          return { error: nextError };
+          const antwort = nextError
+            ? { data: null, error: nextError }
+            : { data: { id: "feedback-1" }, error: null };
+          return {
+            select() {
+              return { async single() { return antwort; } };
+            },
+            then(f) { return Promise.resolve(antwort).then(f); },
+          };
         },
       };
     },
+    auth: {
+      async getSession() { return { data: { session: { access_token: "tok" } } }; },
+    },
+  };
+
+  /* feedback.js meldet den Support ueber eine Edge Function. Hier nur
+     mitschreiben – der Aufruf darf den Ablauf nie aufhalten. */
+  var SUPABASE_URL = "https://test.supabase.co";
+  var SUPABASE_ANON_KEY = "anon";
+  window.fetch = async (url, opts) => {
+    meldungen.push({ url: String(url), rumpf: JSON.parse(opts.body) });
+    return { ok: true, status: 200, json: async () => ({ ok: true }) };
   };
 
   function resetStub() {
     inserts = [];
+    meldungen = [];
     nextError = null;
   }
 </script>
@@ -175,6 +201,35 @@ test("Erneutes Öffnen startet leer", async () => {
   assert(!$("#feedback-form").hidden, "Formular fehlt");
   assert($("#feedback-done").hidden, "Bestätigung noch sichtbar");
   assertEqual($("[data-category].active").dataset.category, "fehler", "Kategorie nicht zurückgesetzt");
+});
+
+/* ---------- Benachrichtigung an den Support ---------- */
+
+test("Nach dem Speichern wird der Support benachrichtigt, mit der ID", async () => {
+  await fresh();
+  fill("Der Scanner hakt");
+  $('[data-action="feedback-send"]').click();
+  await tick();
+
+  assertEqual(meldungen.length, 1, "genau eine Meldung");
+  assertIncludes(meldungen[0].url, "/functions/v1/feedback-melden");
+  assertEqual(meldungen[0].rumpf.id, "feedback-1", "die ID des gespeicherten Eintrags");
+  assert(!("message" in meldungen[0].rumpf),
+    "der Text darf NICHT mitgeschickt werden - die Function liest ihn selbst, " +
+    "sonst waere sie ein offenes Mailtor");
+});
+
+test("Eine klemmende Benachrichtigung stoert den Nutzer nicht", async () => {
+  await fresh();
+  window.fetch = async () => { throw new Error("Postfach nicht erreichbar"); };
+  fill("Wunsch: Dark Mode");
+  $('[data-action="feedback-send"]').click();
+  await tick();
+
+  // Gespeichert ist gespeichert: die Bestaetigung muss trotzdem kommen.
+  assertEqual(inserts.length, 1, "die Rueckmeldung wurde gespeichert");
+  assert($("#feedback-form").hidden, "das Formular muesste versteckt sein");
+  assert(!$("#feedback-done").hidden, "die Bestaetigung muesste stehen");
 });
 
 runTests();

@@ -24,15 +24,22 @@ let feedbackDialog = null;
 async function insertFeedback({ category, message, page }) {
   if (!currentUser) throw new Error("Nicht angemeldet.");
 
-  const { error } = await sb.from("feedback").insert({
+  const { data, error } = await sb.from("feedback").insert({
     user_id: currentUser.id,
     category,
     message,
     page,
     user_agent: navigator.userAgent.slice(0, 500),
-  });
+  }).select("id").single();
 
-  if (!error) return;
+  if (!error) {
+    // Gespeichert ist gespeichert – die Benachrichtigung ist eine Zugabe.
+    // Schlägt sie fehl, erfährt der Nutzer davon bewusst nichts: seine
+    // Rückmeldung ist angekommen, und ein roter Kasten dafür, dass unser
+    // Postfach klemmt, wäre eine Lüge über seine Eingabe.
+    meldeFeedback(data?.id);
+    return;
+  }
 
   if (error.code === MISSING_TABLE || /Could not find the table/i.test(error.message || "")) {
     throw new Error(
@@ -40,6 +47,35 @@ async function insertFeedback({ category, message, page }) {
     );
   }
   throw new Error(error.message);
+}
+
+/**
+ * Den Support benachrichtigen. Absichtlich ohne await beim Aufrufer und
+ * ohne Fehlerweitergabe – siehe Kommentar oben.
+ *
+ * Die Function bekommt nur die ID; den Inhalt liest sie selbst aus der
+ * Tabelle. Sonst wäre sie ein offenes Mailtor.
+ */
+async function meldeFeedback(id) {
+  if (!id) return;
+  try {
+    const { data } = await sb.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) return;
+
+    await fetch(`${SUPABASE_URL}/functions/v1/feedback-melden`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: SUPABASE_ANON_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id }),
+    });
+  } catch {
+    /* Kein Netz, Function nicht da, Postfach klemmt: alles egal an
+       dieser Stelle. Die Rückmeldung liegt in der Tabelle. */
+  }
 }
 
 /* ---------- Dialog ---------- */
