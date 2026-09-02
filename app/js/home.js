@@ -16,7 +16,6 @@ function renderStats(stats) {
   };
   set("stat-total", stats.total);
   set("stat-artists", stats.artists);
-  set("stat-formats", stats.formats);
 }
 
 function renderRecent(items) {
@@ -75,7 +74,7 @@ async function init() {
   } catch (e) {
     recentEl.innerHTML = "";
     recentEl.insertAdjacentHTML("afterend", errorState(e.message));
-    ["stat-total", "stat-artists", "stat-formats"].forEach((id) => {
+    ["stat-total", "stat-artists"].forEach((id) => {
       document.getElementById(id).textContent = "–";
     });
   }

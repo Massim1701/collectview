@@ -535,6 +535,15 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .landing-nav-links a{ color:var(--text-muted); display:inline-flex; align-items:center; min-height:var(--target); }
 .landing-nav-links a:hover{ color:var(--text); }
 
+/* Burger-Toggle: per Default unsichtbar (Desktop zeigt die Links direkt),
+   erst der Mobil-Breakpoint unten schaltet ihn sichtbar. */
+.landing-nav-toggle{
+  display:none; align-items:center; justify-content:center;
+  width:40px; height:40px; flex:0 0 auto; margin-left:auto;
+  border:1px solid var(--border); border-radius:6px;
+  background:transparent; color:var(--text); cursor:pointer;
+}
+
 .hero{ padding:var(--space-24) var(--space-10); }
 .hero-grid{ display:flex; gap:var(--space-18); align-items:center; }
 .hero-headline{ font-family:var(--font-display); font-style:italic; font-size:var(--text-6xl); line-height:1.05; margin:0 0 var(--space-6); }
@@ -570,6 +579,39 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
   .hero-grid,.features-row,.steps-row{ flex-direction:column; }
   .hero-headline{ font-size:var(--text-4xl); }
   .landing-wrap,.landing-nav-inner,.hero,.landing-section,.cta-band,.landing-footer{ padding-left:var(--space-5); padding-right:var(--space-5); }
+}
+
+/* Smartphones: eigener, engerer Breakpoint statt nur weniger Seitenrand --
+   die Landingpage soll hier deutlich weniger scrollen. Burger-Menü statt
+   der fünf Nav-Links nebeneinander (die haben sonst mit dem Hero-Titel
+   überlappt), plus spürbar kleinere vertikale Abstände/Schriftgrößen. */
+@media (max-width:640px){
+  .landing-nav-inner{ padding:var(--space-3) var(--space-5); position:relative; }
+  .landing-nav-toggle{ display:inline-flex; }
+  .landing-nav-links{
+    display:none; position:absolute; left:0; right:0; top:100%; z-index:20;
+    flex-direction:column; align-items:stretch; gap:0;
+    background:var(--bg); border-bottom:1px solid var(--border);
+    box-shadow:var(--shadow-md); padding:var(--space-2) var(--space-5) var(--space-4);
+  }
+  .landing-nav-links.is-open{ display:flex; }
+  .landing-nav-links a{ min-height:auto; padding:var(--space-3) 0; border-bottom:1px solid var(--border); }
+  .landing-nav-links a:last-child{ border-bottom:none; padding-top:var(--space-4); }
+
+  .hero{ padding:var(--space-8) var(--space-5) var(--space-10); }
+  .studio-badge{ margin-bottom:14px; font-size:10px; padding:6px 11px; }
+  [data-theme="studio"] .hero-headline{ font-size:var(--text-3xl); margin-bottom:var(--space-4); }
+  .hero-copy{ font-size:var(--text-base); margin-bottom:var(--space-5); }
+  .hero-visual{ margin-top:var(--space-6); }
+  [data-theme="studio"] .studio-card{ padding:18px; }
+
+  .landing-section{ padding:var(--space-10) var(--space-5); }
+  .section-heading{ font-size:var(--text-2xl); margin-bottom:var(--space-2); }
+  .section-subheading{ margin-bottom:var(--space-8); }
+  .features-row,.steps-row{ gap:var(--space-6); }
+
+  .cta-band{ padding:var(--space-10) var(--space-5); }
+  .cta-heading{ font-size:var(--text-2xl); margin-bottom:var(--space-5); }
 }
 
 /* =====================================================================
