@@ -62,7 +62,7 @@ async function init() {
   const user = await requireAuth();
   if (!user) return;
 
-  wireAccountMenu(document.getElementById("account-menu-btn"), user, { openNow: location.hash === "#konto" });
+  renderAccountRow(document.getElementById("account-card"), user);
   initFeedback();
 
   recentEl.innerHTML = `<div class="rail-item">${skeletonGrid(1)}</div>`.repeat(3);

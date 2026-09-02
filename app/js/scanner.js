@@ -1718,6 +1718,7 @@ async function init() {
   const user = await requireAuth();
   if (!user) return;
 
+  renderAccountRow(document.getElementById("account-card"), user);
   scanBtn.addEventListener("click", () => {
     if (mode === "barcode") toggleScan();
     else toggleCoverCamera();

@@ -15,8 +15,9 @@ Stand: 02.09.2026
 | | |
 |---|---|
 | **Massimo, braucht ein Gerät** | Sandbox-Kauf auf einem echten iPhone. Scanner, Kamera und Barcode auf einem echten Android-Gerät (bisher nur Emulator, der hat keine Kamera). |
-| **Akzentfarbe** | Fortgesetzt (02.09.2026): Lücke im Trigger geschlossen (Farbe blieb nach Abo-Ende stehen), gegen die DB verifiziert. Bereit, aber uncommittet — siehe unten. |
-| **Konto-Menü + Passwort vergessen** | Neu (02.09.2026, Wunsch von Massimo): große Konto-Karte entfernt, Sprache/Akzentfarbe/Name/Logout jetzt über Dialog am Avatar-Icon. Login-Seite hat „Passwort vergessen"-Link (Supabase `resetPasswordForEmail`), neue Seite `app/reset-password.html`. Code fertig, uncommittet — siehe unten. Supabase-Redirect-URL noch einzutragen. |
+| **Akzentfarbe** | Fortgesetzt (02.09.2026): Lücke im Trigger geschlossen (Farbe blieb nach Abo-Ende stehen), gegen die DB verifiziert. Committet (`2f88fad`), lokal — Push braucht Massimo (siehe unten). |
+| **Konto-Menü + Passwort vergessen** | Neu (02.09.2026, Wunsch von Massimo): große Konto-Karte entfernt, Sprache/Akzentfarbe/Name/Logout jetzt über Dialog am Avatar-Icon. Login-Seite hat „Passwort vergessen"-Link (Supabase `resetPasswordForEmail`), neue Seite `app/reset-password.html`. Committet (`2f88fad`), lokal — Push braucht Massimo. Supabase-Redirect-URL noch einzutragen. |
+| **Cloudflare Worker `collectview-site`** | Offen, nicht von den Sitzungen lösbar: `/`, `/support`, `/datenschutz` zeigen noch die alte Adresse `support@collectview.site` statt der neuen; Startseite verlinkt das Impressum nicht. Kontaktformular schickt weiterhin ins Driftware-Postfach (kein eigener formsubmit-Endpunkt auf die neue Adresse). Braucht Cloudflare-API-Token oder den Worker-Quelltext — keine Sitzung hat das. |
 | **Claude Web** | Play-Preise gesetzt UND über die Play-API gegengeprüft (02.09.2026, siehe 2b) — erledigt. `1970`-Datum auf `/datenschutz` — erledigt, Massimo hat den Fix eingefügt und deployt, live geprüft (02.09.2026): `Stand: 2026-09-02`, Footer `© 2026`. Apple-Produkte/Sandbox-Tester: abgelehnt, das bleibt bei Massimo/App Store Connect direkt. |
 | **Claude Code** | Nichts offen. |
 | **Erst kurz vor dem Launch** | `APPLE_SANDBOX_ERLAUBT` auf `false`. Apples Produktions-Notification-URL setzen. Alten Schlüssel `4L3Y2HPQU4` widerrufen. |

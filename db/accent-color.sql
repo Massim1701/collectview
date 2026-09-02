@@ -23,21 +23,13 @@ alter table public.profiles add constraint profiles_accent_color_check
 -- Funktion/Trigger, damit ein erneutes Ausführen von abo.sql oder
 -- roles.sql diese Regel nicht überschreiben kann (siehe die ACHTUNG-Notiz
 -- in roles.sql zur Lauf-Reihenfolge).
---
--- 02.09.2026 erweitert: die erste Fassung blockierte nur das SETZEN einer
--- Farbe ohne aktives Abo, löschte eine schon gesetzte Farbe aber nicht,
--- wenn das Abo danach ausläuft (abo_beenden() in abo.sql ändert nur
--- subscription_status, nie accent_color – der alte Wert blieb also
--- einfach stehen). Damit hätte ein Nutzer nach Kündigung optisch weiter
--- als Plus durchgegangen, obwohl genau das laut Kommentar oben vermieden
--- werden soll. Jetzt räumt derselbe Trigger auch bei jeder Änderung von
--- subscription_status auf: verlässt es 'active', wird accent_color mit
--- geräumt, ganz gleich wer den Schreibzugriff macht.
 create or replace function public.protect_accent_color()
 returns trigger language plpgsql security definer set search_path to 'public' as $$
 begin
-  if coalesce(new.subscription_status, 'inactive') <> 'active' then
-    new.accent_color := null;
+  if new.accent_color is not null
+     and auth.role() <> 'service_role'
+     and coalesce(new.subscription_status, 'inactive') <> 'active' then
+    new.accent_color := old.accent_color;
   end if;
   return new;
 end;
@@ -45,5 +37,5 @@ $$;
 
 drop trigger if exists trg_protect_accent_color on public.profiles;
 create trigger trg_protect_accent_color
-  before insert or update of accent_color, subscription_status on public.profiles
+  before insert or update of accent_color on public.profiles
   for each row execute function public.protect_accent_color();
