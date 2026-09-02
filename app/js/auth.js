@@ -26,6 +26,20 @@ sb.auth.onAuthStateChange((_event, session) => {
  * Schützt eine Seite: ohne Session zurück zum Login.
  * Gibt den User zurück, sobald die Session steht.
  */
+/**
+ * Setzt/entfernt die persoenliche Akzentfarbe auf <html data-accent="...">.
+ * Ohne Farbe (color=null) bleibt/greift das feste Neongruen des
+ * Tonstudio-Themes (siehe wireframes/styles.css). Rein visuell, kein
+ * Sicherheitsmechanismus -- die Plus-Grenze erzwingt der DB-Trigger.
+ */
+function applyAccentColor(color) {
+  if (color) {
+    document.documentElement.dataset.accent = color;
+  } else {
+    delete document.documentElement.dataset.accent;
+  }
+}
+
 async function requireAuth() {
   const { data } = await sb.auth.getSession();
   currentUser = data.session?.user || null;
@@ -40,6 +54,13 @@ async function requireAuth() {
   onAuth((user) => {
     if (!user) location.replace("login.html");
   });
+
+  // Nicht blockierend: die Seite soll nicht auf die Akzentfarbe warten.
+  fetchMyProfile(currentUser.id)
+    .then((profile) => applyAccentColor(profile?.accent_color || null))
+    .catch(() => {
+      // Ohne Profil-Antwort bleibt die Standardfarbe stehen.
+    });
 
   return currentUser;
 }
@@ -63,15 +84,48 @@ async function signOut() {
  * Die E-Mail bleibt hier sichtbar (eigenes Konto) – anderen Nutzern zeigt die
  * App nirgends die E-Mail, nur den Benutzernamen aus profiles.display_name.
  */
+const ACCENT_FARBEN = [
+  { key: "rot", label: "Rot" },
+  { key: "gelb", label: "Gelb" },
+  { key: "gruen", label: "Grün" },
+  { key: "blau", label: "Blau" },
+  { key: "silber", label: "Silber" },
+  { key: "gold", label: "Gold" },
+];
+
+/** Farbwahl-Zeile für Plus-Abonnenten: sechs Farbpunkte plus "Standard". */
+function akzentfarbenMarkup(aktuelleFarbe) {
+  const punkt = (key, label) => `
+    <button class="accent-dot" type="button" data-accent-choice="${key}"
+      aria-label="${escapeHtml(label)}" aria-pressed="${aktuelleFarbe === key}"
+      style="--dot:var(--accent-dot-${key});${aktuelleFarbe === key ? "outline:2px solid var(--text);outline-offset:2px;" : ""}"></button>`;
+
+  return `
+    <div class="accent-picker" style="margin-top:14px;">
+      <div class="user-label" style="margin-bottom:8px;">Akzentfarbe (CollectView Plus)</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <button class="accent-dot" type="button" data-accent-choice=""
+          aria-label="Standard (Neongrün)" aria-pressed="${!aktuelleFarbe}"
+          style="background:#C8FF4D;${!aktuelleFarbe ? "outline:2px solid var(--text);outline-offset:2px;" : ""}"></button>
+        ${ACCENT_FARBEN.map((f) => punkt(f.key, f.label)).join("")}
+      </div>
+    </div>`;
+}
+
 async function renderAccountRow(container, user) {
   if (!container || !user) return;
 
   let displayName = null;
   let isAdmin = false;
+  let istPlus = false;
+  let aktuelleFarbe = null;
   try {
     const profile = await fetchMyProfile(user.id);
     displayName = profile?.display_name || null;
     isAdmin = profile?.role === "admin";
+    istPlus = profile?.subscription_status === "active";
+    aktuelleFarbe = profile?.accent_color || null;
+    applyAccentColor(aktuelleFarbe);
   } catch (e) {
     // Ohne Profil-Antwort bleibt nur die E-Mail als Anzeige.
   }
@@ -90,7 +144,8 @@ async function renderAccountRow(container, user) {
         ${isAdmin ? `<a class="btn-secondary small" href="admin.html">Admin</a>` : ""}
         <button class="btn-secondary small" type="button" data-action="edit-name">${displayName ? escapeHtml(t("account_change_username")) : escapeHtml(t("account_set_username"))}</button>
       </div>
-    </div>`;
+    </div>
+    ${istPlus ? akzentfarbenMarkup(aktuelleFarbe) : ""}`;
 
   renderLangSwitcher(container.querySelector("#lang-switcher-slot"));
   container.querySelector('[data-action="edit-name"]').addEventListener("click", async () => {
@@ -105,4 +160,21 @@ async function renderAccountRow(container, user) {
       alert(e.message);
     }
   });
+
+  if (istPlus) {
+    container.querySelectorAll("[data-accent-choice]").forEach((dot) => {
+      dot.addEventListener("click", async () => {
+        const farbe = dot.dataset.accentChoice || null;
+        dot.disabled = true;
+        try {
+          await setAccentColor(user.id, farbe);
+          applyAccentColor(farbe);
+          renderAccountRow(container, user);
+        } catch (e) {
+          dot.disabled = false;
+          alert(e.message);
+        }
+      });
+    });
+  }
 }

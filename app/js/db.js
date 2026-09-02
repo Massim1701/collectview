@@ -52,11 +52,26 @@ async function fetchIsSubscribed(userId) {
   return data?.subscription_status === "active";
 }
 
-/** Eigenes Profil (Benutzername, Rolle). */
+/** Eigenes Profil (Benutzername, Rolle, Abo-Status, Akzentfarbe). */
 async function fetchMyProfile(userId) {
-  const { data, error } = await sb.from("profiles").select("display_name, role").eq("id", userId).maybeSingle();
+  const { data, error } = await sb
+    .from("profiles")
+    .select("display_name, role, subscription_status, accent_color")
+    .eq("id", userId)
+    .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+/**
+ * Persoenliche Akzentfarbe setzen/entfernen (color = null fuer "zurueck
+ * zum Standard-Neongruen"). Nur mit aktivem Plus-Abo wirksam -- ein
+ * Server-Trigger (db/accent-color.sql) laesst den Wert sonst unveraendert,
+ * ohne Fehler zu werfen. Die erlaubten Farben stehen im DB-Constraint.
+ */
+async function setAccentColor(userId, color) {
+  const { error } = await sb.from("profiles").update({ accent_color: color }).eq("id", userId);
+  if (error) throw error;
 }
 
 /**
