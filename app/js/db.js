@@ -98,6 +98,26 @@ async function fetchDisplayNames(userIds) {
   return map;
 }
 
+/**
+ * Plus-Abzeichen mehrerer Nutzer auf einmal (für Marktplatz-Beiträge):
+ * ist aktiv abonniert + welche Akzentfarbe. Damit Plus-Verkäufer:innen in
+ * den Beiträgen sofort erkennbar sind, nicht erst im eigenen Konto.
+ */
+async function fetchSellerBadges(userIds) {
+  const ids = [...new Set(userIds)].filter(Boolean);
+  if (ids.length === 0) return {};
+  const { data, error } = await sb
+    .from("profiles_public")
+    .select("id, accent_color, subscription_status")
+    .in("id", ids);
+  if (error) throw error;
+  const map = {};
+  (data || []).forEach((row) => {
+    map[row.id] = { isPlus: row.subscription_status === "active", accentColor: row.accent_color || null };
+  });
+  return map;
+}
+
 /** Ist der Nutzer Admin? (role = 'admin') */
 async function fetchIsAdmin(userId) {
   const { data, error } = await sb.from("profiles").select("role").eq("id", userId).maybeSingle();

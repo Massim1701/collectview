@@ -4,7 +4,7 @@
 -- Absicht: Alle Nutzer, auch Free, sehen dasselbe feste Neongrün des
 -- Tonstudio-Themes (--accent in wireframes/styles.css) – das ist die
 -- Markenfarbe. CollectView-Plus-Abonnenten können sie stattdessen durch
--- eine von sechs Farben ersetzen (rot/gelb/gruen/blau/silber/gold).
+-- eine von fünf Farben ersetzen (grau/gelb/rot/gruen/orange).
 -- Bewusst kein Neon-Lime als Grün-Option in der CSS-Palette: ein
 -- Plus-Nutzer soll auf den ersten Blick von einem Free-Nutzer zu
 -- unterscheiden sein, nicht denselben Farbeindruck bekommen.
@@ -15,9 +15,18 @@
 -- ist gefahrlos.
 
 alter table public.profiles add column if not exists accent_color text;
+
+-- 02.09.2026 (Massimo, Cowork): Palette von sechs auf fünf Farben
+-- geändert -- grau/gelb/rot/gruen/orange statt rot/gelb/gruen/blau/
+-- silber/gold. "silber" wird zu "grau" (gleicher Farbwert, nur
+-- umbenannt), "blau"/"gold" entfallen ersatzlos. Bestehende Profile
+-- zuerst migrieren, bevor der neue Constraint sie sonst ablehnt.
+update public.profiles set accent_color = 'grau' where accent_color = 'silber';
+update public.profiles set accent_color = null where accent_color in ('blau', 'gold');
+
 alter table public.profiles drop constraint if exists profiles_accent_color_check;
 alter table public.profiles add constraint profiles_accent_color_check
-  check (accent_color is null or accent_color in ('rot', 'gelb', 'gruen', 'blau', 'silber', 'gold'));
+  check (accent_color is null or accent_color in ('grau', 'gelb', 'rot', 'gruen', 'orange'));
 
 -- Eigene, von protect_subscription_fields() (db/abo.sql) unabhängige
 -- Funktion/Trigger, damit ein erneutes Ausführen von abo.sql oder

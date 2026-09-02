@@ -45,34 +45,27 @@ function metaLine(item, release) {
 }
 
 /**
- * Hörlinks. YouTube-Videos liefert Discogs direkt mit; für Spotify gibt es
- * keine ID im Datensatz, deshalb eine vorbereitete Suche statt eines Links,
- * der ins Leere zeigen könnte.
+ * Pro-Track-Hörlinks. YouTube-Videos liefert Discogs nicht pro Titel,
+ * deshalb wie bei der alten Album-weiten Suche: vorbereitete Suchlinks
+ * statt Links, die ins Leere zeigen könnten.
  */
-function listenMarkup(item, release) {
-  const query = [item.artist, item.title].filter(Boolean).join(" ");
-  const video = (release?.videos || []).find((v) => /youtu\.?be/.test(v.uri || ""));
-
-  const youtubeHref = video
-    ? video.uri
-    : `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-  const youtubeSub = video ? escapeHtml(video.title || "") : "Suche nach Interpret und Titel";
+function trackLinksMarkup(item, track) {
+  const query = [item.artist, track.title].filter(Boolean).join(" ");
+  const youtubeHref = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+  const spotifyHref = `https://open.spotify.com/search/${encodeURIComponent(query)}`;
 
   return `
-    <h2 class="section-title">Anhören</h2>
-    <div class="link-stack">
-      <a class="link-chip" href="${escapeHtml(youtubeHref)}" target="_blank" rel="noopener noreferrer">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-        <span>Auf YouTube ansehen<span class="chip-sub">${youtubeSub}</span></span>
+    <span class="track-links">
+      <a class="track-link track-link-yt" href="${escapeHtml(youtubeHref)}" target="_blank" rel="noopener noreferrer" aria-label="„${escapeHtml(track.title)}“ auf YouTube suchen">
+        <svg width="20" height="14" viewBox="0 0 24 17" aria-hidden="true"><rect width="24" height="17" rx="4" fill="#FF0000"/><path d="M10 5.2 16.5 8.5 10 11.8Z" fill="#fff"/></svg>
       </a>
-      <a class="link-chip" href="https://open.spotify.com/search/${encodeURIComponent(query)}" target="_blank" rel="noopener noreferrer">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7 15c3-1 7-1 10 1M7 12c3.5-1.2 8-1 10.5 1M7.5 9c4-1.4 8.5-1 11 1.2"/></svg>
-        <span>Auf Spotify suchen<span class="chip-sub">Öffnet die Suche nach „${escapeHtml(query)}“</span></span>
+      <a class="track-link track-link-sp" href="${escapeHtml(spotifyHref)}" target="_blank" rel="noopener noreferrer" aria-label="„${escapeHtml(track.title)}“ auf Spotify suchen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7 15c3-1 7-1 10 1M7 12c3.5-1.2 8-1 10.5 1M7.5 9c4-1.4 8.5-1 11 1.2"/></svg>
       </a>
-    </div>`;
+    </span>`;
 }
 
-function tracklistMarkup(release) {
+function tracklistMarkup(item, release) {
   const tracks = release?.tracklist || [];
   if (tracks.length === 0) {
     return `
@@ -89,7 +82,10 @@ function tracklistMarkup(release) {
       return `
         <div class="track-row">
           <span><span class="pos">${escapeHtml(t.position || "")}</span>${escapeHtml(t.title)}</span>
-          <span class="dur">${escapeHtml(t.duration || "")}</span>
+          <span class="track-row-right">
+            <span class="dur">${escapeHtml(t.duration || "")}</span>
+            ${trackLinksMarkup(item, t)}
+          </span>
         </div>`;
     })
     .join("");
@@ -263,8 +259,7 @@ function render(item, release) {
       <div class="detail-artist">${escapeHtml(item.artist || "Unbekannter Interpret")}</div>
       <div class="detail-meta">${metaLine(item, release)}</div>
       ${quantityMarkup(item)}
-      ${listenMarkup(item, release)}
-      ${tracklistMarkup(release)}
+      ${tracklistMarkup(item, release)}
       ${detailsMarkup(item, release)}
       ${communityMarkup(release)}
       ${dangerMarkup()}

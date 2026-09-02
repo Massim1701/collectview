@@ -85,7 +85,15 @@
         );
         return;
       }
-      list.innerHTML = items.map((it) => listingCardMarkup(it)).join("");
+      // Plus-Abzeichen der Verkäufer:innen dazuladen, damit sie in der
+      // Liste sofort erkennbar sind (eigene Anfrage, nicht nur im Konto).
+      let sellerBadges = {};
+      try {
+        sellerBadges = await fetchSellerBadges(items.map((it) => it.seller_id));
+      } catch (e) {
+        // Ohne Abzeichen zeigt die Liste einfach keine Plus-Markierung.
+      }
+      list.innerHTML = items.map((it) => listingCardMarkup(it, { seller: sellerBadges[it.seller_id] })).join("");
     } catch (e) {
       list.innerHTML = errorState(e.message);
     }

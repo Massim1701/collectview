@@ -147,12 +147,11 @@ function wireAccountMenu(buttonEl, user, { openNow = false } = {}) {
  * App nirgends die E-Mail, nur den Benutzernamen aus profiles.display_name.
  */
 const ACCENT_FARBEN = [
-  { key: "rot", label: "Rot" },
+  { key: "grau", label: "Grau" },
   { key: "gelb", label: "Gelb" },
+  { key: "rot", label: "Rot" },
   { key: "gruen", label: "Grün" },
-  { key: "blau", label: "Blau" },
-  { key: "silber", label: "Silber" },
-  { key: "gold", label: "Gold" },
+  { key: "orange", label: "Orange" },
 ];
 
 /** Farbwahl-Zeile für Plus-Abonnenten: sechs Farbpunkte plus "Standard". */

@@ -100,6 +100,20 @@ textarea:focus-visible, [tabindex]:focus-visible{
 a.list-card, .list-card[role="button"]{ cursor:pointer; transition:border-color .15s ease, transform .15s ease; }
 a.list-card:hover, .list-card[role="button"]:hover{ border-color:var(--border-strong); transform:translateY(-1px); }
 
+/* Plus-Verkäufer:innen im Marktplatz sofort erkennbar: Rahmen + kleines
+   Abzeichen in ihrer eigenen Akzentfarbe (--plus-color, inline pro Karte
+   aus listingCardMarkup gesetzt). Bewusst nicht die Farbe des lesenden
+   Nutzers -- die der/des Verkäufer:in. */
+.list-card-plus{ border-color:color-mix(in srgb, var(--plus-color) 55%, var(--border)); }
+a.list-card-plus:hover{ border-color:var(--plus-color); }
+.plus-chip{
+  display:inline-flex; align-items:center; margin-left:7px; padding:1px 7px;
+  border-radius:999px; font-size:10.5px; font-weight:800; letter-spacing:.03em;
+  text-transform:uppercase; vertical-align:middle;
+  color:var(--plus-color); border:1px solid color-mix(in srgb, var(--plus-color) 55%, transparent);
+  background:color-mix(in srgb, var(--plus-color) 14%, transparent);
+}
+
 /* Mehrfach vorhandene Tonträger: "×3" rechts im Listeneintrag.
    Das margin-left:auto übernimmt hier der Badge – der Pfeil rückt
    dahinter, statt sich den freien Platz mit ihm zu teilen. */
@@ -262,6 +276,16 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 
 .track-row .pos{ color:var(--text-muted); font-variant-numeric:tabular-nums; margin-right:10px; }
 .track-heading{ font-weight:800; font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); padding:16px 0 6px; }
+
+.track-row-right{ display:flex; align-items:center; gap:12px; flex:0 0 auto; }
+.track-links{ display:flex; align-items:center; gap:6px; }
+.track-link{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:6px;
+  opacity:.82; transition:opacity .15s ease, transform .15s ease;
+}
+.track-link:hover{ opacity:1; transform:translateY(-1px); }
+.track-link-sp{ color:#1DB954; }
 
 .meta-grid{ display:flex; flex-direction:column; }
 .meta-row{ display:flex; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid var(--border); font-size:14px; }

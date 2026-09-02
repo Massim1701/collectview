@@ -183,20 +183,21 @@ body[data-theme="studio"]{ background:var(--bg); }
    [data-theme="studio"] durch die hoehere Selektor-Spezifitaet sonst
    gewinnen wuerde. Bewusst kein Neon-Lime bei "gruen": ein Plus-Nutzer
    soll auf den ersten Blick von Free zu unterscheiden sein, nicht denselben
-   Farbeindruck bekommen. Gesetzt wird das Attribut in app/js/auth.js. */
-:root[data-accent="rot"]{ --accent:#FF4D5E !important; --accent-ink:#2A0508 !important; --accent-soft:rgba(255,77,94,.18) !important; --accent-text:#FF8892 !important; }
+   Farbeindruck bekommen. Fuenf Farben (02.09.2026): grau/gelb/rot/gruen/
+   orange, statt vormals sechs (blau/gold entfallen, "silber" -> "grau").
+   Gesetzt wird das Attribut in app/js/auth.js. */
+:root[data-accent="grau"]{ --accent:#C7CCD1 !important; --accent-ink:#17181A !important; --accent-soft:rgba(199,204,209,.18) !important; --accent-text:#E4E7EA !important; }
 :root[data-accent="gelb"]{ --accent:#FFD23F !important; --accent-ink:#241900 !important; --accent-soft:rgba(255,210,63,.18) !important; --accent-text:#FFE083 !important; }
+:root[data-accent="rot"]{ --accent:#FF4D5E !important; --accent-ink:#2A0508 !important; --accent-soft:rgba(255,77,94,.18) !important; --accent-text:#FF8892 !important; }
 :root[data-accent="gruen"]{ --accent:#34C759 !important; --accent-ink:#04170B !important; --accent-soft:rgba(52,199,89,.18) !important; --accent-text:#7BE0A0 !important; }
-:root[data-accent="blau"]{ --accent:#4D9FFF !important; --accent-ink:#05122A !important; --accent-soft:rgba(77,159,255,.18) !important; --accent-text:#93C2FF !important; }
-:root[data-accent="silber"]{ --accent:#C7CCD1 !important; --accent-ink:#17181A !important; --accent-soft:rgba(199,204,209,.18) !important; --accent-text:#E4E7EA !important; }
-:root[data-accent="gold"]{ --accent:#D9A536 !important; --accent-ink:#241804 !important; --accent-soft:rgba(217,165,54,.18) !important; --accent-text:#EAC46B !important; }
+:root[data-accent="orange"]{ --accent:#FF8A3D !important; --accent-ink:#2A1400 !important; --accent-soft:rgba(255,138,61,.18) !important; --accent-text:#FFB27A !important; }
 
 /* Feste Vorschau-Farben für die Farbpunkte in der Kontozeile (auth.js) --
    unabhängig von data-accent, damit man auch die nicht gewählten Farben
    als Punkt sieht, nicht nur die aktive. */
 :root{
-  --accent-dot-rot:#FF4D5E; --accent-dot-gelb:#FFD23F; --accent-dot-gruen:#34C759;
-  --accent-dot-blau:#4D9FFF; --accent-dot-silber:#C7CCD1; --accent-dot-gold:#D9A536;
+  --accent-dot-grau:#C7CCD1; --accent-dot-gelb:#FFD23F; --accent-dot-rot:#FF4D5E;
+  --accent-dot-gruen:#34C759; --accent-dot-orange:#FF8A3D;
 }
 .accent-dot{
   width:28px; height:28px; border-radius:999px; border:1px solid var(--border);

@@ -25,3 +25,6 @@ android/.idea/
 # index.html fürs Deployen selbst - nicht committen, sonst dupliziert
 # sich das im Repo. wrangler.toml + worker.js gehören ins Repo.
 web/deploy/assets/
+
+# wrangler: lokaler Build-Cache beim Deploy, keine Quelle.
+web/deploy/.wrangler/

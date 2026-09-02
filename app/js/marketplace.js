@@ -107,14 +107,34 @@ function listingBadge(listing) {
 }
 
 /** Listing-Kachel im .list-card-Stil (siehe ui.js listCardMarkup). */
-function listingCardMarkup(listing, { href } = {}) {
+/**
+ * Farbwert einer Plus-Akzentfarbe fürs Badge (nicht die des lesenden
+ * Nutzers -- die des/der Verkäufer:in, unabhängig von <html data-accent>).
+ * Fällt ohne Auswahl auf das feste Markengrün zurück, wie überall sonst.
+ */
+function plusBadgeColor(accentColor) {
+  const farben = { grau: "#C7CCD1", gelb: "#FFD23F", rot: "#FF4D5E", gruen: "#34C759", orange: "#FF8A3D" };
+  return farben[accentColor] || "#C8FF4D";
+}
+
+/**
+ * Beitragskarte. `seller` (optional, aus fetchSellerBadges) macht
+ * Plus-Verkäufer:innen sofort erkennbar: farbiger Rahmen in ihrer eigenen
+ * Akzentfarbe plus ein kleines "Plus"-Abzeichen -- nicht erst im Profil.
+ */
+function listingCardMarkup(listing, { href, seller } = {}) {
   const target = href || `marketplace-listing.html?id=${encodeURIComponent(listing.id)}`;
   const badge = listingBadge(listing);
+  const isPlus = !!seller?.isPlus;
+  const plusColor = plusBadgeColor(seller?.accentColor);
   return `
-    <a class="list-card" href="${target}">
+    <a class="list-card${isPlus ? " list-card-plus" : ""}" href="${target}" ${isPlus ? `style="--plus-color:${plusColor};"` : ""}>
       ${coverMarkup(listing, { size: 56 })}
       <div style="min-width:0;">
-        <div class="list-card-title">${escapeHtml(listing.title)}</div>
+        <div class="list-card-title">
+          ${escapeHtml(listing.title)}
+          ${isPlus ? `<span class="plus-chip" style="--plus-color:${plusColor};" title="CollectView Plus">Plus</span>` : ""}
+        </div>
         <div class="list-card-sub">${[listing.artist, listing.format].filter(Boolean).map(escapeHtml).join(" · ")}</div>
       </div>
       <div style="flex:0 0 auto; font-weight:800; color:${badge.muted ? "var(--text-muted)" : "var(--accent-text)"};">${escapeHtml(badge.text)}</div>
