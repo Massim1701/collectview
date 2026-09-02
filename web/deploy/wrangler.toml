@@ -1,0 +1,12 @@
+name = "collectview-site"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+account_id = "eef96927358c0c63b98a6563bacb70bd"
+
+routes = [
+  { pattern = "collectview.site/*", zone_name = "collectview.site" }
+]
+
+[assets]
+directory = "./assets"
+binding = "ASSETS"

@@ -549,18 +549,15 @@ Alle Dateien mit `node --check` geprüft, syntaktisch ok.
    `web/render-landing.mjs` (Ableitungsschritt aus
    `wireframes/landing.html`, korrigierte Footer-Links). Massimo muss das
    selbst deployen.
-2. **E-Mail-Adresse ersetzt**: noch nicht — erneut versucht (02.09.2026,
-   zweiter Anlauf auf Massimos Wunsch "Cloudflare machst du alleine").
-   Editor lädt diesmal sichtbar (Code lesbar), aber Klicks/Tastatur/JS
-   erreichen den Monaco-Editor weiterhin nicht — Cross-Origin-iframe,
-   von der Browser-Automation aus nicht ansprechbar (bestätigt: Cursor
-   bewegt sich nicht, `document.querySelectorAll('iframe')` zeigt
-   Cross-Origin-Frames ohne Zugriff auf `contentDocument`). Nach
-   mehreren Versuchen abgebrochen statt festgebissen. Bleibt bei
-   Massimo: Ctrl+H im Cloudflare Quick Edit, `support@collectview.site`
-   → `supportcollectview.site@gmail.com`, Replace All, Deploy. Auf `/`
-   (Startseite) hängt die Adresse zusätzlich vom Assets-Redeploy ab
-   (siehe Punkt 1).
+2. **E-Mail-Adresse ersetzt**: erledigt (02.09.2026), live bestätigt.
+   Dritter Anlauf im selben Cloudflare-Tab hat funktioniert — der
+   Ctrl+H-Dialog blieb diesmal (verzögert) offen und liess sich per
+   Klick/Tippen bedienen, Replace All hat alle 5 Vorkommen in
+   `/support` + `/datenschutz` ersetzt, Deploy ausgelöst ("Version
+   saved"), per Live-Fetch auf `/support` gegengeprüft:
+   `supportcollectview.site@gmail.com` kommt jetzt an. Auf `/`
+   (Startseite) hängt die Adresse weiterhin am separaten
+   Assets-Redeploy (siehe Punkt 1) — dort ändert dieser Fix nichts.
 3. **Worker-Quelltext im Repo**: `web/collectview-site-worker.js` (Herkunft
    verifiziert vs. rekonstruiert im Dateikopf dokumentiert, `UPSTREAM` als
    nicht verifizierter Platzhalter markiert — vor Deploy prüfen),

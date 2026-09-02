@@ -19,3 +19,9 @@ supabase/.temp/
 
 # Android Studio / IntelliJ – Arbeitsplatz-Kram, gehoert niemandem sonst
 android/.idea/
+
+# web/deploy: lokales wrangler-Deploy-Projekt für collectview-site.
+# assets/ ist nur eine Kopie von app/ + wireframes/ + generierter
+# index.html fürs Deployen selbst - nicht committen, sonst dupliziert
+# sich das im Repo. wrangler.toml + worker.js gehören ins Repo.
+web/deploy/assets/
