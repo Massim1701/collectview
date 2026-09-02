@@ -541,13 +541,18 @@ Alle Dateien mit `node --check` geprüft, syntaktisch ok.
    `web/render-landing.mjs` (Ableitungsschritt aus
    `wireframes/landing.html`, korrigierte Footer-Links). Massimo muss das
    selbst deployen.
-2. **E-Mail-Adresse ersetzt**: teilweise. `/support` und `/datenschutz`
-   kommen aus Funktionen im Worker-Skript (Quick-Edit-fähig), aber der
-   Monaco-Editor dort liess sich per Browser-Automation nicht
-   fokussieren/scrollen — keine Direkt-Edits versucht, um keine
-   Textverdopplung zu riskieren (gleiches Problem wie beim 1970-Bug).
-   Copy-Paste-Text für Massimo kommt im Chat. Auf `/` (Startseite) hängt
-   die Adresse vom Assets-Redeploy ab (siehe Punkt 1).
+2. **E-Mail-Adresse ersetzt**: noch nicht — erneut versucht (02.09.2026,
+   zweiter Anlauf auf Massimos Wunsch "Cloudflare machst du alleine").
+   Editor lädt diesmal sichtbar (Code lesbar), aber Klicks/Tastatur/JS
+   erreichen den Monaco-Editor weiterhin nicht — Cross-Origin-iframe,
+   von der Browser-Automation aus nicht ansprechbar (bestätigt: Cursor
+   bewegt sich nicht, `document.querySelectorAll('iframe')` zeigt
+   Cross-Origin-Frames ohne Zugriff auf `contentDocument`). Nach
+   mehreren Versuchen abgebrochen statt festgebissen. Bleibt bei
+   Massimo: Ctrl+H im Cloudflare Quick Edit, `support@collectview.site`
+   → `supportcollectview.site@gmail.com`, Replace All, Deploy. Auf `/`
+   (Startseite) hängt die Adresse zusätzlich vom Assets-Redeploy ab
+   (siehe Punkt 1).
 3. **Worker-Quelltext im Repo**: `web/collectview-site-worker.js` (Herkunft
    verifiziert vs. rekonstruiert im Dateikopf dokumentiert, `UPSTREAM` als
    nicht verifizierter Platzhalter markiert — vor Deploy prüfen),

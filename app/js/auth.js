@@ -80,6 +80,68 @@ async function signOut() {
 }
 
 /**
+ * Verschickt eine "Passwort vergessen"-Mail. Antwortet nicht anders, wenn
+ * die E-Mail unbekannt ist -- das übernimmt Supabase serverseitig, damit
+ * niemand über die Fehlermeldung prüfen kann, welche Adressen ein Konto
+ * haben. redirectTo bleibt relativ zur aktuellen Seite (login.html liegt
+ * neben reset-password.html), damit es lokal wie live ohne Anpassung
+ * stimmt.
+ */
+async function requestPasswordReset(email) {
+  const redirectTo = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}reset-password.html`;
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) throw error;
+}
+
+/* ---------- Konto-Dialog ----------
+   Ersetzt die vormals fest eingebaute Konto-Karte (Sprache, Akzentfarbe,
+   Benutzername) durch einen Dialog, den ein Icon-Button (z.B. der Avatar
+   in der Topbar) öffnet. Ein <dialog> statt einem eigenen Popover, weil
+   Escape/Fokus/Backdrop dann der Browser übernimmt -- selbes Muster wie
+   der Feedback-Dialog in feedback.js. */
+
+let accountDialog = null;
+
+function ensureAccountDialog() {
+  if (accountDialog) return accountDialog;
+
+  accountDialog = document.createElement("dialog");
+  accountDialog.className = "account-dialog";
+  accountDialog.id = "account-dialog";
+  accountDialog.innerHTML = `
+    <div class="account-dialog-head">
+      <div class="feedback-title" style="margin:0;">Konto</div>
+      <button class="icon-close" type="button" data-action="account-close" aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="account-dialog-body"></div>`;
+  document.body.appendChild(accountDialog);
+
+  accountDialog.querySelector('[data-action="account-close"]').addEventListener("click", () => accountDialog.close());
+
+  return accountDialog;
+}
+
+/**
+ * Verbindet einen Auslöser-Button mit dem Konto-Dialog. openNow öffnet ihn
+ * sofort -- für den Sprung von der Bottom-Nav (index.html#konto), die von
+ * jeder Seite aus auf dieselbe Anker-Adresse zeigt.
+ */
+function wireAccountMenu(buttonEl, user, { openNow = false } = {}) {
+  if (!buttonEl || !user) return;
+
+  const open = () => {
+    const dialog = ensureAccountDialog();
+    renderAccountRow(dialog.querySelector("#account-dialog-body"), user);
+    dialog.showModal();
+  };
+
+  buttonEl.addEventListener("click", open);
+  if (openNow) open();
+}
+
+/**
  * Rendert die Konto-Zeile (Avatar, Benutzername, Abmelden) in einen Container.
  * Die E-Mail bleibt hier sichtbar (eigenes Konto) – anderen Nutzern zeigt die
  * App nirgends die E-Mail, nur den Benutzernamen aus profiles.display_name.
@@ -145,9 +207,17 @@ async function renderAccountRow(container, user) {
         <button class="btn-secondary small" type="button" data-action="edit-name">${displayName ? escapeHtml(t("account_change_username")) : escapeHtml(t("account_set_username"))}</button>
       </div>
     </div>
-    ${istPlus ? akzentfarbenMarkup(aktuelleFarbe) : ""}`;
+    ${istPlus ? akzentfarbenMarkup(aktuelleFarbe) : ""}
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+      <button class="menu-item danger" type="button" data-action="sign-out" style="border-bottom:none;padding:6px 2px;min-height:auto;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+        ${escapeHtml(t("account_logout"))}
+      </button>
+    </div>`;
 
   renderLangSwitcher(container.querySelector("#lang-switcher-slot"));
+  container.querySelector('[data-action="sign-out"]').addEventListener("click", () => signOut());
+
   container.querySelector('[data-action="edit-name"]').addEventListener("click", async () => {
     const input = prompt("Benutzername (3–20 Zeichen: Buchstaben, Ziffern, _ oder -)\nSichtbar für andere Nutzer, nie deine E-Mail:", displayName || "");
     if (input == null) return;

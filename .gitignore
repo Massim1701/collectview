@@ -16,3 +16,6 @@ www/
 
 # Supabase-CLI: Arbeitsstand der Verknüpfung, wird beim Deploy angelegt.
 supabase/.temp/
+
+# Android Studio / IntelliJ – Arbeitsplatz-Kram, gehoert niemandem sonst
+android/.idea/

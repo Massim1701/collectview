@@ -72,3 +72,26 @@ form.addEventListener("submit", (e) => {
 });
 
 form.querySelector('[data-action="sign-up"]').addEventListener("click", () => submit("sign-up"));
+
+document.getElementById("forgot-password").addEventListener("click", async () => {
+  errorEl.textContent = "";
+  noteEl.textContent = "";
+
+  const email = document.getElementById("email").value.trim();
+  if (!email) {
+    errorEl.textContent = "Bitte zuerst deine E-Mail-Adresse eingeben.";
+    document.getElementById("email").focus();
+    return;
+  }
+
+  setBusy(true, "E-Mail wird verschickt …");
+  try {
+    await requestPasswordReset(email);
+    setBusy(false);
+    noteEl.textContent =
+      "Falls ein Konto mit dieser E-Mail existiert, ist eine Mail mit einem Link zum Zurücksetzen unterwegs.";
+  } catch (e) {
+    setBusy(false);
+    errorEl.textContent = e.message;
+  }
+});

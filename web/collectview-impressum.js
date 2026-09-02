@@ -21,13 +21,13 @@
      Satz "wird auf Anfrage mitgeteilt" – wie auf driftware.online. Für
      eine geschäftsmäßige Seite verlangt § 5 DDG die Anschrift; das ist
      Massimos Entscheidung, nicht meine.
-   - Das Kontaktformular benutzt weiterhin den formsubmit-Endpunkt von
-     Driftware. ACHTUNG, seit dem Adresswechsel am 02.09.2026 ist das
-     eine echte Unstimmigkeit: auf der Seite steht
-     supportcollectview.site@gmail.com, das Formular landet aber
-     weiterhin im Driftware-Postfach. Wer über das Formular schreibt,
-     erreicht eine andere Adresse als angegeben. Behoben ist das erst
-     mit einem eigenen formsubmit-Endpunkt auf die neue Adresse.
+   - Kontaktformular (02.09.2026 korrigiert): eigener formsubmit-Endpunkt
+     auf supportcollectview.site@gmail.com, aktiviert von Massimo. Läuft
+     über die Klartext-Adresse in der Formular-action, nicht über einen
+     Hash — den Hash hätte nur die Aktivierungsmail selbst gezeigt, die
+     Claude Web nicht lesen kann (kein Gmail-Zugriff auf dieses
+     Postfach). Klartext-Adresse ist bei formsubmit ausdrücklich
+     erlaubt, nur weniger privat (steht im Seitenquelltext).
    ===================================================================== */
 
 const SEITE = `<!doctype html>
@@ -62,7 +62,7 @@ const SEITE = `<!doctype html>
 <h2>Verantwortlich f&uuml;r den Inhalt nach &sect; 18 Abs. 2 MStV</h2>
 <p>Massimo Manca</p>
 <h2>Kontaktformular</h2>
-<form method="POST" action="https://formsubmit.co/0b4cb7348b4cff5d1891bf8d99f1e757">
+<form method="POST" action="https://formsubmit.co/supportcollectview.site@gmail.com">
   <input type="hidden" name="_subject" value="CollectView &mdash; neue Kontaktanfrage">
   <input type="hidden" name="_template" value="table">
   <input type="hidden" name="_next" value="https://collectview.site/impressum">

@@ -427,6 +427,29 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .notice strong{ display:block; font-weight:800; margin-bottom:2px; }
 .notice .btn-secondary{ margin-top:12px; }
 
+/* ===== Konto-Dialog =====
+   Ersetzt die frühere, fest im Seitenfluss stehende Konto-Karte -- Sprache,
+   Akzentfarbe und Benutzername öffnen sich jetzt über das Avatar-Icon.
+   Gleiches Muster wie .feedback-dialog (natives <dialog>, Escape/Backdrop
+   kommen vom Browser). */
+.account-dialog{
+  width:min(420px, calc(100vw - 32px));
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  color:var(--text);
+  padding:24px;
+  box-shadow:0 30px 60px -24px rgba(120,86,30,.4);
+}
+.account-dialog::backdrop{ background:rgba(35,28,16,.45); }
+.account-dialog-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.icon-close{
+  width:32px; height:32px; border-radius:var(--radius-pill); border:1px solid var(--border);
+  background:var(--surface-2); color:var(--text-muted); display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex:0 0 auto; padding:0;
+}
+.icon-close:hover{ color:var(--text); border-color:var(--border-strong); }
+
 /* ===== Feedback-Dialog ===== */
 .feedback-dialog{
   width:min(440px, calc(100vw - 32px));
