@@ -60,7 +60,9 @@ const SEITE = `<!doctype html>
 <h2>Kontakt</h2>
 <p>E-Mail: <a href="mailto:supportcollectview.site@gmail.com">supportcollectview.site@gmail.com</a></p>
 <h2>Verantwortlich f&uuml;r den Inhalt nach &sect; 18 Abs. 2 MStV</h2>
-<p>Massimo Manca</p>
+<p>Driftware.online</p>
+<h2>Hinweis</h2>
+<p>CollectView ist eine Projektarbeit. Dieses Projekt steht zum Verkauf.</p>
 <h2>Kontaktformular</h2>
 <form method="POST" action="https://formsubmit.co/supportcollectview.site@gmail.com">
   <input type="hidden" name="_subject" value="CollectView &mdash; neue Kontaktanfrage">
