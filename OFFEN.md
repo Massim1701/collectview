@@ -15,8 +15,10 @@ Stand: 02.09.2026
 | | |
 |---|---|
 | **Massimo, braucht ein Gerät** | Sandbox-Kauf auf einem echten iPhone. Scanner, Kamera und Barcode auf einem echten Android-Gerät (bisher nur Emulator, der hat keine Kamera). |
-| **Claude Web, braucht Store-Zugänge** | Play-Preise korrigieren (2b). `1970`-Datum auf `/datenschutz` (unten). Apple-Abo-Produkte und Sandbox-Tester anlegen (2). |
-| **Claude Code** | Nichts offen. Meldet sich, wenn Web die Preise gesetzt hat, und prüft sie über die Play-API gegen. |
+| **Akzentfarbe** | Fortgesetzt (02.09.2026): Lücke im Trigger geschlossen (Farbe blieb nach Abo-Ende stehen), gegen die DB verifiziert. Bereit, aber uncommittet — siehe unten. |
+| **Konto-Menü + Passwort vergessen** | Neu (02.09.2026, Wunsch von Massimo): große Konto-Karte entfernt, Sprache/Akzentfarbe/Name/Logout jetzt über Dialog am Avatar-Icon. Login-Seite hat „Passwort vergessen"-Link (Supabase `resetPasswordForEmail`), neue Seite `app/reset-password.html`. Code fertig, uncommittet — siehe unten. Supabase-Redirect-URL noch einzutragen. |
+| **Claude Web** | Play-Preise gesetzt UND über die Play-API gegengeprüft (02.09.2026, siehe 2b) — erledigt. `1970`-Datum auf `/datenschutz` — erledigt, Massimo hat den Fix eingefügt und deployt, live geprüft (02.09.2026): `Stand: 2026-09-02`, Footer `© 2026`. Apple-Produkte/Sandbox-Tester: abgelehnt, das bleibt bei Massimo/App Store Connect direkt. |
+| **Claude Code** | Nichts offen. |
 | **Erst kurz vor dem Launch** | `APPLE_SANDBOX_ERLAUBT` auf `false`. Apples Produktions-Notification-URL setzen. Alten Schlüssel `4L3Y2HPQU4` widerrufen. |
 
 Alles Weitere in dieser Datei ist Begründung und Beleg zu diesen Punkten.
@@ -264,9 +266,13 @@ Jahrespreis gerechnet (`monatsAequivalent()`, drei Tests).
 
 **Entschieden:** Der Kunde soll **3,99 €** zahlen.
 
-**Offen — Web / Play Console:** die Play-Preise so setzen, dass beim Kunden
-`3,99 €` bzw. `34,90 €` ankommen (also der Bruttopreis, nicht netto).
-Apple-Produkte sind noch nicht angelegt und werden gleich passend gesetzt.
+**Erledigt (02.09.2026):** Play-Preise auf `3,99 €` (monatlich-autorenew) und
+`34,90 €` (jaehrlich-autorenew) für DE gesetzt, über die Play Developer API
+gegengeprüft (`GET .../subscriptions`, `regionalConfigs` für `DE`):
+`monatlich-autorenew` 3.99 EUR, `jaehrlich-autorenew` 34.90 EUR, beide `state:
+ACTIVE`. Apple-Produkte sind noch nicht angelegt — das bleibt bei Massimo /
+App Store Connect direkt, nicht bei Claude Web (Kontoerstellung/Store-Produkte
+fallen unter die Ausnahme für Store-seitige Aktionen).
 
 ### 3. App Store Connect · Eintrag steht, Produkte fehlen
 
@@ -284,18 +290,68 @@ laufen; Apples Prüfung verlangt sie für die Produktionsumgebung.
 
 ## Technisch offen
 
-### `/datenschutz` zeigt 1970 — offen, gehört Claude Web
+### ~~`/datenschutz` zeigt 1970~~ — erledigt am 02.09.2026
 
 `https://collectview.site/datenschutz` schreibt „Stand: 1970-01-01" und im
-Fuß „© 1970 CollectView". Das ist der Unix-Nullpunkt: irgendwo wird ein
-Zeitstempel `0` formatiert. Die Stelle liegt im Cloudflare Worker, nicht in
-diesem Repo.
+Fuß „© 1970 CollectView". Ursache gefunden (02.09.2026): `SUPPORT_HTML` und
+`PRIVACY_HTML` im Cloudflare Worker (`collectview-site`, Quick Edit, nicht in
+diesem Repo) sind `var`-Konstanten, die `page(...)` beim Cold-Start des
+Workers einmalig aufrufen — Cloudflare liefert `new Date()` bei diesem
+einmaligen Modul-Load als Unix-Nullpunkt. Fix: beide zu Funktionen machen
+(`function supportHtml() { return page(...) }` /
+`function privacyHtml() { return page(...) }`), damit `page()` erst pro
+Request läuft, plus die zwei `fetch()`-Zeilen (`/support`, `/datenschutz`)
+entsprechend auf `supportHtml()` / `privacyHtml()` umstellen.
+
+**Deployt und live geprüft (02.09.2026).** Direkt-Edit per Browser-Automation
+ist an einer unsauberen Zwischenfassung hängen geblieben (Sicherheitsfilter
+blockierte den Korrekturversuch); Massimo hat den fertigen Fix-Text danach
+selbst im Cloudflare Quick Edit eingefügt und deployt. Live nachgeprüft:
+`/datenschutz` zeigt `Stand: 2026-09-02` und Footer `© 2026 CollectView`,
+`/support` ebenso `© 2026`, `/` lädt weiterhin normal über `env.ASSETS.fetch`.
 
 Nicht kosmetisch: Apple liest die Datenschutzerklärung in der Review, und
 Web hat sie am 01.09.2026 veröffentlicht. Inhaltlich ist sie gut — sie
 benennt ausdrücklich, dass beim Cover-Scan ein Foto an Google (Gemini) geht.
 Damit ist die frühere offene Frage „gehört der Weg in die
 Datenschutzerklärung" beantwortet.
+
+### Akzentfarbe für Plus — fortgesetzt am 02.09.2026
+
+Übernommen aus `60f835b` (siehe Commit-Text oben): Plus-Abonnenten können
+das feste Neongrün durch eine von sechs Farben ersetzen. `db.js`,
+`auth.js`, `styles.css` waren beim Übernehmen bereits fertig und
+unverändert richtig — nur `db/accent-color.sql` hatte eine Lücke.
+
+**Gefunden:** Der Trigger blockierte nur das *Setzen* einer Farbe ohne
+aktives Abo. Er lief lediglich `before insert or update of accent_color` —
+`abo_beenden()` (db/abo.sql) ändert aber nur `subscription_status`, nie
+`accent_color`. Eine einmal gesetzte Farbe blieb also nach Kündigung
+einfach stehen, und der Client zeigt sie ungeprüft weiter an
+(`applyAccentColor()` in `auth.js` fragt nicht nach `subscription_status`).
+Ein gekündigter Nutzer wäre optisch weiter als Plus durchgegangen — genau
+das, was der Kommentar in der SQL-Datei ausdrücklich vermeiden wollte.
+
+**Fix:** Trigger feuert jetzt auch `before update of subscription_status`
+und setzt `accent_color` auf `null`, sobald der Status von `active`
+wegwechselt — unabhängig davon, wer schreibt (die alte
+`service_role`-Ausnahme ist damit weg, da sie das Aufräumen beim
+Kündigen sonst verhindert hätte).
+
+**Angewandt und geprüft (02.09.2026):** Migration über die Management-API
+gegen `mevmpihydpksruhmzzwr` gelaufen, Spalte/Constraint/Trigger stehen.
+Verhalten an einer isolierten Testtabelle (keine echten Profile berührt)
+durchgespielt: aktiv + Farbe → bleibt; Abo läuft aus → Farbe wird
+automatisch `null`; Farbe setzen ohne aktives Abo → bleibt `null`; wieder
+aktiv + Farbe im selben Update → funktioniert. Bestehende Profile
+gegengeprüft: 0 mit verwaister Farbe (`accent_color` gesetzt bei nicht
+aktivem Abo) — nichts nachzuräumen.
+
+**Uncommittet, wie der Rest von `60f835b`.** `db/accent-color.sql` ist im
+Baum geändert, nicht committet, nicht gepusht. Massimo: weitermachen
+bedeutet aus meiner Sicht als Nächstes — Sichtprüfung mit einem echten
+Plus-Testkonto (die Farbpunkte in der Kontozeile auf `home.html` /
+`scanner.html`) und danach committen, wenn sie so bleiben soll.
 
 ### ~~Ein Test ist rot~~ — erledigt am 01.09.2026
 
@@ -425,3 +481,47 @@ lazy — dort ist es richtig. Zwei Tests halten beide Seiten fest.
 - **Repo umbenannt** auf `github.com/Massim1701/collectview`. Der fehlende
   PAT-Bereich *Administration: Read and write* ist gesetzt, `gh repo rename`
   funktioniert ab jetzt. Lokales Remote ist umgestellt.
+
+---
+
+### Konto-Menü + Passwort vergessen — neu, 02.09.2026
+
+Wunsch von Massimo (Screenshots + Text): die grosse Konto-Karte im
+Seitenfluss (Avatar, Name, E-Mail, Sprache, Admin-Button, Ändern-Button)
+raus, Funktion stattdessen über das kleine Avatar-Icon oben rechts als
+Menü/Dialog. Zusätzlich ein "Passwort vergessen"-Feld auf der Login-Seite,
+"Standardverfahren" — also Supabase-eigener E-Mail-Reset-Flow.
+
+**Umgesetzt (Code, uncommittet):**
+- `app/js/auth.js`: `requestPasswordReset(email)` (ruft
+  `sb.auth.resetPasswordForEmail` mit `redirectTo` auf
+  `reset-password.html`), `ensureAccountDialog()` + `wireAccountMenu(btn,
+  user)` — natives `<dialog>`, gleiches Muster wie das Feedback-Dialog.
+  `renderAccountRow()` bekommt zusätzlich einen Abmelden-Button.
+- `app/index.html`, `app/scanner.html`: alte `#konto`-Sektion/Karte entfernt,
+  Avatar im Topbar ist jetzt ein Button (`#account-menu-btn`), öffnet den
+  Dialog.
+- `app/js/home.js`, `app/js/scanner.js`: rufen `wireAccountMenu(...)` statt
+  der alten `renderAccountRow(#account-card, ...)`. `home.js` öffnet den
+  Dialog automatisch, wenn die Seite mit `#konto` aufgerufen wird (der
+  bestehende Eintrag in der unteren Navigation zeigt weiter dorthin).
+- `app/app.css`: `.account-dialog` / `.account-dialog-head` / `.icon-close`
+  ergänzt.
+- `app/login.html`, `app/js/login.js`: Link "Passwort vergessen?" unter dem
+  Passwortfeld, ruft `requestPasswordReset(email)`.
+- **Neu:** `app/reset-password.html` + `app/js/reset-password.js` — eigene
+  Seite, hört auf `PASSWORD_RECOVERY`/vorhandene Session, setzt per
+  `sb.auth.updateUser({password})` das neue Passwort, leitet danach auf
+  `index.html` weiter.
+
+Alle Dateien mit `node --check` geprüft, syntaktisch ok.
+
+**Noch offen:**
+- Im Supabase-Dashboard unter Authentication → URL Configuration muss
+  `https://collectview.site/app/reset-password.html` in die "Additional
+  Redirect URLs" eingetragen werden — sonst wird `redirectTo` beim
+  E-Mail-Reset ignoriert bzw. abgelehnt.
+- Live-Test des kompletten Reset-Flows (E-Mail wirklich abschicken/öffnen)
+  ist von hier aus nur eingeschränkt möglich — bitte einmal selbst
+  durchklicken.
+- Wie bei Akzentfarbe: alles uncommittet im Arbeitsbaum, kein `git push`.
