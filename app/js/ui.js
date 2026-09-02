@@ -22,10 +22,19 @@ function coverClass(seed) {
  * eingeblendet, wenn es geladen ist – schlägt es fehl, bleibt der
  * Verlauf stehen. Feste Box durch aspect-ratio: kein Layout-Shift.
  */
-function coverMarkup(item, { size = null } = {}) {
+function coverMarkup(item, { size = null, lazy = true } = {}) {
   const style = size ? ` style="width:${size}px;height:${size}px;flex:0 0 ${size}px;"` : "";
+  // lazy=false für Bilder, die sofort sichtbar sind. Warum das nötig ist:
+  // Das Bild startet mit opacity:0 und wird erst durch die Klasse "loaded"
+  // sichtbar. Wird das Markup neu gesetzt, während es im Blick steht – auf
+  // der Detailseite passiert genau das, render() läuft vor und nach dem
+  // Discogs-Abruf –, stellt der Browser das Laden zurück und holt es nicht
+  // mehr nach. Das Bild bleibt dann dauerhaft unsichtbar, ohne Fehler und
+  // ohne Platzhalter, also ohne jeden Hinweis. Am 02.09.2026 im Browser
+  // nachgestellt: mit lazy bleibt complete=false, ohne lazy lädt es.
+  const laden = lazy ? ' loading="lazy"' : "";
   const img = item.cover_url
-    ? `<img src="${escapeHtml(item.cover_url)}" alt="" loading="lazy" decoding="async"
+    ? `<img src="${escapeHtml(item.cover_url)}" alt=""${laden} decoding="async"
             onload="this.classList.add('loaded')" onerror="this.remove()">`
     : "";
   return `<div class="cover ${coverClass(item.discogs_id || item.title)}"${style}>${img}</div>`;

@@ -341,7 +341,21 @@ den Discogs gerade ohne Bild führt.
 `onerror="this.remove()"`. Ein Cover, dessen URL nicht lädt, sieht damit
 exakt aus wie eines, das nie gesetzt wurde. Wer graue Kacheln sucht, muss
 beide Fälle unterscheiden — erst in der Datenbank nachsehen, dann die URL
-abrufen.
+abrufen. **Und einen dritten Fall gibt es auch:** geladen, aber unsichtbar.
+
+### ~~Großes Cover fehlte auf der Detailseite~~ — erledigt am 02.09.2026
+
+In der Liste erschienen die Miniaturen, auf der Detailseite blieb das große
+Cover leer. Ursache war `loading="lazy"` am Hero-Bild. Das Bild startet mit
+`opacity:0` und wird erst durch die Klasse `loaded` sichtbar; `render()`
+läuft auf der Detailseite zweimal (vor und nach dem Discogs-Abruf), und beim
+zweiten Mal stellte der Browser das verzögerte Laden zurück und holte es nie
+nach. Kein Fehler, kein Platzhalter, kein Hinweis — nur eine leere Fläche.
+
+Im Browser nachgestellt und gemessen: mit `lazy` bleibt `complete=false` und
+`opacity:0`, ohne `lazy` lädt das Bild und wird sichtbar. `coverMarkup()`
+kennt jetzt `{ lazy: false }`, die Detailseite benutzt es. Die Liste bleibt
+lazy — dort ist es richtig. Zwei Tests halten beide Seiten fest.
 
 - **Nur eine von vier Tesseract-Core-Fassungen ist vendort.** Der Worker
   fordert je nach Gerät `simd-lstm`, `simd`, `lstm` oder die Grundfassung an.

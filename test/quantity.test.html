@@ -215,6 +215,23 @@ test("Cover in der Liste wird erst beim Scrollen geladen", () => {
     "ohne Cover darf kein leeres Bild-Tag entstehen");
 });
 
+/* Das Gegenstueck: Ein Bild, das sofort im Blick steht, darf NICHT lazy
+   sein. Auf der Detailseite war das Cover unsichtbar, obwohl die URL
+   stimmte und kein Fehler kam – render() laeuft dort zweimal, und beim
+   zweiten Mal stellte der Browser das verzoegerte Laden zurueck und holte
+   es nie nach. Ohne Fehler, ohne Platzhalter, ohne Hinweis. */
+test("Ein sofort sichtbares Cover wird nicht verzögert geladen", () => {
+  const item = { id: "e", title: "Kid A", cover_url: "https://example.invalid/a.jpg" };
+
+  const sofort = coverMarkup(item, { lazy: false });
+  assertIncludes(sofort, "<img", "das Bild gehört ins Markup");
+  assert(!sofort.includes('loading="lazy"'),
+    "ein Bild im ersten Blickfeld darf nicht auf das Scrollen warten");
+
+  // Der Normalfall bleibt lazy – sonst laedt eine lange Liste alles auf einmal.
+  assertIncludes(coverMarkup(item), 'loading="lazy"');
+});
+
 runTests();
 </script>
 </body>
