@@ -125,8 +125,40 @@ test("Ein unbekannter Zeitraum wird abgefangen, bevor der Store gefragt wird", a
 test("Die Produkt-IDs sind die, die in den Stores angelegt werden", async () => {
   // Zeichengenau: ein Tippfehler äußert sich im Store als "Produkt nicht
   // gefunden", nicht als Fehlermeldung mit Hinweis.
-  assertEqual(ABO_PRODUKTE.monatlich, "collectview.plus.monatlich");
-  assertEqual(ABO_PRODUKTE.jaehrlich, "collectview.plus.jaehrlich");
+  // Im Browser (kein Store) gelten die Google-IDs.
+  assertEqual(aboProdukte().monatlich, "collectview.plus.monatlich");
+  assertEqual(aboProdukte().jaehrlich, "collectview.plus.jaehrlich");
+});
+
+/* Apple und Google haben getrennte Namensraeume. In App Store Connect
+   steht die Unterstrich-Schreibweise, und Apple laesst Produkt-IDs nach
+   dem Anlegen nicht mehr aendern - die App folgt deshalb dem Store. Wer
+   das je vereinheitlicht, muss beide Stores anfassen, nicht nur diese
+   Datei. */
+test("Auf iOS gelten Apples IDs, und das fehlende Jahresabo faellt weg", () => {
+  const vorher = window.Capacitor;
+  window.Capacitor = { getPlatform: () => "ios" };
+  try {
+    const p = aboProdukte();
+    assertEqual(p.monatlich, "collectview_plus_monatlich", "Apple schreibt Unterstriche");
+    assert(!("jaehrlich" in p),
+      "das Jahresabo existiert bei Apple noch nicht - es darf gar nicht erst " +
+      "angeboten werden, sonst meldet der Store nur 'Produkt nicht gefunden'");
+  } finally {
+    window.Capacitor = vorher;
+  }
+});
+
+test("Auf Android gelten Googles IDs, beide Zyklen", () => {
+  const vorher = window.Capacitor;
+  window.Capacitor = { getPlatform: () => "android" };
+  try {
+    const p = aboProdukte();
+    assertEqual(p.monatlich, "collectview.plus.monatlich");
+    assertEqual(p.jaehrlich, "collectview.plus.jaehrlich");
+  } finally {
+    window.Capacitor = vorher;
+  }
 });
 
 /* ---------- Preisanzeige ----------

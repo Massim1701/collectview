@@ -24,10 +24,40 @@
  * Play Console entsprechen – ein Tippfehler äußert sich als "Produkt
  * nicht gefunden", nicht als Fehlermeldung mit Hinweis.
  */
-const ABO_PRODUKTE = {
-  monatlich: "collectview.plus.monatlich",
-  jaehrlich: "collectview.plus.jaehrlich",
+const ABO_PRODUKTE_JE_STORE = {
+  // Apple: Produkt-IDs sind nach dem Anlegen NICHT mehr aenderbar, und in
+  // App Store Connect steht die Unterstrich-Schreibweise. Deshalb folgt
+  // die App dem Store, nicht umgekehrt. Das Jahresabo existiert dort noch
+  // gar nicht - bis dahin bleibt der Eintrag leer, und die Preisseite
+  // bietet nur den Monat an.
+  apple: {
+    monatlich: "collectview_plus_monatlich",
+    jaehrlich: "",
+  },
+  // Google: dort sind beide mit Punkten angelegt und aktiv.
+  google: {
+    monatlich: "collectview.plus.monatlich",
+    jaehrlich: "collectview.plus.jaehrlich",
+  },
 };
+
+/**
+ * Die Produkt-IDs des Stores, auf dem wir gerade laufen.
+ *
+ * Apple und Google haben getrennte Namensraeume - dass die IDs dort
+ * verschieden heissen, ist kein Fehler, sondern der Normalfall, sobald
+ * sie von Hand angelegt wurden. Ein Tippfehler aeussert sich im Store nur
+ * als "Produkt nicht gefunden", nie als Hinweis auf die Ursache; deshalb
+ * steht die Zuordnung an genau einer Stelle.
+ *
+ * Im Browser (kein Store) faellt die Wahl auf Google, damit die Seite
+ * etwas anzuzeigen hat. Leere Eintraege sind Produkte, die es im Store
+ * noch nicht gibt.
+ */
+function aboProdukte() {
+  const tabelle = ABO_PRODUKTE_JE_STORE[storePlattform() ?? "google"];
+  return Object.fromEntries(Object.entries(tabelle).filter(([, id]) => id));
+}
 
 const ABO_PRUEFEN_URL = `${SUPABASE_URL}/functions/v1/abo-pruefen`;
 
@@ -108,7 +138,7 @@ async function storeStarten() {
     ? CdvPurchase.Platform.APPLE_APPSTORE
     : CdvPurchase.Platform.GOOGLE_PLAY;
 
-  store.register(Object.values(ABO_PRODUKTE).map((id) => ({
+  store.register(Object.values(aboProdukte()).map((id) => ({
     id,
     type: CdvPurchase.ProductType.PAID_SUBSCRIPTION,
     platform: plattform,
@@ -201,7 +231,7 @@ async function storePreise() {
   }
 
   const preise = {};
-  for (const [zyklus, id] of Object.entries(ABO_PRODUKTE)) {
+  for (const [zyklus, id] of Object.entries(aboProdukte())) {
     const p = CdvPurchase.store.get(id)?.pricing;
     if (p?.price) {
       preise[zyklus] = {
@@ -224,7 +254,7 @@ async function storePreise() {
  * abgebrochener Kauf ist der Normalfall, kein Ausnahmezustand.
  */
 async function kaufeAbo(zyklus) {
-  const produktId = ABO_PRODUKTE[zyklus];
+  const produktId = aboProdukte()[zyklus];
   if (!produktId) throw new Error("Unbekannter Abo-Zeitraum.");
 
   const plattform = storePlattform();
@@ -258,7 +288,7 @@ async function aboWiederherstellen() {
   await storeStarten();
   await CdvPurchase.store.restorePurchases();
 
-  const kauf = Object.values(ABO_PRODUKTE)
+  const kauf = Object.values(aboProdukte())
     .map((id) => CdvPurchase.store.get(id))
     .find((p) => p?.owned);
 
