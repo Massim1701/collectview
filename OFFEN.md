@@ -17,9 +17,10 @@ Stand: 02.09.2026
 | **Massimo, braucht ein Gerät** | Sandbox-Kauf auf einem echten iPhone. Scanner, Kamera und Barcode auf einem echten Android-Gerät (bisher nur Emulator, der hat keine Kamera). |
 | **Akzentfarbe** | Fortgesetzt (02.09.2026): Lücke im Trigger geschlossen (Farbe blieb nach Abo-Ende stehen), gegen die DB verifiziert. Committet (`2f88fad`), lokal — Push braucht Massimo (siehe unten). |
 | **Konto-Menü + Passwort vergessen** | Neu (02.09.2026, Wunsch von Massimo): große Konto-Karte entfernt, Sprache/Akzentfarbe/Name/Logout jetzt über Dialog am Avatar-Icon. Login-Seite hat „Passwort vergessen"-Link (Supabase `resetPasswordForEmail`), neue Seite `app/reset-password.html`. Committet (`2f88fad`), lokal — Push braucht Massimo. Supabase-Redirect-URL noch einzutragen. |
-| **Cloudflare Worker `collectview-site`** | Offen, nicht von den Sitzungen lösbar: `/`, `/support`, `/datenschutz` zeigen noch die alte Adresse `support@collectview.site` statt der neuen; Startseite verlinkt das Impressum nicht. Kontaktformular schickt weiterhin ins Driftware-Postfach (kein eigener formsubmit-Endpunkt auf die neue Adresse). Braucht Cloudflare-API-Token oder den Worker-Quelltext — keine Sitzung hat das. |
+| **Cloudflare Worker `collectview-site`** | Claude Web (02.09.2026): technisch blockiert. `/` kommt aus einem Workers-Assets-Binding, NICHT aus dem Worker-Skript — Quick Edit kann diese Datei nicht bearbeiten, das geht nur über `wrangler deploy` (Versionshistorie zeigt bisherige Deploys als "Wrangler by welove80sde", also von Massimos eigenem Rechner/Terminal aus — dort liegen die Zugänge, nicht in dieser Sitzung). `/support` und `/datenschutz` kommen aus Funktionen im Worker-Skript und sind damit über Quick Edit erreichbar, aber der Monaco-Editor dort liess sich per Browser-Automation nicht fokussieren/scrollen (gleiches cross-origin-iframe-Problem wie beim 1970-Bug) — keine Direkt-Edits versucht, um keine Textverdopplung zu riskieren. Fertig vorbereitet in `web/`: `collectview-site-index.html` (neu abgeleitete Startseite, korrigierte Footer-Links, `render-landing.mjs` als Ableitungsschritt), `collectview-site-worker.js` (Rekonstruktion, Herkunft im Dateikopf dokumentiert, `UPSTREAM`-Wert als Platzhalter markiert). Alles nur im Arbeitsbaum, kein Commit. Massimo: Copy-Paste-Text für die E-Mail-Änderung in `/support`+`/datenschutz` kommt im Chat; Startseite und Worker-Skript brauchen `wrangler deploy` von deinem Rechner aus dem lokalen collectview-site-Projekt. |
+| **formsubmit.co-Endpunkt** | Claude Web (02.09.2026): alter Hash im Impressum-Formular (`0b4cb7348b4cff5d1891bf8d99f1e757`) zeigte auf `welove80sde@gmail.com`, nicht auf die neue Adresse — Massimo wollte das korrigiert haben. Neue Aktivierungsmail an `supportcollectview.site@gmail.com` ausgelöst (POST direkt an `https://formsubmit.co/supportcollectview.site@gmail.com`). Massimo muss die Mail dort bestätigen (kein Zugriff auf dieses Postfach von hier) und danach den NEUEN Hash aus der Mail in `web/collectview-impressum.js` Zeile 65 (Worker `collectview-impressum`, live über Cloudflare Quick Edit) UND bei Claude Codes Feedback-Mail-Anbindung eintragen — der alte Hash bleibt sonst aktiv und liefert weiter an welove80sde@gmail.com. |
 | **Claude Web** | Play-Preise gesetzt UND über die Play-API gegengeprüft (02.09.2026, siehe 2b) — erledigt. `1970`-Datum auf `/datenschutz` — erledigt, Massimo hat den Fix eingefügt und deployt, live geprüft (02.09.2026): `Stand: 2026-09-02`, Footer `© 2026`. Apple-Produkte/Sandbox-Tester: abgelehnt, das bleibt bei Massimo/App Store Connect direkt. |
-| **Claude Code** | Nichts offen. |
+| **Claude Code** | **Feedback-Mail gebaut** (02.09.2026, `5ac0103`): Rückmeldungen landeten bisher nur in der Tabelle `feedback`, niemand wurde benachrichtigt. Neue Edge Function `feedback-melden` schickt sie an die Support-Adresse — deployt, geprüft. **Wartet auf `FEEDBACK_MAIL_URL`**, also auf den neuen formsubmit-Hash (siehe Zeile darüber). Ohne ihn ist alles gebaut, aber still. — **Passwort-vergessen entsperrt** (02.09.2026): `site_url` stand auf `http://localhost:3000`, die Allow-List war leer; ein Zurücksetzen hätte auf localhost gezeigt. Jetzt `https://collectview.site` plus `capacitor://localhost/**` (iOS), `https://localhost/**` (Android) und `http://localhost:*/**` (Entwicklung), gegengeprüft. — Sonst nichts offen. |
 | **Erst kurz vor dem Launch** | `APPLE_SANDBOX_ERLAUBT` auf `false`. Apples Produktions-Notification-URL setzen. Alten Schlüssel `4L3Y2HPQU4` widerrufen. |
 
 Alles Weitere in dieser Datei ist Begründung und Beleg zu diesen Punkten.
@@ -526,3 +527,37 @@ Alle Dateien mit `node --check` geprüft, syntaktisch ok.
   ist von hier aus nur eingeschränkt möglich — bitte einmal selbst
   durchklicken.
 - Wie bei Akzentfarbe: alles uncommittet im Arbeitsbaum, kein `git push`.
+
+---
+
+### Rückmeldung an Claude Code — Auftrag 02.09.2026 (Claude Web)
+
+1. **Startseite neu ausspielen**: NICHT gemacht. `/` kommt aus einem
+   Workers-Assets-Binding (`env.ASSETS.fetch`, siehe Bindings-Tab), das
+   Quick Edit nicht bearbeiten kann — nur `wrangler deploy` aus dem
+   lokalen Worker-Projekt (Versionshistorie: bisherige Deploys liefen als
+   "Wrangler by welove80sde", also von Massimos Rechner). Fertig
+   vorbereitet in `web/collectview-site-index.html` +
+   `web/render-landing.mjs` (Ableitungsschritt aus
+   `wireframes/landing.html`, korrigierte Footer-Links). Massimo muss das
+   selbst deployen.
+2. **E-Mail-Adresse ersetzt**: teilweise. `/support` und `/datenschutz`
+   kommen aus Funktionen im Worker-Skript (Quick-Edit-fähig), aber der
+   Monaco-Editor dort liess sich per Browser-Automation nicht
+   fokussieren/scrollen — keine Direkt-Edits versucht, um keine
+   Textverdopplung zu riskieren (gleiches Problem wie beim 1970-Bug).
+   Copy-Paste-Text für Massimo kommt im Chat. Auf `/` (Startseite) hängt
+   die Adresse vom Assets-Redeploy ab (siehe Punkt 1).
+3. **Worker-Quelltext im Repo**: `web/collectview-site-worker.js` (Herkunft
+   verifiziert vs. rekonstruiert im Dateikopf dokumentiert, `UPSTREAM` als
+   nicht verifizierter Platzhalter markiert — vor Deploy prüfen),
+   `web/render-landing.mjs`, `web/collectview-site-index.html`,
+   `web/README.md`. Alles nur im Arbeitsbaum, nicht committet (Repo
+   gehört Claude Code).
+4. **formsubmit.co**: neuer Endpunkt auf `supportcollectview.site@gmail.com`
+   ausgelöst, wartet auf Massimos Bestätigung (kein Zugriff auf dieses
+   Postfach von hier). Der alte Hash im Impressum-Formular
+   (`web/collectview-impressum.js` Zeile 65) zeigte auf
+   `welove80sde@gmail.com` — falsches Postfach, Massimo wollte korrigieren.
+   Nach Bestätigung: neuen Hash sowohl dort als auch in deiner
+   Feedback-Mail-Anbindung eintragen.
