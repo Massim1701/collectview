@@ -29,6 +29,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const MAIL_URL = Deno.env.get("FEEDBACK_MAIL_URL");
+// formsubmit prüft die Herkunft; ohne sie kommt eine Absage.
+const HERKUNFT = Deno.env.get("FEEDBACK_HERKUNFT") ?? "https://collectview.site";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -92,9 +94,17 @@ Deno.serve(async (req) => {
     return json({ ok: true, gemeldet: false, grund: "kein Versandweg konfiguriert" });
   }
 
+  // Referer und Origin sind Pflicht: formsubmit weist Aufrufe ohne sie ab
+  // ("FormSubmit will not work in pages browsed as HTML files") – und zwar
+  // mit HTTP 200, siehe unten.
   const res = await fetch(MAIL_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Referer: HERKUNFT + "/",
+      Origin: HERKUNFT,
+    },
     body: JSON.stringify({
       _subject: `CollectView — Rückmeldung (${eintrag.category})`,
       Kategorie: eintrag.category,
@@ -111,6 +121,18 @@ Deno.serve(async (req) => {
     // Client zeigt das nicht als Fehler an, die Rückmeldung steht ja.
     console.error(`Versand scheiterte mit ${res.status}`);
     return json({ error: `Versand scheiterte mit ${res.status}` }, 500);
+  }
+
+  // Der Status allein sagt nichts: formsubmit antwortet auch auf einen
+  // abgelehnten Versand mit 200 und schreibt das Scheitern in den Rumpf.
+  // Wer nur res.ok prüft, verbucht jeden Fehlschlag als Erfolg – und
+  // merkt erst, dass niemand Rückmeldungen bekommt, wenn sich jemand
+  // beschwert, dass er nie eine Antwort erhält.
+  const antwort = await res.json().catch(() => ({}));
+  if (String(antwort?.success) !== "true") {
+    const grund = String(antwort?.message ?? "ohne Begründung");
+    console.error(`Versand abgelehnt: ${grund}`);
+    return json({ error: `Versand abgelehnt: ${grund}` }, 502);
   }
 
   console.log(`Rückmeldung ${eintrag.id} gemeldet.`);
