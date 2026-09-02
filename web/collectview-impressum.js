@@ -21,10 +21,13 @@
      Satz "wird auf Anfrage mitgeteilt" – wie auf driftware.online. Für
      eine geschäftsmäßige Seite verlangt § 5 DDG die Anschrift; das ist
      Massimos Entscheidung, nicht meine.
-   - Das Kontaktformular benutzt vorerst den formsubmit-Endpunkt von
-     Driftware. Der gehört derselben Person und liefert in dasselbe
-     Postfach, der Betreff ist auf CollectView gesetzt. Ein eigener
-     Endpunkt wäre sauberer.
+   - Das Kontaktformular benutzt weiterhin den formsubmit-Endpunkt von
+     Driftware. ACHTUNG, seit dem Adresswechsel am 02.09.2026 ist das
+     eine echte Unstimmigkeit: auf der Seite steht
+     supportcollectview.site@gmail.com, das Formular landet aber
+     weiterhin im Driftware-Postfach. Wer über das Formular schreibt,
+     erreicht eine andere Adresse als angegeben. Behoben ist das erst
+     mit einem eigenen formsubmit-Endpunkt auf die neue Adresse.
    ===================================================================== */
 
 const SEITE = `<!doctype html>
@@ -55,7 +58,7 @@ const SEITE = `<!doctype html>
 <p>Massimo Manca</p>
 <p class="hinweis">Vollst&auml;ndiger Name und ladungsf&auml;hige Anschrift werden auf Anfrage &uuml;ber das Kontaktformular unten mitgeteilt.</p>
 <h2>Kontakt</h2>
-<p>E-Mail: <a href="mailto:support@collectview.site">support@collectview.site</a></p>
+<p>E-Mail: <a href="mailto:supportcollectview.site@gmail.com">supportcollectview.site@gmail.com</a></p>
 <h2>Verantwortlich f&uuml;r den Inhalt nach &sect; 18 Abs. 2 MStV</h2>
 <p>Massimo Manca</p>
 <h2>Kontaktformular</h2>
