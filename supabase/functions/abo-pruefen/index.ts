@@ -25,6 +25,7 @@
    ===================================================================== */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { pruefeGooglesAbo } from "../_shared/google-play.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -70,25 +71,30 @@ function pemZuBytes(pem: string): Uint8Array {
   return Uint8Array.from(atob(kern), (c) => c.charCodeAt(0));
 }
 
+/**
+ * ES256-JWT für Apple signieren.
+ *
+ * Konnte früher auch RS256, weil Google hier mitsignierte. Seit die
+ * Play-Abfrage in _shared/google-play.ts liegt, gibt es dafür keinen
+ * Aufrufer mehr – und ein ungenutzter Zweig ausgerechnet in einer
+ * Signierfunktion ist nichts, was man aus Bequemlichkeit stehen lässt.
+ */
 async function signiereJwt(
   kopf: Record<string, unknown>,
   nutzlast: Record<string, unknown>,
   pem: string,
-  algorithmus: "ES256" | "RS256",
 ): Promise<string> {
   const schluessel = await crypto.subtle.importKey(
     "pkcs8",
     pemZuBytes(pem),
-    algorithmus === "ES256"
-      ? { name: "ECDSA", namedCurve: "P-256" }
-      : { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    { name: "ECDSA", namedCurve: "P-256" },
     false,
     ["sign"],
   );
 
   const daten = `${base64url(JSON.stringify(kopf))}.${base64url(JSON.stringify(nutzlast))}`;
   const signatur = new Uint8Array(await crypto.subtle.sign(
-    algorithmus === "ES256" ? { name: "ECDSA", hash: "SHA-256" } : { name: "RSASSA-PKCS1-v1_5" },
+    { name: "ECDSA", hash: "SHA-256" },
     schluessel,
     new TextEncoder().encode(daten),
   ));
@@ -116,7 +122,6 @@ async function pruefeApple(transaktion: string) {
       bid: APPLE_BUNDLE_ID,
     },
     APPLE_PRIVATE_KEY,
-    "ES256",
   );
 
   // Erst Produktion versuchen. Apple beantwortet eine Sandbox-Transaktion
@@ -167,62 +172,12 @@ async function pruefeApple(transaktion: string) {
 }
 
 /* ---------- Google ----------
-   Der Client schickt den purchaseToken. Der Weg dahin ist zweistufig:
-   Dienstkonto-JWT gegen ein Zugriffstoken tauschen, dann die Play
-   Developer API fragen. */
-
-async function pruefeGoogle(kaufToken: string, produkt: string) {
-  if (!GOOGLE_SERVICE_ACCOUNT) throw new Error("Google-Dienstkonto ist nicht gesetzt.");
-  const konto = JSON.parse(GOOGLE_SERVICE_ACCOUNT);
-
-  const jetzt = Math.floor(Date.now() / 1000);
-  const behauptung = await signiereJwt(
-    { alg: "RS256", typ: "JWT" },
-    {
-      iss: konto.client_email,
-      scope: "https://www.googleapis.com/auth/androidpublisher",
-      aud: "https://oauth2.googleapis.com/token",
-      iat: jetzt,
-      exp: jetzt + 3600,
-    },
-    konto.private_key,
-    "RS256",
-  );
-
-  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: behauptung,
-    }),
-  });
-  if (!tokenRes.ok) throw new Error(`Google-Anmeldung scheiterte mit ${tokenRes.status}`);
-  const { access_token } = await tokenRes.json();
-
-  const res = await fetch(
-    `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/` +
-    `${ANDROID_PACKAGE}/purchases/subscriptionsv2/tokens/${encodeURIComponent(kaufToken)}`,
-    { headers: { Authorization: `Bearer ${access_token}` } },
-  );
-  if (!res.ok) throw new Error(`Google antwortete mit ${res.status}`);
-
-  const daten = await res.json();
-  const zustand = String(daten.subscriptionState ?? "");
-  const aktiv = zustand === "SUBSCRIPTION_STATE_ACTIVE" ||
-                zustand === "SUBSCRIPTION_STATE_IN_GRACE_PERIOD";
-  if (!aktiv) return { aktiv: false as const };
-
-  const zeile = (daten.lineItems ?? [])[0] ?? {};
-  return {
-    aktiv: true as const,
-    produkt: String(zeile.productId ?? produkt),
-    // Der purchaseToken bleibt über die Laufzeit stabil und ist damit
-    // der dauerhafte Schlüssel für diesen Kauf.
-    transaktion: kaufToken,
-    laeuftBis: String(zeile.expiryTime ?? daten.expiryTime ?? ""),
-  };
-}
+   Der Client schickt den purchaseToken; verbindlich ist allein, was die
+   Play Developer API dazu sagt. Die Abfrage stand bis zum 02.09.2026
+   hier ausgeschrieben und ein zweites Mal in abo-notify-google. Zwei
+   Kopien derselben Entscheidung driften auseinander – gerade an der
+   Stelle, die bestimmt, wer ein Abo hat. Sie liegt jetzt einmal in
+   _shared/google-play.ts. */
 
 /* ---------- Einstieg ---------- */
 
@@ -262,7 +217,7 @@ Deno.serve(async (req) => {
   try {
     ergebnis = plattform === "apple"
       ? await pruefeApple(beleg)
-      : await pruefeGoogle(beleg, produkt);
+      : await pruefeGooglesAbo(GOOGLE_SERVICE_ACCOUNT, ANDROID_PACKAGE, beleg, produkt);
   } catch (e) {
     // Der Store war nicht erreichbar oder die Schlüssel fehlen. Das ist
     // ein Betriebsfehler, kein Betrugsversuch – entsprechend melden,

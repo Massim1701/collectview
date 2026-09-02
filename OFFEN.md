@@ -210,10 +210,12 @@ trifft eine Entscheidung. Nebeneffekt: eine erfundene Meldung erreicht
 nichts, sie führt nur dazu, dass wir bei Google nachfragen und den wahren
 Zustand hinschreiben.
 
-Die Play-Abfrage liegt jetzt in `supabase/functions/_shared/google-play.ts`,
-damit Kaufprüfung und Meldungen dieselbe Quelle benutzen. **Achtung:**
-`abo-pruefen` hat davon noch seine eigene Kopie — zusammenführen steht aus,
-siehe unten.
+Die Play-Abfrage liegt in `supabase/functions/_shared/google-play.ts` —
+seit dem 02.09.2026 benutzen sie **beide** Functions, `abo-pruefen`
+eingeschlossen. Zwei Kopien derselben Entscheidung driften auseinander, und
+das ausgerechnet an der Stelle, die bestimmt, wer ein Abo hat. Beim
+Zusammenführen ist auch der RS256-Zweig aus `signiereJwt()` verschwunden:
+den brauchte nur Google, seitdem gab es keinen Aufrufer mehr.
 
 Nachgeprüft: `GET` → `405`; leerer Rumpf → `400`; Probemeldung → `200`;
 fremder `packageName` → `400`; unbekannter Kauf-Token → `200 kein Profil`.
