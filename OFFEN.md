@@ -8,13 +8,24 @@ DB abgleichen" verlangten, obwohl das längst erledigt war: die Listen lagen
 in `~/Downloads/*.md`, wo die jeweils andere Sitzung sie nicht sehen konnte.
 Beide Sitzungen sehen den Code — also gehört die Liste in den Code.
 
-Stand: 01.09.2026
+Stand: 02.09.2026
+
+## Wer ist woran — Kurzfassung
+
+| | |
+|---|---|
+| **Massimo, braucht ein Gerät** | Sandbox-Kauf auf einem echten iPhone. Scanner, Kamera und Barcode auf einem echten Android-Gerät (bisher nur Emulator, der hat keine Kamera). |
+| **Claude Web, braucht Store-Zugänge** | Play-Preise korrigieren (2b). `1970`-Datum auf `/datenschutz` (unten). Apple-Abo-Produkte und Sandbox-Tester anlegen (2). |
+| **Claude Code** | Nichts offen. Meldet sich, wenn Web die Preise gesetzt hat, und prüft sie über die Play-API gegen. |
+| **Erst kurz vor dem Launch** | `APPLE_SANDBOX_ERLAUBT` auf `false`. Apples Produktions-Notification-URL setzen. Alten Schlüssel `4L3Y2HPQU4` widerrufen. |
+
+Alles Weitere in dieser Datei ist Begründung und Beleg zu diesen Punkten.
 
 ---
 
 ## Braucht Massimo — niemand sonst kommt da ran
 
-### 1. Edge Functions · alle drei deployt, beide Stores geprüft
+### 1. Edge Functions · fünf deployt, beide Stores tragen
 
 **Alle drei Functions sind deployt** (01.09.2026). Keine antwortet ohne JWT.
 
@@ -224,24 +235,15 @@ Die Autorisierung wurde mit einem vorübergehend gesetzten
 `401` (Log: `kid unbekannt` — Googles echte Schlüsselliste wurde geholt).
 Der Testschalter ist wieder entfernt.
 
-**Was zum Scharfschalten fehlt — Google Cloud und Play Console:**
+**Scharf geschaltet und Ende zu Ende bestätigt (Web, 01./02.09.2026):**
+Pub/Sub-Topic steht, Play Console meldet dorthin, das Push-Abo liefert mit
+OIDC-Token, und eine Probemeldung aus der Play Console ist in den
+Function-Logs angekommen. `GOOGLE_PUBSUB_EMAIL` **ist gesetzt** (am
+02.09.2026 in den Secrets nachgeprüft) — die Function erzwingt die
+Autorisierung also wirklich und nimmt nicht mehr jede Zustellung an.
 
-1. Pub/Sub-Topic anlegen und
-   `google-play-developer-notifications@system.gserviceaccount.com` darauf
-   die Rolle *Pub/Sub Publisher* geben.
-2. Play Console → *Monetarisierung → Monetarisierungs-Setup → Real-time
-   developer notifications*: den Topic-Namen eintragen.
-3. Push-Abo auf dem Topic anlegen, Ziel:
-   `https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/abo-notify-google`
-   (oder hübscher über den Worker, dann bräuchte der eine Route
-   `/google/abo-notify` analog zu Apple). **Mit OIDC-Token**, ausgestellt
-   auf ein Dienstkonto.
-4. Dessen Adresse als `GOOGLE_PUBSUB_EMAIL` setzen — erst dann erzwingt die
-   Function die Autorisierung. Solange sie fehlt, nimmt die Function jede
-   Zustellung an und schreibt das in jedes Log. **Vor dem Launch setzen.**
-5. Probemeldung aus der Play Console schicken und in den Function-Logs
-   „TEST-Notification von Google empfangen" suchen.
-
+Die Google-Seite ist damit vollständig: Produkte aktiv, App hochgeladen,
+Meldungen laufen. Offen bleibt dort allein der Preis, siehe 2b.
 
 ### 2b. Preise · die App zeigte einen anderen Preis, als der Store abbucht
 
@@ -266,15 +268,34 @@ Jahrespreis gerechnet (`monatsAequivalent()`, drei Tests).
 `3,99 €` bzw. `34,90 €` ankommen (also der Bruttopreis, nicht netto).
 Apple-Produkte sind noch nicht angelegt und werden gleich passend gesetzt.
 
-### 3. App Store Connect prüfen
+### 3. App Store Connect · Eintrag steht, Produkte fehlen
 
-Die Bundle-ID ist beim Rebrand von `online.driftware.plattenregal` auf
-`online.driftware.collectview` gewechselt. Liegt dort schon ein Eintrag unter
-der alten ID, ist das ein **neuer App-Eintrag**, kein Update.
+Der App-Eintrag **existiert** (nachgesehen am 01.09.2026): CollectView,
+Apple-ID `6807394925`, Bundle-ID `online.driftware.collectview`, Status
+„1.0 Prepare for Submission". Die Frage von damals — ob der Rebrand einen
+neuen Eintrag nötig macht — ist damit erledigt.
+
+Die Apple-ID `6807394925` wird gebraucht, sobald Produktions-Notifications
+laufen; Apples Prüfung verlangt sie für die Produktionsumgebung.
+
+**Offen dort:** die zwei Abo-Produkte und ein Sandbox-Tester (siehe 2).
 
 ---
 
 ## Technisch offen
+
+### `/datenschutz` zeigt 1970 — offen, gehört Claude Web
+
+`https://collectview.site/datenschutz` schreibt „Stand: 1970-01-01" und im
+Fuß „© 1970 CollectView". Das ist der Unix-Nullpunkt: irgendwo wird ein
+Zeitstempel `0` formatiert. Die Stelle liegt im Cloudflare Worker, nicht in
+diesem Repo.
+
+Nicht kosmetisch: Apple liest die Datenschutzerklärung in der Review, und
+Web hat sie am 01.09.2026 veröffentlicht. Inhaltlich ist sie gut — sie
+benennt ausdrücklich, dass beim Cover-Scan ein Foto an Google (Gemini) geht.
+Damit ist die frühere offene Frage „gehört der Weg in die
+Datenschutzerklärung" beantwortet.
 
 ### ~~Ein Test ist rot~~ — erledigt am 01.09.2026
 
@@ -345,6 +366,16 @@ abrufen.
 ---
 
 ## Erledigt — bitte nicht erneut auf eine Übergabeliste setzen
+
+- **Google Play ist vollständig.** Beide Abo-Produkte angelegt und aktiv
+  (Basis-Abos `monatlich-autorenew`, `jaehrlich-autorenew`, 173 Regionen),
+  App Bundle gebaut, signiert und in die Play Console hochgeladen,
+  Real-time Developer Notifications Ende zu Ende bestätigt. Nur der Preis
+  stimmt noch nicht, siehe 2b — das ist eine Zahl, kein Aufbau.
+- **Apples Server Notifications laufen** über `https://collectview.site/apple/abo-notify`;
+  Apple verbucht die Zustellung selbst als `SUCCESS`. Nicht erneut aufsetzen.
+- **`cordova-plugin-purchase` ist installiert** und in beiden nativen
+  Projekten; iOS und Android bauen damit.
 
 - **Cover-Erkennung trägt jetzt, auch mit Spiegelungen.** Am Gerät bestätigt
   (31.08.2026): eine Hülle, die zuvor nur `\ SPEAK & SPELL I u` ergab, wurde
