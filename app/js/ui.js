@@ -222,6 +222,7 @@ function renderBottomNav(container, active) {
     </nav>`;
 
   markForumNavIfFree(container);
+  markAdminNavIfStaff(container);
 }
 
 /**
@@ -272,5 +273,34 @@ async function markForumNavIfFree(container) {
     forumItem.insertAdjacentHTML("beforeend", '<span class="navitem-badge">Plus</span>');
   } catch {
     /* kein Hinweis ist besser als eine kaputte Navigation */
+  }
+}
+
+/**
+ * Admin/Mod bekommen einen eigenen, immer sichtbaren Nav-Punkt zu admin.html
+ * -- direkt in jeder unteren Navigation, statt erst über das Konto-Menü
+ * gehen zu müssen. Für alle anderen Nutzer:innen passiert hier nichts.
+ */
+async function markAdminNavIfStaff(container) {
+  try {
+    const { data } = await sb.auth.getUser();
+    if (!data?.user) return;
+    const profile = await fetchMyProfile(data.user.id);
+    const role = profile?.role;
+    if (role !== "admin" && role !== "moderator") return;
+
+    const accountItem = container.querySelector('[data-navkey="account"]');
+    if (!accountItem || container.querySelector('[data-navkey="admin"]')) return;
+
+    const label = role === "admin" ? "Admin" : "Mod";
+    const isActive = window.location.pathname.endsWith("admin.html");
+    const tag = isActive ? "span" : "a";
+    accountItem.insertAdjacentHTML("beforebegin", `
+      <${tag} class="navitem${isActive ? " active" : ""}" data-navkey="admin"${isActive ? ' aria-current="page"' : ' href="admin.html"'}>
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
+        ${label}
+      </${tag}>`);
+  } catch {
+    /* kein Zusatz-Icon ist besser als eine kaputte Navigation */
   }
 }

@@ -25,6 +25,8 @@
 
 </main>
 
+<div class="bottomnav" id="bottomnav"></div>
+
 <script src="./vendor/supabase.js"></script>
 <script src="./config.js"></script>
 <script src="./js/i18n.js"></script>
@@ -103,6 +105,7 @@
     </div>` : ""}
   `;
 
+  renderBottomNav(document.getElementById("bottomnav"), "admin");
   renderOnlineList(document.getElementById("online-list"));
   wireBroadcastForm(document.getElementById("broadcast-form"), document.getElementById("broadcast-text"), document.getElementById("broadcast-result"), user.id);
 
