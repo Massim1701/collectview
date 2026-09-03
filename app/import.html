@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="de" data-theme="studio">
+<head>
+<title>Sammlung importieren – CollectView</title>
+<meta charset="utf-8">
+<script>(function(){var m=new Date().getMonth();var s=(m<2||m===11)?"winter":m<5?"fruehling":m<8?"sommer":"herbst";document.documentElement.dataset.season=s;})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" sizes="192x192" href="./favicon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon-180.png">
+<meta name="theme-color" content="#0E0E10">
+<link rel="stylesheet" href="./vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="./app.css">
+<style>
+  .imp-drop{ border:1.5px dashed var(--border); border-radius:var(--radius-md); padding:28px 20px; text-align:center; margin-bottom:14px; }
+  .imp-table-wrap{ max-height:360px; overflow:auto; border:1px solid var(--border); border-radius:var(--radius-md); margin:14px 0; }
+  .imp-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .imp-table th, .imp-table td{ padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .imp-table th{ position:sticky; top:0; background:var(--surface); color:var(--text-muted); font-weight:700; }
+  .imp-table tr:last-child td{ border-bottom:none; }
+  .imp-summary{ font-size:13px; color:var(--text-muted); margin:10px 0; }
+</style>
+</head>
+<body>
+<main class="shell">
+
+  <a href="collection.html" style="display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-weight:700; font-size:13.5px; margin:30px 0 18px;">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Sammlung
+  </a>
+  <h1 class="page-title" style="font-size:28px; margin:0 0 20px;">Sammlung importieren</h1>
+
+  <div id="paywall" hidden class="card" style="text-align:center; padding:34px 24px;">
+    <div class="section-title" style="justify-content:center;">Nur für CollectView Plus</div>
+    <p class="muted" style="margin:8px 0 20px;">Der Import legt Einträge in deiner Sammlung an – das ist wie das Speichern beim Scannen den Plus-Mitgliedern vorbehalten.</p>
+    <a class="btn-primary" href="../wireframes/pricing.html" style="display:inline-flex; align-items:center; height:46px; padding:0 22px;">Zu den Preisen</a>
+  </div>
+
+  <div id="import-ui" class="card">
+    <p class="muted" style="margin:0 0 14px; line-height:1.6;">
+      Hast du deine Sammlung schon woanders als Liste – Excel, eine andere App? Als CSV exportieren
+      (bei Excel: „Speichern unter" → CSV) und hier hochladen. Titel ist die einzige Pflichtspalte,
+      alles andere ist optional.
+    </p>
+    <button type="button" class="linklike" id="template-btn" style="padding:2px 4px; margin-bottom:14px;">Vorlage herunterladen</button>
+
+    <div class="imp-drop">
+      <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none;">
+      <button type="button" class="btn-secondary" id="pick-file-btn">CSV-Datei auswählen</button>
+      <div class="muted" id="picked-name" style="margin-top:8px; font-size:12.5px;"></div>
+    </div>
+
+    <p class="err" id="import-error" role="alert"></p>
+
+    <div id="preview" hidden>
+      <div class="imp-summary" id="preview-summary"></div>
+      <div class="imp-table-wrap">
+        <table class="imp-table">
+          <thead>
+            <tr><th>Titel</th><th>Interpret</th><th>Format</th><th>Jahr</th><th>Land</th><th>Barcode</th><th>Anzahl</th></tr>
+          </thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+      </div>
+      <button type="button" class="btn-primary" id="import-btn" style="width:100%; height:50px;">Importieren</button>
+    </div>
+
+    <div id="import-done" hidden class="imp-summary"></div>
+  </div>
+
+</main>
+
+<div class="bottomnav" id="bottomnav"></div>
+
+<script src="./vendor/supabase.js"></script>
+<script src="./config.js"></script>
+<script src="./js/i18n.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/db.js"></script>
+<script src="./js/csv-import.js"></script>
+<script>
+(async function () {
+  const user = await requireAuth();
+  if (!user) return;
+  renderBottomNav(document.getElementById("bottomnav"), "collection");
+
+  let subscribed = false;
+  try {
+    subscribed = await fetchIsSubscribed(user.id);
+  } catch (e) {
+    // Bei Fehler vorsichtshalber sperren statt versehentlich zu öffnen.
+  }
+  if (!subscribed) {
+    document.getElementById("paywall").hidden = false;
+    document.getElementById("import-ui").hidden = true;
+    return;
+  }
+
+  document.getElementById("template-btn").addEventListener("click", downloadImportTemplate);
+
+  const fileInput = document.getElementById("csv-file");
+  const pickedName = document.getElementById("picked-name");
+  const errorEl = document.getElementById("import-error");
+  const preview = document.getElementById("preview");
+  const previewBody = document.getElementById("preview-body");
+  const previewSummary = document.getElementById("preview-summary");
+  const importBtn = document.getElementById("import-btn");
+  const importDone = document.getElementById("import-done");
+
+  document.getElementById("pick-file-btn").addEventListener("click", () => fileInput.click());
+
+  const MAX_ROWS = 3000;
+  let parsedItems = [];
+
+  fileInput.addEventListener("change", async () => {
+    errorEl.textContent = "";
+    preview.hidden = true;
+    importDone.hidden = true;
+    const file = fileInput.files[0];
+    if (!file) return;
+    pickedName.textContent = file.name;
+
+    let text;
+    try {
+      text = await file.text();
+    } catch (e) {
+      errorEl.textContent = "Datei konnte nicht gelesen werden.";
+      return;
+    }
+
+    const { header, rows } = parseCsv(text);
+    if (header.length === 0) {
+      errorEl.textContent = "Die Datei ist leer oder kein gültiges CSV.";
+      return;
+    }
+    const colMap = mapCsvColumns(header);
+    if (colMap.title == null) {
+      errorEl.textContent = 'Keine Spalte "Titel" gefunden – siehe Vorlage für die erwarteten Spaltennamen.';
+      return;
+    }
+
+    const items = [];
+    let skipped = 0;
+    rows.slice(0, MAX_ROWS).forEach((row) => {
+      const item = csvRowToItem(row, colMap);
+      if (item) items.push(item);
+      else skipped++;
+    });
+
+    if (items.length === 0) {
+      errorEl.textContent = "Keine Zeile mit Titel gefunden.";
+      return;
+    }
+
+    parsedItems = items;
+    previewSummary.textContent = `${items.length} Einträge gefunden${skipped ? ` (${skipped} Zeile(n) ohne Titel übersprungen)` : ""}${rows.length > MAX_ROWS ? ` – nur die ersten ${MAX_ROWS} werden importiert` : ""}.`;
+    previewBody.innerHTML = items.slice(0, 200).map((it) => `
+      <tr>
+        <td>${escapeHtml(it.title)}</td>
+        <td>${escapeHtml(it.artist || "")}</td>
+        <td>${escapeHtml(it.format || "")}</td>
+        <td>${escapeHtml(it.year || "")}</td>
+        <td>${escapeHtml(it.country || "")}</td>
+        <td>${escapeHtml(it.barcode || "")}</td>
+        <td>${escapeHtml(it.quantity)}</td>
+      </tr>`).join("") + (items.length > 200 ? `<tr><td colspan="7" class="muted">… und ${items.length - 200} weitere</td></tr>` : "");
+    preview.hidden = false;
+  });
+
+  importBtn.addEventListener("click", async () => {
+    if (parsedItems.length === 0) return;
+    importBtn.disabled = true;
+    importBtn.textContent = "Importiere …";
+    errorEl.textContent = "";
+
+    const CHUNK = 200;
+    let done = 0;
+    let failed = 0;
+    let stoppedEarly = false;
+
+    for (let i = 0; i < parsedItems.length; i += CHUNK) {
+      const chunk = parsedItems.slice(i, i + CHUNK).map((it) => ({ ...it, user_id: user.id }));
+      const { error } = await sb.from("collection_items").insert(chunk);
+      if (error) {
+        failed += chunk.length;
+        // RLS-Ablehnung (kein Abo) betrifft alle folgenden Chunks genauso –
+        // dann nicht stur weiterprobieren, sondern sofort abbrechen.
+        if (/row-level security|policy/i.test(error.message)) {
+          stoppedEarly = true;
+          break;
+        }
+      } else {
+        done += chunk.length;
+      }
+      importBtn.textContent = `Importiere … (${done + failed} / ${parsedItems.length})`;
+    }
+
+    preview.hidden = true;
+    importDone.hidden = false;
+    if (stoppedEarly) {
+      importDone.innerHTML = `${done} Einträge importiert, dann abgebrochen: Import ist mit CollectView Plus möglich – dein Abo scheint gerade nicht aktiv zu sein.`;
+    } else if (failed > 0) {
+      importDone.innerHTML = `${done} von ${parsedItems.length} Einträgen importiert, ${failed} fehlgeschlagen.<br><a href="collection.html" style="color:var(--accent-text); font-weight:700;">Zur Sammlung</a>`;
+    } else {
+      importDone.innerHTML = `${done} Einträge erfolgreich importiert.<br><a href="collection.html" style="color:var(--accent-text); font-weight:700;">Zur Sammlung</a>`;
+    }
+    importBtn.disabled = false;
+    importBtn.textContent = "Importieren";
+  });
+})();
+</script>
+</body>
+</html>

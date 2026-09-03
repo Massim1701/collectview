@@ -304,6 +304,8 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 }
 .track-link:hover{ opacity:1; transform:translateY(-1px); }
 .track-link-sp{ color:#1DB954; }
+.track-link-am{ color:#FA233B; }
+.track-link-dz{ color:#A238FF; }
 
 .meta-grid{ display:flex; flex-direction:column; }
 .meta-row{ display:flex; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid var(--border); font-size:14px; }

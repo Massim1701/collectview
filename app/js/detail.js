@@ -49,19 +49,48 @@ function metaLine(item, release) {
  * deshalb wie bei der alten Album-weiten Suche: vorbereitete Suchlinks
  * statt Links, die ins Leere zeigen könnten.
  */
+/** Hörlink-Anbieter, alphabetisch sortiert – so erscheinen sie auch im
+    Markup (nicht nach Beliebtheit oder Einbaudatum). */
+function trackLinkProviders(query) {
+  const q = encodeURIComponent(query);
+  return [
+    {
+      key: "am",
+      label: "Apple Music",
+      href: `https://music.apple.com/search?term=${q}`,
+      svg: `<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#FA233B"/><path fill="#fff" d="M11.9 9.1c-.2-2 1.1-3.9 3.1-4-.1 1.9-1.7 3.9-3.1 4Z"/><path fill="#fff" d="M12 10.3c1.1-.7 2.6-1 4-.3 1.1.6 1.9 1.6 2.3 2.8-1.7.7-2.1 3.1-.6 4.3-.5 1.1-1.1 2.1-1.9 3-.7.8-1.5 1.6-2.6 1.6-1 0-1.4-.6-2.5-.6s-1.5.6-2.5.6c-1.1 0-2-1-2.7-1.8-1.9-2.3-2.2-6.1-.4-8.1 1.1-1.3 2.9-1.5 4-.7.8.5 1.4.5 2.9-.8Z"/><circle cx="17.4" cy="14.6" r="1.55" fill="#FA233B"/></svg>`,
+    },
+    {
+      key: "dz",
+      label: "Deezer",
+      href: `https://www.deezer.com/search/${q}`,
+      svg: `<svg width="20" height="14" viewBox="0 0 24 16" aria-hidden="true" fill="#A238FF"><rect x="19" y="0" width="5" height="4"/><rect x="19" y="6" width="5" height="4"/><rect x="19" y="12" width="5" height="4"/><rect x="13" y="6" width="5" height="4"/><rect x="13" y="12" width="5" height="4"/><rect x="7" y="12" width="5" height="4"/><rect x="1" y="12" width="5" height="4"/></svg>`,
+    },
+    {
+      key: "sp",
+      label: "Spotify",
+      href: `https://open.spotify.com/search/${q}`,
+      svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7 15c3-1 7-1 10 1M7 12c3.5-1.2 8-1 10.5 1M7.5 9c4-1.4 8.5-1 11 1.2"/></svg>`,
+    },
+    {
+      key: "yt",
+      label: "YouTube",
+      href: `https://www.youtube.com/results?search_query=${q}`,
+      svg: `<svg width="20" height="14" viewBox="0 0 24 17" aria-hidden="true"><rect width="24" height="17" rx="4" fill="#FF0000"/><path d="M10 5.2 16.5 8.5 10 11.8Z" fill="#fff"/></svg>`,
+    },
+  ];
+}
+
 function trackLinksMarkup(item, track) {
   const query = [item.artist, track.title].filter(Boolean).join(" ");
-  const youtubeHref = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-  const spotifyHref = `https://open.spotify.com/search/${encodeURIComponent(query)}`;
+  const providers = trackLinkProviders(query);
 
   return `
     <span class="track-links">
-      <a class="track-link track-link-yt" href="${escapeHtml(youtubeHref)}" target="_blank" rel="noopener noreferrer" aria-label="„${escapeHtml(track.title)}“ auf YouTube suchen">
-        <svg width="20" height="14" viewBox="0 0 24 17" aria-hidden="true"><rect width="24" height="17" rx="4" fill="#FF0000"/><path d="M10 5.2 16.5 8.5 10 11.8Z" fill="#fff"/></svg>
-      </a>
-      <a class="track-link track-link-sp" href="${escapeHtml(spotifyHref)}" target="_blank" rel="noopener noreferrer" aria-label="„${escapeHtml(track.title)}“ auf Spotify suchen">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7 15c3-1 7-1 10 1M7 12c3.5-1.2 8-1 10.5 1M7.5 9c4-1.4 8.5-1 11 1.2"/></svg>
-      </a>
+      ${providers.map((p) => `
+      <a class="track-link track-link-${p.key}" href="${escapeHtml(p.href)}" target="_blank" rel="noopener noreferrer" aria-label="„${escapeHtml(track.title)}“ auf ${escapeHtml(p.label)} suchen">
+        ${p.svg}
+      </a>`).join("")}
     </span>`;
 }
 
@@ -287,6 +316,32 @@ shell.addEventListener("click", (e) => {
   if (action === "ask-delete") askDelete(currentItem);
   if (action === "cancel-delete") document.getElementById("danger-zone").outerHTML = dangerMarkup();
   if (action === "confirm-delete") confirmDelete(currentItem);
+});
+
+/* Hörlinks öffnen als echtes Popup-Fenster statt als neuer Tab/Seite.
+   window.open() muss dafür SYNCHRON im Klick-Handler laufen (kein
+   await, kein setTimeout davor) – nur dann lassen Popup-Blocker es
+   durch, weil der Browser es noch als direkte Nutzeraktion erkennt. */
+shell.addEventListener("click", (e) => {
+  const link = e.target.closest(".track-link");
+  if (!link) return;
+  e.preventDefault();
+  const w = 480, h = 760;
+  const left = Math.max(0, (window.screen.width - w) / 2);
+  const top = Math.max(0, (window.screen.height - h) / 2);
+  const popup = window.open(
+    link.href,
+    "collectview-hoerlink",
+    `popup=yes,width=${w},height=${h},left=${left},top=${top}`
+  );
+  // Vom Blocker verhindert (popup === null) oder als Tab statt Fenster
+  // geöffnet (kein reines Popup-Verhalten möglich): dann normal als
+  // neuer Tab öffnen statt den Klick ins Leere laufen zu lassen.
+  if (!popup) {
+    window.open(link.href, "_blank", "noopener,noreferrer");
+  } else {
+    popup.opener = null;
+  }
 });
 
 function renderMissing(message) {
