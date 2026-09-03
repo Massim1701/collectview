@@ -254,12 +254,14 @@ async function renderAccountRow(container, user) {
 
   let displayName = null;
   let isAdmin = false;
+  let isMod = false;
   let istPlus = false;
   let aktuelleFarbe = null;
   try {
     const profile = await fetchMyProfile(user.id);
     displayName = profile?.display_name || null;
     isAdmin = profile?.role === "admin";
+    isMod = profile?.role === "moderator";
     istPlus = profile?.subscription_status === "active";
     aktuelleFarbe = profile?.accent_color || null;
     applyAccentColor(aktuelleFarbe);
@@ -279,6 +281,7 @@ async function renderAccountRow(container, user) {
       <div class="user-actions">
         <span id="lang-switcher-slot"></span>
         ${isAdmin ? `<a class="btn-secondary small" href="admin.html">Admin</a>` : ""}
+        ${isMod ? `<a class="btn-secondary small" href="admin.html">Mod</a>` : ""}
         <button class="btn-secondary small" type="button" data-action="edit-name">${displayName ? escapeHtml(t("account_change_username")) : escapeHtml(t("account_set_username"))}</button>
       </div>
     </div>
