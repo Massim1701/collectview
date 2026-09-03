@@ -214,6 +214,23 @@ async function fetchAdminStats() {
   return { gesamt, aktiv, neuDieseWoche, nachKanal };
 }
 
+/**
+ * Neueste registrierte Nutzer, unabhängig davon, ob gerade online --
+ * anders als staff_presence (Online-Liste) hier auch ohne Benutzername
+ * und unabhängig vom letzten Login. Admin-only wie fetchAdminStats().
+ * Anonyme Gast-Sitzungen bleiben draußen (siehe dort).
+ */
+async function fetchRecentUsers(limit = 20) {
+  const { data, error } = await sb
+    .from("profiles")
+    .select("id, display_name, role, subscription_status, created_at")
+    .eq("is_anonymous", false)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
 /** Alle Nutzer mit Admin-/Moderator-Rolle (nur für Admins sichtbar dank profiles_select_admin). */
 async function fetchStaffList() {
   const { data, error } = await sb

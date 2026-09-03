@@ -57,6 +57,25 @@ async function renderOnlineList(container) {
   }
 }
 
+/** Neueste registrierte Nutzer -- auch ohne aktuellen Online-Status. */
+async function renderRecentUsers(container) {
+  container.innerHTML = `<div class="muted">Lade …</div>`;
+  try {
+    const rows = await fetchRecentUsers(20);
+    container.innerHTML = rows.length
+      ? rows.map((p) => `
+          <div class="list-card list-card-plain" style="cursor:default;">
+            <div style="min-width:0;">
+              <div class="list-card-title">${escapeHtml(p.display_name || "(kein Benutzername)")}</div>
+              <div class="list-card-sub">${new Date(p.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}${p.subscription_status === "active" ? " &middot; Plus" : ""}${p.role !== "user" ? " &middot; " + roleLabel(p.role) : ""}</div>
+            </div>
+          </div>`).join("")
+      : `<div class="muted">Noch keine Nutzer.</div>`;
+  } catch (e) {
+    container.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
+  }
+}
+
 async function renderStaffList(container) {
   container.innerHTML = `<div class="muted">Lade …</div>`;
   try {

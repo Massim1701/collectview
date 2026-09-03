@@ -61,6 +61,10 @@
     <div class="card" style="margin-bottom:18px;">
       <div class="section-title">Nutzerzahlen</div>
       <div id="admin-stats"></div>
+    </div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="section-title">Neue Nutzer</div>
+      <div id="recent-users"></div>
     </div>` : ""}
 
     <div class="card" style="margin-bottom:18px;">
@@ -96,6 +100,7 @@
     wireAdminForm(document.getElementById("admin-form"), document.getElementById("admin-result"), staffList);
     renderStaffList(staffList);
     renderAdminStats(document.getElementById("admin-stats"));
+    renderRecentUsers(document.getElementById("recent-users"));
   }
 })();
 </script>
