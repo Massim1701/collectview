@@ -167,7 +167,7 @@ function akzentfarbenMarkup(aktuelleFarbe) {
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <button class="accent-dot" type="button" data-accent-choice=""
           aria-label="Standard (Neongrün)" aria-pressed="${!aktuelleFarbe}"
-          style="background:#C8FF4D;${!aktuelleFarbe ? "outline:2px solid var(--text);outline-offset:2px;" : ""}"></button>
+          style="background:#A3C9A3;${!aktuelleFarbe ? "outline:2px solid var(--text);outline-offset:2px;" : ""}"></button>
         ${ACCENT_FARBEN.map((f) => punkt(f.key, f.label)).join("")}
       </div>
     </div>`;

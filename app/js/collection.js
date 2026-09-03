@@ -269,4 +269,6 @@ async function showFreeLimitHint(user, count) {
   countEl.insertAdjacentElement("afterend", hint);
 }
 
+initSaleText(gridEl, (id) => allItems.find((it) => it.id === id));
+
 init();

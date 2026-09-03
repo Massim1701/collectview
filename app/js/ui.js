@@ -81,6 +81,15 @@ function qtyBadgeMarkup(item) {
  * Liste laedt der Browser nur die Cover, die tatsaechlich in den
  * sichtbaren Bereich gescrollt werden, nicht alle auf einmal.
  */
+function saleIconButtonMarkup(item) {
+  return `
+    <button class="sale-icon-btn" type="button" data-action="sale-open" data-id="${escapeHtml(item.id)}"
+            aria-label="Verkaufstext für „${escapeHtml(item.title)}“ erstellen" title="Verkaufstext erstellen">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    </button>`;
+}
+
 function plainListRowMarkup(item) {
   return `
     <a class="list-card" href="${detailHref(item)}">
@@ -90,6 +99,7 @@ function plainListRowMarkup(item) {
         <div class="list-card-sub">${itemSubtitle(item)}</div>
       </div>
       ${qtyBadgeMarkup(item)}
+      ${saleIconButtonMarkup(item)}
       <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </a>`;

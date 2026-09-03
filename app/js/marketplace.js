@@ -114,7 +114,7 @@ function listingBadge(listing) {
  */
 function plusBadgeColor(accentColor) {
   const farben = { grau: "#C7CCD1", gelb: "#FFD23F", rot: "#FF4D5E", gruen: "#34C759", orange: "#FF8A3D" };
-  return farben[accentColor] || "#C8FF4D";
+  return farben[accentColor] || "#A3C9A3";
 }
 
 /**

@@ -119,6 +119,15 @@ function communityMarkup(release) {
   return `<p class="community-note">${have.toLocaleString("de-DE")} Sammler haben diesen Tonträger</p>`;
 }
 
+function saleButtonMarkup() {
+  return `
+    <div class="sale-cta-zone" id="sale-cta-zone">
+      <button class="btn-secondary" type="button" data-action="sale-open" style="width:100%;">
+        Verkaufstext erstellen
+      </button>
+    </div>`;
+}
+
 function dangerMarkup() {
   return `
     <div class="danger-zone" id="danger-zone">
@@ -259,6 +268,7 @@ function render(item, release) {
       <div class="detail-artist">${escapeHtml(item.artist || "Unbekannter Interpret")}</div>
       <div class="detail-meta">${metaLine(item, release)}</div>
       ${quantityMarkup(item)}
+      ${saleButtonMarkup()}
       ${tracklistMarkup(item, release)}
       ${detailsMarkup(item, release)}
       ${communityMarkup(release)}
@@ -273,6 +283,7 @@ shell.addEventListener("click", (e) => {
   if (!action || !currentItem) return;
   if (action === "qty-dec") setQuantity(currentItem, clampQuantity(currentItem.quantity) - 1);
   if (action === "qty-inc") setQuantity(currentItem, clampQuantity(currentItem.quantity) + 1);
+  if (action === "sale-open") openSaleText(currentItem);
   if (action === "ask-delete") askDelete(currentItem);
   if (action === "cancel-delete") document.getElementById("danger-zone").outerHTML = dangerMarkup();
   if (action === "confirm-delete") confirmDelete(currentItem);

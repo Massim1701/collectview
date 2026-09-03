@@ -126,7 +126,9 @@
    Tonstudio-Theme fuer die Marketing-Seiten (Landingpage, Preise).
    Fest verdrahtet auf <html data-theme="studio">, unabhaengig von
    System-Darkmode und Jahreszeit -- das ist die Marken-Identitaet,
-   kein Nutzer-Setting. Rack-Optik: fast schwarz, ein greller Lime-Akzent,
+   kein Nutzer-Setting. Rack-Optik: fast schwarz, ein dezenter Salbei-Akzent
+   (03.09.2026, Massimo: ersetzt das vorherige grelle Neongruen/-gelb --
+   erst nur auf der Landingpage getestet, jetzt auf alle Seiten uebernommen),
    Big Shoulders Display + IBM Plex Mono statt Instrument Serif/Manrope
    fuer die Headline-Elemente (siehe .studio-headline in landing.html).
    ===================================================================== */
@@ -134,7 +136,7 @@
   --bg:#0E0E10; --page-bg:#0E0E10; --surface:#17171A; --surface-2:#141416; --surface-3:#1D1D21;
   --border:rgba(255,255,255,.10); --border-strong:rgba(255,255,255,.20);
   --text:#F2F2F5; --text-muted:#B3B3BC; --text-faint:#6E6E76;
-  --accent:#C8FF4D; --accent-ink:#0B0B0D; --accent-soft:rgba(200,255,77,.16); --accent-text:#C8FF4D;
+  --accent:#A3C9A3; --accent-ink:#0B1A0E; --accent-soft:rgba(163,201,163,.16); --accent-text:#A3C9A3;
   --danger:#E8483A; --danger-ink:#2A0904; --danger-soft:rgba(232,72,58,.16);
   --shadow-sm:0 1px 2px rgba(0,0,0,.4);
   --shadow-md:0 4px 10px -4px rgba(0,0,0,.5);
@@ -149,9 +151,20 @@
 [data-theme="studio"] body,
 body[data-theme="studio"]{ background:var(--bg); }
 .studio-bg{
-  position:fixed; inset:0; z-index:-1;
-  background-image:linear-gradient(180deg, rgba(9,9,10,.88) 0%, rgba(9,9,10,.94) 55%, rgba(9,9,10,.98) 100%), url('./assets/hero-studio.jpg');
-  background-size:cover; background-position:center 30%;
+  position:fixed; inset:0; z-index:-1; overflow:hidden;
+  background:var(--bg);
+}
+/* Test (Massimo, 03.09.2026): Standbild durch ein loopendes Video ersetzt.
+   Dunkler Verlauf jetzt als eigene Ebene ueber dem Video statt als
+   Hintergrundbild-Layer, sonst waere er nicht mit einem <video>
+   kombinierbar. object-fit:cover + object-position halten den
+   Bildausschnitt wie vorher beim Foto. */
+.studio-bg::after{
+  content:""; position:absolute; inset:0;
+  background-image:linear-gradient(180deg, rgba(9,9,10,.88) 0%, rgba(9,9,10,.94) 55%, rgba(9,9,10,.98) 100%);
+}
+.studio-bg video{
+  width:100%; height:100%; object-fit:cover; object-position:center 30%; display:block;
 }
 [data-theme="studio"] .rack-screw{ position:absolute; width:6px; height:6px; border-radius:999px; background:radial-gradient(circle at 35% 35%,#5A5A62,#1A1A1D); box-shadow:0 0 0 1px rgba(0,0,0,.5); }
 [data-theme="studio"] .studio-headline{ font-family:'Big Shoulders Display',sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:.01em; }
@@ -162,7 +175,26 @@ body[data-theme="studio"]{ background:var(--bg); }
 [data-theme="studio"] .hero-headline em{ color:var(--accent); font-style:normal; }
 [data-theme="studio"] .studio-badge{ display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(200,255,77,.4); color:var(--accent); padding:7px 14px; border-radius:3px; font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; font-family:'IBM Plex Mono',monospace; margin-bottom:22px; }
 [data-theme="studio"] .studio-price{ font-size:12px; color:var(--text-faint); font-family:'IBM Plex Mono',monospace; }
-[data-theme="studio"] .studio-card{ background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:8px; padding:26px; width:100%; max-width:400px; position:relative; box-shadow:var(--shadow-frame); font-family:'IBM Plex Mono',monospace; color:var(--text); }
+[data-theme="studio"] .studio-card{ background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:8px; padding:26px; width:100%; max-width:400px; position:relative; overflow:hidden; box-shadow:var(--shadow-frame); font-family:'IBM Plex Mono',monospace; color:var(--text); }
+
+/* Scan-Laser vor jedem Kartenwechsel im Hero-Demo (Massimo, 03.09.2026) --
+   passt zum Kernfeature "Barcode scannen". .scan-line liegt ueber dem
+   Karteninhalt und faehrt einmal von oben nach unten durch, waehrend der
+   Inhalt in der Mitte des Durchlaufs ausgetauscht wird (siehe Skript am
+   Seitenende). Ohne .is-active unsichtbar, keine Dauerschleife. */
+.scan-line{
+  position:absolute; left:0; right:0; height:2px; top:0;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow:0 0 14px 3px var(--accent-soft);
+  opacity:0; pointer-events:none; z-index:1;
+}
+.scan-line.is-active{ animation:scan-sweep .7s ease-in-out; }
+@keyframes scan-sweep{
+  0%{ top:0; opacity:0; }
+  12%{ opacity:1; }
+  88%{ opacity:1; }
+  100%{ top:100%; opacity:0; }
+}
 [data-theme="studio"] .studio-card .title{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:22px; text-transform:uppercase; }
 [data-theme="studio"] .page-title,
 [data-theme="studio"] .section-heading,

@@ -25,6 +25,8 @@ const out = src
   .replaceAll("../app/", "/app/")
   .replaceAll('href="./styles.css"', 'href="/wireframes/styles.css"')
   .replaceAll('href="./pricing.html"', 'href="/wireframes/pricing.html"')
+  .replaceAll('src="./assets/', 'src="/wireframes/assets/')
+  .replaceAll('poster="./assets/', 'poster="/wireframes/assets/')
   .replace(
     "<title>Landingpage – CollectView</title>",
     "<title>CollectView &middot; Scan. Erkannt. Geh&ouml;rt.</title>"

@@ -323,6 +323,8 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .qty-zone .err{ flex:1 0 100%; margin:0; }
 .qty-zone .err:empty{ display:none; }
 
+.sale-cta-zone{ margin-bottom:var(--space-6); }
+
 /* Löschen: zweistufig, damit kein Fehlgriff die Platte kostet */
 .danger-zone{ margin-top:34px; border-top:1px solid var(--border); padding-top:8px; }
 .menu-item.danger{ border-bottom:none; color:var(--danger-ink); }
@@ -493,6 +495,26 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .feedback-textarea{ resize:vertical; min-height:112px; line-height:1.5; font-family:var(--font-body); }
 .feedback-counter{ font-size:12px; color:var(--text-muted); text-align:right; margin-top:6px; font-variant-numeric:tabular-nums; }
 .feedback-dialog .err:empty{ display:none; }
+
+/* ===== Verkaufstext-Dialog (sale-text.js) =====
+   Gleiches Muster wie .feedback-dialog, nur mit zwei Auswahlfeldern
+   (Zustand Tonträger/Cover) statt der Kategorie-Chips. */
+.sale-dialog{ width:min(460px, calc(100vw - 32px)); }
+.sale-dialog select.field{ margin-bottom:0; }
+.sale-dialog #sale-output{ font-family:var(--font-body); font-size:13.5px; }
+.sale-label{ font-size:12.5px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:6px; }
+#sale-copied:empty{ display:none; }
+#sale-copied{ font-size:13px; color:var(--accent-text); margin:10px 0 0; }
+
+/* Kleiner Verkaufstext-Button in der Sammlungsliste, sitzt IN der
+   .list-card-<a> -- deshalb stopPropagation()/preventDefault() in
+   sale-text.js statt eines echten Navigations-Stopps. */
+.sale-icon-btn{
+  flex:0 0 auto; width:34px; height:34px; border-radius:var(--radius-pill);
+  border:1px solid var(--border); background:var(--surface-2); color:var(--text-muted);
+  display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;
+}
+.sale-icon-btn:hover{ color:var(--accent-text); border-color:var(--accent); }
 
 .feedback-done{ text-align:center; padding:8px 0 4px; }
 .feedback-done .icon-badge{ margin:0 auto 14px; }
