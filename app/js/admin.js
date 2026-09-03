@@ -138,8 +138,21 @@ function wireAdminForm(formEl, resultEl, staffContainer) {
   });
 }
 
-/** Formular fürs Verfassen einer Rundnachricht an alle Nutzer:innen (Admin+Mod). */
+/**
+ * Formular fürs Verfassen einer Nachricht (Admin+Mod) -- entweder an alle
+ * Nutzer:innen (Broadcast) oder gezielt an eine Person per Benutzername.
+ */
 function wireBroadcastForm(formEl, textEl, resultEl, senderId) {
+  const usernameEl = formEl.querySelector("#broadcast-username");
+  const zielRadios = formEl.querySelectorAll('input[name="broadcast-target"]');
+
+  zielRadios.forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const anPerson = formEl.querySelector('input[name="broadcast-target"]:checked').value === "user";
+      usernameEl.style.display = anPerson ? "" : "none";
+    });
+  });
+
   formEl.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     resultEl.textContent = "";
@@ -148,11 +161,31 @@ function wireBroadcastForm(formEl, textEl, resultEl, senderId) {
     const body = textEl.value.trim();
     if (!body) return;
 
+    const anPerson = formEl.querySelector('input[name="broadcast-target"]:checked').value === "user";
+
     try {
-      await sendBroadcast(senderId, body);
-      resultEl.textContent = "Gesendet.";
+      let recipientId = null;
+      if (anPerson) {
+        const name = usernameEl.value.trim();
+        if (!name) {
+          resultEl.textContent = "Bitte Benutzernamen eingeben.";
+          resultEl.className = "err";
+          return;
+        }
+        const gefunden = await findUserByUsername(name);
+        if (!gefunden) {
+          resultEl.textContent = "Kein Nutzer mit diesem Benutzernamen gefunden.";
+          resultEl.className = "err";
+          return;
+        }
+        recipientId = gefunden.id;
+      }
+
+      await sendBroadcast(senderId, body, recipientId);
+      resultEl.textContent = anPerson ? "Gesendet." : "An alle gesendet.";
       resultEl.className = "muted";
       formEl.reset();
+      usernameEl.style.display = "none";
     } catch (e) {
       resultEl.textContent = e.message;
       resultEl.className = "err";

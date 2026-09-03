@@ -72,9 +72,10 @@
       const seenAb = profil?.broadcasts_seen_at ? new Date(profil.broadcasts_seen_at) : null;
       broadcastsContent.innerHTML = broadcasts.map((b) => {
         const isNew = !seenAb || new Date(b.created_at) > seenAb;
+        const tags = [isNew ? "neu" : null, b.persoenlich ? "an dich" : null].filter(Boolean).join(" · ");
         return `
           <div class="broadcast-row">
-            <div class="broadcast-sender">${escapeHtml(b.sender_name)}${isNew ? " · neu" : ""}</div>
+            <div class="broadcast-sender">${escapeHtml(b.sender_name)}${tags ? ` · ${tags}` : ""}</div>
             <div class="broadcast-body">${escapeHtml(b.body)}</div>
             <div class="broadcast-meta">${new Date(b.created_at).toLocaleString("de-DE")}</div>
           </div>`;

@@ -79,6 +79,15 @@
       <div class="section-title">Rundnachricht an alle</div>
       <p class="muted" style="margin:0 0 10px; font-size:12.5px;">Geht an alle Nutzer:innen, erscheint in ihrem Posteingang.</p>
       <form id="broadcast-form">
+        <div style="display:flex; gap:16px; margin-bottom:10px; font-size:13px;">
+          <label style="display:flex; align-items:center; gap:6px;">
+            <input type="radio" name="broadcast-target" value="all" checked> Alle
+          </label>
+          <label style="display:flex; align-items:center; gap:6px;">
+            <input type="radio" name="broadcast-target" value="user"> Bestimmte Person
+          </label>
+        </div>
+        <input class="field" id="broadcast-username" type="text" placeholder="Benutzername" style="margin-bottom:10px; display:none;">
         <textarea class="field" id="broadcast-text" rows="3" placeholder="Nachricht..." style="margin-bottom:10px; width:100%; resize:vertical;" required></textarea>
         <button class="btn-primary" type="submit" style="width:100%; height:46px;">Senden</button>
         <div id="broadcast-result" class="muted" style="margin-top:10px;"></div>

@@ -165,7 +165,7 @@ async function fetchOnlinePresence() {
 async function fetchBroadcasts(limit = 20) {
   const { data, error } = await sb
     .from("broadcasts")
-    .select("id, body, created_at, sender_id")
+    .select("id, body, created_at, sender_id, recipient_id")
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
@@ -189,12 +189,18 @@ async function fetchBroadcasts(limit = 20) {
     body: row.body,
     created_at: row.created_at,
     sender_name: namen.get(row.sender_id) || "Team",
+    persoenlich: !!row.recipient_id,
   }));
 }
 
-/** Neue Rundnachricht verfassen -- RLS lässt nur Admin/Mod zu (is_moderator). */
-async function sendBroadcast(senderId, body) {
-  const { error } = await sb.from("broadcasts").insert({ sender_id: senderId, body: body.trim() });
+/**
+ * Neue Nachricht von Admin/Mod verfassen -- RLS lässt nur Admin/Mod zu
+ * (is_moderator). Ohne recipientId geht sie an alle, mit recipientId nur
+ * an diese eine Person (dann sieht sie sonst niemand, siehe RLS auf
+ * broadcasts_select_all).
+ */
+async function sendBroadcast(senderId, body, recipientId = null) {
+  const { error } = await sb.from("broadcasts").insert({ sender_id: senderId, body: body.trim(), recipient_id: recipientId });
   if (error) throw error;
 }
 
