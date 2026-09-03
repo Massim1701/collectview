@@ -112,11 +112,21 @@
           Schon gekauft?
           <button type="button" class="linklike" id="restore-btn">Kauf wiederherstellen</button>
         </p>
+        <p class="manual-hint" style="text-align:left; margin-top:6px;" id="trial-offer" hidden>
+          Noch unentschlossen?
+          <button type="button" class="linklike" id="trial-btn">7 Tage kostenlos testen</button>
+        </p>
       </div>
       <div id="already-plus" hidden>
         <button class="btn-secondary" type="button" disabled>Du hast CollectView Plus</button>
         <p class="manual-hint" style="text-align:left; margin-top:10px;">
           Egal ob über die App oder die Website gekauft – dein Abo gilt für deinen Account überall.
+        </p>
+      </div>
+      <div id="trial-active" hidden>
+        <button class="btn-secondary" type="button" disabled id="trial-active-label">Testzeitraum läuft</button>
+        <p class="manual-hint" style="text-align:left; margin-top:10px;">
+          Danach brauchst du CollectView Plus, um weiter zu speichern und den Marktplatz zu nutzen.
         </p>
       </div>
       <div class="err" id="upgrade-note" style="margin-top:12px; font-size:12.5px; color:var(--text-muted);"></div>
@@ -272,22 +282,50 @@
   // gekauft – beides landet im selben profiles.subscription_status)?
   // Still im Hintergrund geprüft, ohne bei fehlender Session zum Login
   // umzuleiten – das soll hier nicht erzwungen werden, nur informieren.
-  (async () => {
+  async function pruefePlanStatus() {
     if (!sb) return;
     const { data } = await sb.auth.getSession();
     if (!data.session) return;
 
     const { data: profil } = await sb
       .from("profiles")
-      .select("subscription_status")
+      .select("subscription_status, role, trial_ends_at")
       .eq("id", data.session.user.id)
       .maybeSingle();
+    if (!profil) return;
 
-    if (profil?.subscription_status === "active") {
-      document.getElementById("upgrade-cta").hidden = true;
-      document.getElementById("already-plus").hidden = false;
+    const hatVollzugriff = profil.subscription_status === "active" || profil.role === "admin" || profil.role === "moderator";
+    const testLaeuft = !hatVollzugriff && profil.trial_ends_at && new Date(profil.trial_ends_at) > new Date();
+
+    document.getElementById("upgrade-cta").hidden = hatVollzugriff || testLaeuft;
+    document.getElementById("already-plus").hidden = !hatVollzugriff;
+    document.getElementById("trial-active").hidden = !testLaeuft;
+
+    if (testLaeuft) {
+      const bis = new Date(profil.trial_ends_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+      document.getElementById("trial-active-label").textContent = `Testzeitraum läuft bis ${bis}`;
     }
-  })();
+
+    // Testangebot nur zeigen, wenn wirklich noch nie genutzt (Spalte leer) --
+    // ein einmal gesetztes trial_ends_at bleibt stehen, auch nach Ablauf.
+    document.getElementById("trial-offer").hidden = hatVollzugriff || !!profil.trial_ends_at;
+  }
+  pruefePlanStatus();
+
+  document.getElementById("trial-btn").addEventListener("click", async (ev) => {
+    if (!(await angemeldet())) return;
+    const knopf = ev.currentTarget;
+    knopf.disabled = true;
+    melde("Testzeitraum wird gestartet …", false);
+    try {
+      await testzeitraumStarten();
+      melde("7 Tage CollectView Plus sind frei -- viel Spaß beim Testen.", false);
+      await pruefePlanStatus();
+    } catch (e) {
+      melde(e.message, true);
+      knopf.disabled = false;
+    }
+  });
 
   // Rückkehr von Stripe Checkout: der Webhook setzt das Abo im
   // Hintergrund frei, das kann ein paar Sekunden dauern – deshalb hier

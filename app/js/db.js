@@ -51,15 +51,21 @@ async function fetchCollection() {
  * nicht exakt verglichen.
  */
 /**
- * Hat der Nutzer Zugriff auf die Plus-Funktionen? Aktives Abo, oder
- * Admin/Moderator -- die sind aus dem Jahresbeitrag-Zyklus raus (Spiegel
- * von is_subscribed() in der DB, siehe db/staff-access-presence.sql; die
- * RLS-Policies gelten unabhängig davon, hier geht es nur um die UI).
+ * Hat der Nutzer Zugriff auf die Plus-Funktionen? Aktives Abo, Admin/
+ * Moderator (aus dem Jahresbeitrag-Zyklus raus), oder ein laufender
+ * 7-Tage-Testzeitraum (siehe db/gastzugang.sql) -- Spiegel von
+ * is_subscribed() in der DB. Die RLS-Policies gelten unabhängig davon,
+ * hier geht es nur um die UI.
  */
 async function fetchIsSubscribed(userId) {
-  const { data, error } = await sb.from("profiles").select("subscription_status, role").eq("id", userId).maybeSingle();
+  const { data, error } = await sb.from("profiles").select("subscription_status, role, trial_ends_at").eq("id", userId).maybeSingle();
   if (error) throw error;
-  return data?.subscription_status === "active" || data?.role === "admin" || data?.role === "moderator";
+  return (
+    data?.subscription_status === "active" ||
+    data?.role === "admin" ||
+    data?.role === "moderator" ||
+    (!!data?.trial_ends_at && new Date(data.trial_ends_at) > new Date())
+  );
 }
 
 /** Eigenes Profil (Benutzername, Rolle, Abo-Status, Akzentfarbe). */

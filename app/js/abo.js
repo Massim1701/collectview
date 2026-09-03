@@ -61,6 +61,34 @@ function aboProdukte() {
 
 const ABO_PRUEFEN_URL = `${SUPABASE_URL}/functions/v1/abo-pruefen`;
 const STRIPE_CHECKOUT_URL = `${SUPABASE_URL}/functions/v1/stripe-checkout`;
+const START_TRIAL_URL = `${SUPABASE_URL}/functions/v1/start-trial`;
+
+/**
+ * 7 Tage CollectView Plus testen -- einmal pro Konto, läuft über
+ * start-trial (siehe db/gastzugang.sql für den Missbrauchsschutz, der
+ * ehrlich begrenzt ist: E-Mail-seitig strukturell gedeckt, IP nur lose).
+ * Gibt den Zeitpunkt zurück, bis zu dem der Test läuft.
+ */
+async function testzeitraumStarten() {
+  const { data } = await sb.auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) throw new Error("Bitte zuerst anmelden.");
+
+  const res = await fetch(START_TRIAL_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: SUPABASE_ANON_KEY,
+      "Content-Type": "application/json",
+    },
+  });
+
+  let antwort = {};
+  try { antwort = await res.json(); } catch { /* leerer Rumpf ist auch eine Antwort */ }
+
+  if (!res.ok) throw new Error(antwort.error || `Testzeitraum konnte nicht gestartet werden (${res.status}).`);
+  return antwort.laeuftBis;
+}
 
 /** "apple", "google" – oder null im Browser. */
 function storePlattform() {
