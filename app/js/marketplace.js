@@ -101,6 +101,34 @@ async function sendListingMessage(listingId, recipientId, body) {
   if (error) throw error;
 }
 
+/** Die jeweils andere Person in einer Nachricht, aus Sicht von `meId`. */
+function otherPartyId(message, meId) {
+  return message.sender_id === meId ? message.recipient_id : message.sender_id;
+}
+
+/**
+ * Gruppiert die Nachrichten EINES Angebots nach Gesprächspartner:in --
+ * für Verkäufer:innen kann das mehrere Threads ergeben (je ein:e
+ * Interessent:in), für Käufer:innen immer genau einen (nur der Draht zur
+ * verkaufenden Person). Jede Gruppe bleibt zeitlich sortiert (älteste
+ * zuerst, wie ein Chatverlauf); die Gruppen selbst nach letzter
+ * Aktivität, neueste zuerst.
+ */
+function groupMessagesByThread(messages, meId) {
+  const byOther = new Map();
+  for (const m of messages) {
+    const other = otherPartyId(m, meId);
+    if (!byOther.has(other)) byOther.set(other, []);
+    byOther.get(other).push(m);
+  }
+  for (const list of byOther.values()) list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  return [...byOther.entries()].sort((a, b) => {
+    const letzteA = a[1][a[1].length - 1]?.created_at || "";
+    const letzteB = b[1][b[1].length - 1]?.created_at || "";
+    return new Date(letzteB) - new Date(letzteA);
+  });
+}
+
 /** Alle Konversationen, an denen der Nutzer beteiligt ist, gruppiert nach Angebot. */
 async function fetchMyConversations(userId) {
   const { data, error } = await sb

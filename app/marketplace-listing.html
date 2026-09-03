@@ -217,28 +217,73 @@
     });
 
     const messagesEl = document.getElementById("messages");
-    try {
-      const messages = await fetchListingMessages(id);
-      const names = await fetchDisplayNames(messages.map((m) => m.sender_id));
-      messagesEl.innerHTML = messages.length
-        ? messages.map((m, i) => `
-            <div class="msg" id="msg-${i}">
-              <div class="msg-meta" style="margin-top:0; margin-bottom:2px; font-weight:700;">${escapeHtml(names[m.sender_id] || "Unbekannter Nutzer")}</div>
-              <div class="msg-body" id="msg-body-${i}">${linkifyDiscogsUrls(m.body)}</div>
-              <div class="msg-meta">${new Date(m.created_at).toLocaleString("de-DE")}
-                · <button type="button" class="linklike" data-translate-msg="${i}" data-i18n="marketplace_translate" style="font-size:11.5px;">Übersetzen</button>
-              </div>
-            </div>`).join("")
-        : `<div class="muted">Noch keine Nachrichten.</div>`;
 
-      messages.forEach((m, i) => {
-        const btn = messagesEl.querySelector(`[data-translate-msg="${i}"]`);
-        const body = document.getElementById(`msg-body-${i}`);
-        if (btn && body) wireTranslateToggle(btn, body, () => m.body);
+    // Verkäufer:innen können mehrere Interessent:innen gleichzeitig haben --
+    // ein Angebot ist also potenziell mehrere Gespräche, nicht eins. Jeder
+    // Thread bekommt seinen eigenen Antwort-Kasten (Wunsch von Massimo,
+    // 03.09.2026: Nachrichten schreiben ging als Verkäufer:in bisher gar
+    // nicht, nur ansehen).
+    async function renderOwnerThreads() {
+      let messages;
+      try {
+        messages = await fetchListingMessages(id);
+      } catch (e) {
+        messagesEl.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
+        return;
+      }
+      if (messages.length === 0) {
+        messagesEl.innerHTML = `<div class="muted">Noch keine Nachrichten.</div>`;
+        return;
+      }
+
+      const threads = groupMessagesByThread(messages, user.id);
+      const names = await fetchDisplayNames(threads.map(([otherId]) => otherId));
+
+      messagesEl.innerHTML = threads.map(([otherId, verlauf], t) => `
+        <div class="card" style="margin-bottom:14px;">
+          <div class="msg-meta" style="margin:0 0 8px; font-weight:800; font-size:13.5px;">${escapeHtml(names[otherId] || "Unbekannter Nutzer")}</div>
+          ${verlauf.map((m, i) => `
+            <div class="msg${m.sender_id === user.id ? " own" : ""}" id="msg-${t}-${i}">
+              <div class="msg-body" id="msg-body-${t}-${i}">${linkifyDiscogsUrls(m.body)}</div>
+              <div class="msg-meta">${new Date(m.created_at).toLocaleString("de-DE")}
+                · <button type="button" class="linklike" data-translate-msg="${t}-${i}" data-i18n="marketplace_translate" style="font-size:11.5px;">Übersetzen</button>
+              </div>
+            </div>`).join("")}
+          <textarea class="field" rows="2" placeholder="Antworten …" data-reply-text="${escapeHtml(otherId)}" style="margin:10px 0 8px; resize:vertical;"></textarea>
+          <button class="btn-secondary small" type="button" data-reply-send="${escapeHtml(otherId)}">Antworten</button>
+          <div class="err" data-reply-error="${escapeHtml(otherId)}" style="margin-top:6px;"></div>
+        </div>`).join("");
+
+      threads.forEach(([, verlauf], t) => {
+        verlauf.forEach((m, i) => {
+          const btn = messagesEl.querySelector(`[data-translate-msg="${t}-${i}"]`);
+          const body = document.getElementById(`msg-body-${t}-${i}`);
+          if (btn && body) wireTranslateToggle(btn, body, () => m.body);
+        });
       });
-    } catch (e) {
-      messagesEl.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
+
+      messagesEl.querySelectorAll("[data-reply-send]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const otherId = btn.getAttribute("data-reply-send");
+          const textarea = messagesEl.querySelector(`[data-reply-text="${CSS.escape(otherId)}"]`);
+          const errorEl = messagesEl.querySelector(`[data-reply-error="${CSS.escape(otherId)}"]`);
+          errorEl.textContent = "";
+          const text = textarea.value.trim();
+          if (!text) { errorEl.textContent = "Bitte eine Nachricht eingeben."; return; }
+          if (!(await requireDisplayName(user))) return;
+          btn.disabled = true;
+          try {
+            await sendListingMessage(id, otherId, text);
+            await renderOwnerThreads();
+          } catch (e) {
+            errorEl.textContent = e.message;
+            btn.disabled = false;
+          }
+        });
+      });
     }
+
+    await renderOwnerThreads();
 
     // Beim Ansehen als gelesen markieren – der Ungelesen-Zähler im
     // Umschlag-Symbol (renderInboxBadge) soll dann wieder stimmen.
