@@ -130,18 +130,28 @@ function itemStueckwert(item) {
   return wert == null ? null : Number(wert);
 }
 
+/**
+ * Gruppiert nach Währung statt blind zu addieren -- Discogs liefert nicht
+ * für jedes Release dieselbe Währung (meist EUR, manche Releases nur als
+ * USD-Fallback über lowest_price, siehe discogs-preis). $20 + 15€ als
+ * "35" auszugeben wäre schlicht falsch; separate Summen pro Währung sind
+ * die ehrliche Variante ohne Umrechnung (siehe OFFEN.md).
+ */
 function collectionValueSummary(items) {
-  let summe = 0;
+  const nachWaehrung = new Map(); // "EUR" -> summe
   let bewertet = 0;
-  let waehrung = null;
   for (const item of items) {
     const stueck = itemStueckwert(item);
     if (stueck == null) continue;
     bewertet += 1;
-    summe += stueck * clampQty(item.quantity);
-    waehrung = waehrung || item.releases?.value_currency;
+    const waehrung = item.releases?.value_currency || "?";
+    const bisher = nachWaehrung.get(waehrung) || 0;
+    nachWaehrung.set(waehrung, bisher + stueck * clampQty(item.quantity));
   }
-  return { summe, bewertet, gesamt: items.length, waehrung };
+  const gruppen = [...nachWaehrung.entries()]
+    .map(([waehrung, summe]) => ({ waehrung, summe }))
+    .sort((a, b) => b.summe - a.summe);
+  return { gruppen, bewertet, gesamt: items.length };
 }
 
 function clampQty(value) {
@@ -164,7 +174,7 @@ function renderValueSummary() {
     valueSummaryEl.innerHTML = "";
     return;
   }
-  const { summe, bewertet, gesamt, waehrung } = collectionValueSummary(allItems);
+  const { gruppen, bewertet, gesamt } = collectionValueSummary(allItems);
   const nachladbar = hatUnbewertete(allItems);
 
   if (bewertet === 0) {
@@ -181,11 +191,18 @@ function renderValueSummary() {
     return;
   }
 
+  // Meist nur eine Währung -- dann eine große Zahl wie gewohnt. Mit
+  // mehreren Währungen im Bestand (EUR + USD-Fallback) je eine eigene
+  // Zeile, statt sie falsch zusammenzurechnen.
+  const betragMarkup = gruppen.length === 1
+    ? `<div class="value-summary-amount">${escapeHtml(formatMoney(gruppen[0].summe, gruppen[0].waehrung))}</div>`
+    : gruppen.map((g) => `<div class="value-summary-amount" style="font-size:20px;">${escapeHtml(formatMoney(g.summe, g.waehrung))}</div>`).join("");
+
   valueSummaryEl.innerHTML = `
     <div class="value-summary">
       <div class="value-summary-row">
         <div>
-          <div class="value-summary-amount">${escapeHtml(formatMoney(summe, waehrung))}</div>
+          ${betragMarkup}
           <div class="value-summary-hint">
             Geschätzter Sammlungswert · ${bewertet} von ${gesamt} Platten bewertet
           </div>
@@ -380,9 +397,7 @@ async function showFreeLimitHint(user, count) {
   const hint = document.createElement("div");
   hint.className = "muted";
   hint.style.cssText = "font-size:12.5px; margin-top:2px;";
-  hint.innerHTML = count >= 5
-    ? `Free-Limit erreicht (5/5). <a href="../wireframes/pricing.html" style="color:var(--accent-text); font-weight:700;">CollectView Plus</a> für mehr.`
-    : `${count}/5 in der kostenlosen Version.`;
+  hint.innerHTML = `Scannen ist kostenlos. Zum Speichern in deiner Sammlung brauchst du <a href="../wireframes/pricing.html" style="color:var(--accent-text); font-weight:700;">CollectView Plus</a>.`;
   countEl.insertAdjacentElement("afterend", hint);
 }
 

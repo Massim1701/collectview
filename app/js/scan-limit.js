@@ -1,14 +1,17 @@
 /* =====================================================================
-   scan-limit.js – Free-Limit auf Scans: ohne Abo 5, mit Abo unbegrenzt.
+   scan-limit.js – Scannen ist seit dem Free-Scan-Pivot unbegrenzt und
+   ohne Konto möglich (siehe db/scan-limit-unlimited.sql, das den alten
+   5-Scans-Trigger entfernt hat). Nur das Speichern in die Sammlung ist
+   CollectView Plus vorbehalten (RLS, siehe db/free-tier-gate.sql).
+
+   Diese Datei protokolliert Scans weiterhin (scan_events, fürs Analytics)
+   und übersetzt eine SCAN_LIMIT-Fehlermeldung, falls doch mal ein alter
+   Trigger aktiv sein sollte -- im Normalfall passiert das nicht mehr.
 
    Eigene Datei, damit db.js unangetastet bleibt.
-
-   Verbindlich ist der Trigger in db/scan-limit.sql. Was hier steht, ist
-   die Anzeige davor und die Übersetzung der Fehlermeldung dahinter – ein
-   Client-Check allein wäre mit den Entwicklerwerkzeugen zu umgehen.
    ===================================================================== */
 
-/** Nur für die Anzeige "noch 3 von 5". Die harte Grenze zieht der Trigger. */
+/** Historisch: frühere harte Grenze. Wird nur noch als Fallback-Text genutzt. */
 const FREE_SCAN_LIMIT = 5;
 
 /** Erkennt die Absage des Triggers am Wortlaut aus db/scan-limit.sql. */
@@ -76,7 +79,7 @@ function freeTierHintText(subscribed) {
   return "Scannen ist komplett kostenlos, auch ohne Konto. Zum dauerhaften Speichern in deine Sammlung brauchst du CollectView Plus.";
 }
 
-/** Hinweis, wenn nichts mehr frei ist. */
+/** Fallback-Hinweis, falls ein Backend doch mal ein Scan-Limit meldet. */
 function scanLimitNoticeMarkup() {
   return `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -84,8 +87,8 @@ function scanLimitNoticeMarkup() {
       <circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/>
     </svg>
     <div class="notice-body">
-      <strong>Die ${FREE_SCAN_LIMIT} freien Scans sind aufgebraucht</strong>
-      <span>Mit CollectView Plus scannst du unbegrenzt weiter.</span>
+      <strong>Gerade sind keine weiteren Scans möglich</strong>
+      <span>Bitte versuch es in Kürze erneut, oder hol dir CollectView Plus.</span>
       <a class="btn-secondary small" href="../wireframes/pricing.html">CollectView Plus ansehen</a>
     </div>`;
 }

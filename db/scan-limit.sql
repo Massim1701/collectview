@@ -1,6 +1,10 @@
 -- Free-Limit auf Scans. Im Supabase-SQL-Editor ausführen.
 --
--- Regel: ohne Abo 5 Scans, mit aktivem Abo unbegrenzt.
+-- ACHTUNG: seit dem Free-Scan-Pivot ist dieses Limit AUFGEHOBEN, siehe
+-- db/scan-limit-unlimited.sql. Diese Datei bleibt nur als Historie stehen
+-- (falls die Tabelle scan_events irgendwo neu angelegt werden muss).
+--
+-- Ursprüngliche Regel: ohne Abo 5 Scans, mit aktivem Abo unbegrenzt.
 --
 -- Der Zähler steht bewusst in einer eigenen Tabelle und nicht als Zahl im
 -- Profil: so lässt sich später beantworten, wann und womit gescannt wurde,
