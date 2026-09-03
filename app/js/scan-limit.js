@@ -65,14 +65,15 @@ async function fetchScanCount(userId) {
 }
 
 /**
- * Free-Hinweis unter dem Scan-Bereich. Ersetzt die frühere "noch X von 5"-
- * Anzeige: es gibt kein Kontingent mehr, sondern eine feste Grenze –
- * Kamera-Scan und Speichern sind CollectView Plus vorbehalten, das
- * manuelle Nachschlagen (Code-Formular) bleibt unbegrenzt.
+ * Free-Hinweis unter dem Scan-Bereich. Scannen (Kamera wie auch das
+ * manuelle Code-Formular) ist unbegrenzt und ohne Konto möglich; nur
+ * das dauerhafte Speichern in die Sammlung ist CollectView Plus
+ * vorbehalten (RLS-Regel, siehe db/free-tier-gate.sql). Bis dahin merkt
+ * scan-history.js die letzten Treffer lokal im Browser.
  */
 function freeTierHintText(subscribed) {
   if (subscribed) return "";
-  return "Kamera-Scan und Speichern in die Sammlung gibt's mit CollectView Plus – nachschlagen per Barcode-Ziffern geht hier trotzdem, so oft du willst.";
+  return "Scannen ist komplett kostenlos, auch ohne Konto. Zum dauerhaften Speichern in deine Sammlung brauchst du CollectView Plus.";
 }
 
 /** Hinweis, wenn nichts mehr frei ist. */

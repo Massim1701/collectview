@@ -149,12 +149,7 @@ function clampQty(value) {
   return Number.isFinite(n) && n > 0 ? Math.min(n, 10) : 1;
 }
 
-const WAEHRUNGSZEICHEN = { EUR: "€", USD: "$", GBP: "£", JPY: "¥" };
-
-function formatMoney(value, currency) {
-  const zeichen = WAEHRUNGSZEICHEN[currency] || (currency ? `${currency} ` : "");
-  return `${zeichen}${value.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+// formatMoney(): siehe discogs.js -- dort für alle drei Seiten gemeinsam.
 
 /** true, solange irgendein Eintrag eine discogs_id, aber noch keinen
     (aktuellen) Marktwert hat -- genau die Einträge, die "Werte

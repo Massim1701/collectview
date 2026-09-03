@@ -437,6 +437,47 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .scan-result-barcode{ font-size:var(--text-xs); color:var(--text-muted); margin-top:6px; }
 .scan-result-barcode-num{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:var(--text); user-select:all; -webkit-user-select:all; letter-spacing:.02em; }
 
+/* Marktwert unter dem Scan-Treffer (scanner.js attachScanValue) --
+   schlichte Textzeile, kein eigener Kasten wie .value-zone auf der
+   Detailseite: hier ist der Preis nur ein Zusatz zum Treffer, nicht
+   der Hauptinhalt der Karte. */
+.scan-value{ font-size:var(--text-sm); margin:10px 0 0; }
+.scan-value strong{ color:var(--accent-text); }
+
+/* Lokaler Scan-Verlauf (scan-history.js) -- eine Zeile pro Treffer,
+   gleiches Cover-Muster wie .scan-result nur kompakter. */
+.scan-history-row{
+  display:flex; align-items:center; gap:var(--space-3);
+  padding:var(--space-2) 0; border-bottom:1px solid var(--border);
+}
+.scan-history-row:last-child{ border-bottom:none; }
+.scan-history-row .cover{ border-radius:var(--radius-xs); }
+.scan-history-title{ font-size:var(--text-sm); font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.scan-history-artist{ font-size:var(--text-xs); color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.scan-history-price{ flex:0 0 auto; font-size:var(--text-xs); font-weight:700; color:var(--accent-text); font-variant-numeric:tabular-nums; }
+.scan-history-actions{ flex:0 0 auto; display:flex; gap:6px; }
+.icon-btn{
+  flex:0 0 auto; width:32px; height:32px; border-radius:var(--radius-pill);
+  border:1px solid var(--border); background:var(--surface-2); color:var(--text-muted);
+  display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;
+}
+.icon-btn:hover{ color:var(--accent-text); border-color:var(--accent); }
+.icon-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+/* Verwaschene Vorschau auf die gesperrten Treffer -- echte Daten, nur
+   per CSS unscharf und nicht anklickbar: ein Vorgeschmack, kein Rätsel. */
+.scan-history-locked{ position:relative; margin-top:6px; }
+.scan-history-blur{ filter:blur(5px); user-select:none; pointer-events:none; }
+.scan-history-unlock{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; gap:4px;
+  padding:14px; border-radius:var(--radius-md);
+  background:linear-gradient(var(--bg-alpha-0,transparent), var(--surface) 40%);
+}
+.scan-history-unlock strong{ font-size:var(--text-sm); }
+.scan-history-unlock span{ font-size:var(--text-xs); color:var(--text-muted); max-width:260px; }
+.scan-history-unlock .btn-secondary.small{ height:32px; padding:0 14px; font-size:12.5px; margin-top:4px; }
+
 /* Statushinweis: schon im Regal oder auf der Wunschliste */
 .scan-status-note{
   display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); flex-wrap:wrap;

@@ -144,13 +144,7 @@ function detailsMarkup(item, release) {
 
 /* ---------- Marktwert ---------- */
 
-const WAEHRUNGSZEICHEN = { EUR: "€", USD: "$", GBP: "£", JPY: "¥" };
-
-function formatMoney(value, currency) {
-  if (value == null || !Number.isFinite(value)) return null;
-  const zeichen = WAEHRUNGSZEICHEN[currency] || (currency ? `${currency} ` : "");
-  return `${zeichen}${value.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+// formatMoney(): siehe discogs.js -- dort für alle drei Seiten gemeinsam.
 
 /** Zeigt einen Bereich nur, wenn low und high tatsächlich auseinanderliegen –
     beim lowest_price-Fallback (discogs-preis.ts) sind sie identisch. */

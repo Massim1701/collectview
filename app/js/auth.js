@@ -65,6 +65,40 @@ async function requireAuth() {
   return currentUser;
 }
 
+/**
+ * Wie requireAuth(), nur ohne Zwang: fehlt eine Sitzung, wird eine
+ * anonyme angelegt statt zum Login zu schicken -- für den Nutzer
+ * unsichtbar (kein Formular, kein Redirect), backend-seitig aber eine
+ * echte Supabase-Sitzung mit eigenem Token. Discogs-Proxy und
+ * Preisabfrage (discogs-suche/discogs-preis) laufen damit unverändert:
+ * beide prüfen nur, ob überhaupt eine Sitzung besteht.
+ *
+ * Speichern in die Sammlung bleibt trotzdem gesperrt -- das erzwingt
+ * die RLS-Regel (auth.uid() = user_id and is_subscribed(...), siehe
+ * db/free-tier-gate.sql), eine anonyme Sitzung hat nie ein Abo.
+ *
+ * Nur für Seiten gedacht, die auch ohne Konto nutzbar sein sollen
+ * (aktuell: scanner.html). Alles, was echte Nutzerdaten zeigt
+ * (Sammlung, Detailseite, Konto), bleibt bei requireAuth().
+ */
+async function ensureSession() {
+  const { data } = await sb.auth.getSession();
+  if (data.session?.user) {
+    currentUser = data.session.user;
+    return currentUser;
+  }
+
+  const { data: anon, error } = await sb.auth.signInAnonymously();
+  if (error) {
+    // Kein Absturz: der Scanner soll auch dann noch nutzbar sein, nur
+    // eben ohne Discogs-Proxy/Preis (deren Direktweg-Fallback greift).
+    console.error("Anonyme Sitzung fehlgeschlagen:", error.message);
+    return null;
+  }
+  currentUser = anon.user;
+  return currentUser;
+}
+
 async function signIn(email, password) {
   const { error } = await sb.auth.signInWithPassword({ email, password });
   if (error) throw error;

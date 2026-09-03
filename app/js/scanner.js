@@ -1219,21 +1219,12 @@ async function refreshScanQuota() {
 function paintScanQuota() {
   const el = document.getElementById("scan-quota");
   if (el) el.textContent = freeTierHintText(scanQuota.subscribed);
-  applyFreeTierScanUI(scanQuota.subscribed);
-}
-
-/**
- * Kamera-Scan (Barcode + Cover-Foto) ist CollectView Plus vorbehalten.
- * Free bleibt nur das manuelle Code-Formular weiter unten auf der Seite
- * – das kann beliebig oft genutzt werden, nur das Ergebnis lässt sich
- * ohne Abo nicht speichern (siehe renderResult/saveToCollection).
- */
-function applyFreeTierScanUI(subscribed) {
-  if (subscribed) return; // einmal gesetzt, bleibt es für die Sitzung so
-  if (scanning) stopScan();
-  scanBtn.hidden = true;
-  modeToggle.hidden = true;
-  if (cameraSelect) cameraSelect.hidden = true;
+  // Kamera-Scan (Barcode + Cover-Foto) ist jetzt für alle frei -- auch
+  // ohne Konto (ensureSession(), siehe init()). Nur das Speichern in die
+  // Sammlung bleibt an CollectView Plus gebunden (renderResult,
+  // insertCollectionItem) -- da greift die RLS-Regel ohnehin, dieser
+  // Kommentar ist nur die Erklärung, warum applyFreeTierScanUI hier
+  // nicht mehr existiert.
 }
 
 /**
@@ -1533,6 +1524,7 @@ function renderResult(item) {
     </div>
     ${scanStatusMarkup(status)}
     ${streamingMarkup(item)}
+    <div id="scan-value"></div>
     <div class="scan-actions">
       ${scanQuota.subscribed
         ? `<button class="btn-primary" type="button" data-action="add-collection"${status.inCollection ? " disabled" : ""}>
@@ -1542,8 +1534,38 @@ function renderResult(item) {
       <button class="btn-secondary" type="button" data-action="add-wishlist"${status.inCollection || status.onWishlist ? " disabled" : ""}>Auf Wunschliste</button>
       <button class="btn-secondary" type="button" data-action="weiter">Weiter scannen</button>
     </div>
-    ${scanQuota.subscribed ? "" : `<p class="manual-hint" style="text-align:left;">Nachschlagen ist kostenlos. Zum Speichern in deine Sammlung brauchst du <a href="../wireframes/pricing.html">CollectView Plus</a>.</p>`}
+    ${scanQuota.subscribed ? "" : `<p class="manual-hint" style="text-align:left;">Nachschlagen ist kostenlos. Zum Speichern in deine Sammlung brauchst du <a href="../wireframes/pricing.html">CollectView Plus</a> – bis dahin bleibt der Treffer unten in deinem Verlauf.</p>`}
     <p class="err" id="scan-error" role="alert"></p>`;
+
+  // Preis nachladen und lokal protokollieren, unabhängig vom Speichern
+  // in die Sammlung (siehe attachScanValue).
+  attachScanValue(item);
+}
+
+/**
+ * Marktwert unter dem Treffer nachtragen (discogsPreis() braucht einen
+ * eigenen Request, soll das Ergebnis aber nicht verzögern) und den Scan
+ * lokal protokollieren -- unabhängig davon, ob gespeichert werden darf.
+ * `currentScan.selected !== item` heißt: der Nutzer ist längst weiter,
+ * dann nicht mehr in ein verschwundenes Ergebnis schreiben.
+ */
+async function attachScanValue(item) {
+  let preis = null;
+  if (item.discogs_id) {
+    preis = await discogsPreis(item.discogs_id);
+    if (currentScan.selected !== item) return;
+    const el = document.getElementById("scan-value");
+    if (el) el.innerHTML = scanValueMarkup(preis);
+  }
+  recordScanHistory(item, preis);
+  renderScanHistory();
+}
+
+function scanValueMarkup(preis) {
+  const wert = preis?.median ?? preis?.low;
+  const text = formatMoney(wert, preis?.currency);
+  if (!text) return "";
+  return `<p class="scan-value">Marktwert laut Discogs: <strong>${escapeHtml(text)}</strong></p>`;
 }
 
 /* ---------- Manuell anlegen ---------- */
@@ -1592,9 +1614,14 @@ function scanError(message) {
  * Eintrag anlegen. Der Free-Limit-Trigger meldet sich hier als Fehler –
  * dann statt der rohen Meldung ein Hinweis auf das Abo.
  */
-async function saveToCollection(item) {
-  if (!currentUser) return;
-  scanError("");
+/**
+ * Kern des Speicherns, ohne die scan-spezifische Anschluss-UI (Status,
+ * "weiter scannen" usw.) -- gemeinsam genutzt von saveToCollection()
+ * (laufender Scan) und dem "Hinzufügen" im lokalen Verlauf
+ * (scan-history.js), wo es keine laufende Scan-UI gibt.
+ */
+async function insertCollectionItem(item) {
+  if (!currentUser) return { error: new Error("Keine Sitzung.") };
 
   // Erst in den gemeinsamen Katalog, dann verknüpfen. Schlägt das fehl,
   // wird trotzdem gespeichert – ein fehlender Katalogeintrag darf
@@ -1619,6 +1646,15 @@ async function saveToCollection(item) {
     barcode: item.barcode,
     cover_url: item.cover_url,
   });
+
+  return { error };
+}
+
+async function saveToCollection(item) {
+  if (!currentUser) return;
+  scanError("");
+
+  const { error } = await insertCollectionItem(item);
 
   if (error) {
     // RLS lehnt den Insert ab, wenn kein aktives Abo besteht (siehe
@@ -1713,6 +1749,114 @@ resultsEl.addEventListener("click", (e) => {
   }
 });
 
+/* ---------- Lokaler Scan-Verlauf (ohne Abo) ---------- */
+
+const SCAN_HISTORY_VISIBLE = 5;
+/** So viele verwaschene Zeilen als Andeutung -- der Rest bleibt nur die Zahl. */
+const SCAN_HISTORY_BLUR_PREVIEW = 3;
+
+const scanHistoryEl = document.getElementById("scan-history");
+const scanHistoryCardEl = document.getElementById("scan-history-card");
+
+function scanHistoryRowMarkup(entry, { locked = false } = {}) {
+  const wert = formatMoney(entry.value_median ?? entry.value_low, entry.value_currency);
+  return `
+    <div class="scan-history-row" data-id="${escapeHtml(entry.id)}">
+      ${coverMarkup(entry, { size: 44 })}
+      <div style="min-width:0; flex:1;">
+        <div class="scan-history-title">${escapeHtml(entry.title)}</div>
+        <div class="scan-history-artist">${escapeHtml(entry.artist || "Unbekannter Interpret")}</div>
+      </div>
+      ${wert ? `<div class="scan-history-price">${escapeHtml(wert)}</div>` : ""}
+      ${!locked && scanQuota.subscribed ? `
+        <div class="scan-history-actions">
+          <button class="icon-btn" type="button" data-action="history-add" data-id="${escapeHtml(entry.id)}" title="Zur Sammlung hinzufügen" aria-label="Zur Sammlung hinzufügen">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+          </button>
+          <button class="icon-btn" type="button" data-action="history-discard" data-id="${escapeHtml(entry.id)}" title="Verwerfen" aria-label="Verwerfen">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>` : ""}
+    </div>`;
+}
+
+/**
+ * Letzte 5 Treffer immer klar sichtbar. Ohne Abo werden ein paar weitere
+ * verwaschen angedeutet (echte Daten, nur per CSS unscharf -- ein
+ * Vorgeschmack, kein Rätsel) mit Zähler und Freischalt-Link; mit Abo gibt
+ * es den ganzen Verlauf mit "Hinzufügen"/"Verwerfen" pro Eintrag.
+ */
+function renderScanHistory() {
+  if (!scanHistoryEl || !scanHistoryCardEl) return;
+  const list = loadScanHistory();
+
+  if (list.length === 0) {
+    scanHistoryCardEl.style.display = "none";
+    return;
+  }
+  scanHistoryCardEl.style.display = "";
+
+  const subEl = document.getElementById("scan-history-sub");
+  if (subEl) {
+    subEl.textContent = scanQuota.subscribed
+      ? "Übernimm einzelne Treffer in deine Sammlung oder verwirf sie."
+      : "Ohne Konto nur lokal auf diesem Gerät gemerkt.";
+  }
+
+  if (scanQuota.subscribed) {
+    scanHistoryEl.innerHTML = list.map((e) => scanHistoryRowMarkup(e)).join("");
+    return;
+  }
+
+  const sichtbar = list.slice(0, SCAN_HISTORY_VISIBLE);
+  const rest = list.slice(SCAN_HISTORY_VISIBLE);
+  const verwaschen = rest.slice(0, SCAN_HISTORY_BLUR_PREVIEW);
+
+  scanHistoryEl.innerHTML = `
+    ${sichtbar.map((e) => scanHistoryRowMarkup(e)).join("")}
+    ${rest.length ? `
+      <div class="scan-history-locked">
+        <div class="scan-history-blur" aria-hidden="true">
+          ${verwaschen.map((e) => scanHistoryRowMarkup(e, { locked: true })).join("")}
+        </div>
+        <div class="scan-history-unlock">
+          <strong>+${rest.length} weitere${rest.length === 1 ? "r" : ""} Scan${rest.length === 1 ? "" : "s"}</strong>
+          <span>Mit CollectView Plus siehst und übernimmst du deinen ganzen Verlauf.</span>
+          <a class="btn-secondary small" href="../wireframes/pricing.html">Jetzt freischalten</a>
+        </div>
+      </div>` : ""}`;
+}
+
+scanHistoryEl?.addEventListener("click", async (e) => {
+  const action = e.target.closest("[data-action]")?.dataset.action;
+  const id = e.target.closest("[data-id]")?.dataset.id;
+  if (!action || !id) return;
+
+  if (action === "history-discard") {
+    removeScanHistoryEntry(id);
+    renderScanHistory();
+    return;
+  }
+
+  if (action === "history-add") {
+    const entry = loadScanHistory().find((e2) => e2.id === id);
+    if (!entry) return;
+    const row = scanHistoryEl.querySelector(`.scan-history-row[data-id="${CSS.escape(id)}"]`);
+    row?.querySelectorAll("button").forEach((b) => (b.disabled = true));
+
+    const { error } = await insertCollectionItem(entry);
+    if (error) {
+      row?.querySelectorAll("button").forEach((b) => (b.disabled = false));
+      setStatus("Konnte nicht gespeichert werden: " + error.message);
+      return;
+    }
+
+    removeScanHistoryEntry(id);
+    renderScanHistory();
+    loadRecentlySaved();
+  }
+});
+
 /* ---------- Zuletzt gespeichert ---------- */
 
 async function loadRecentlySaved() {
@@ -1736,7 +1880,11 @@ async function loadRecentlySaved() {
 /* ---------- Start ---------- */
 
 async function init() {
-  const user = await requireAuth();
+  // ensureSession() statt requireAuth(): kein Redirect zum Login, ohne
+  // Sitzung wird eine anonyme angelegt (siehe auth.js) -- Scannen soll
+  // ohne Konto gehen, nur das Speichern bleibt an CollectView Plus
+  // gebunden.
+  const user = await ensureSession();
   if (!user) return;
 
   scanBtn.addEventListener("click", () => {
@@ -1746,7 +1894,8 @@ async function init() {
   captureBtn.addEventListener("click", captureCoverPhoto);
   torchBtn.addEventListener("click", toggleLicht);
   loadRecentlySaved();
-  refreshScanQuota();
+  await refreshScanQuota();
+  renderScanHistory();
 }
 
 init();

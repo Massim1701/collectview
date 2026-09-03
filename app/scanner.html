@@ -172,6 +172,19 @@
     <div id="results"></div>
   </div>
 
+  <div class="card" id="scan-history-card" style="display:none;">
+    <div class="card-head">
+      <div class="icon-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
+      </div>
+      <div>
+        <div class="card-head-title">Deine letzten Scans</div>
+        <div class="card-head-sub" id="scan-history-sub">Ohne Konto nur lokal auf diesem Gerät gemerkt.</div>
+      </div>
+    </div>
+    <div id="scan-history"></div>
+  </div>
+
   <div class="card">
     <div class="card-head">
       <div class="icon-badge">
@@ -211,6 +224,7 @@
 <script src="./js/releases.js"></script>
 <script src="./js/scan-status.js"></script>
 <script src="./js/scan-limit.js"></script>
+<script src="./js/scan-history.js"></script>
 <script src="./js/selftest.js"></script>
 <script src="./js/scanner.js"></script>
 </body>

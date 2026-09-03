@@ -117,3 +117,15 @@ async function discogsPreis(discogsId) {
     return leer;
   }
 }
+
+/* ---------- Geldbeträge ----------
+   Gemeinsam für detail.js, collection.js, scanner.js: alle drei zeigen
+   Discogs-Preise an, hier steht das Format nur einmal. */
+
+const WAEHRUNGSZEICHEN = { EUR: "€", USD: "$", GBP: "£", JPY: "¥" };
+
+function formatMoney(value, currency) {
+  if (value == null || !Number.isFinite(Number(value))) return null;
+  const zeichen = WAEHRUNGSZEICHEN[currency] || (currency ? `${currency} ` : "");
+  return `${zeichen}${Number(value).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
