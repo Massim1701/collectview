@@ -13,6 +13,7 @@ const clearEl = document.getElementById("search-clear");
 const exportEl = document.getElementById("export-csv");
 const sortEl = document.getElementById("sortierung");
 const countEl = document.getElementById("result-count");
+const valueSummaryEl = document.getElementById("value-summary");
 
 const params = new URLSearchParams(location.search);
 
@@ -113,6 +114,122 @@ function renderGrid() {
     html += plainListRowMarkup(item);
   }
   gridEl.innerHTML = html;
+}
+
+
+/* ---------- Gesamtwert ----------
+   Der Marktwert wohnt am Release (db/release-value.sql), nicht am
+   collection_item -- fetchCollection() bringt ihn per Embed schon mit
+   (db.js). Hier wird nur summiert: Stückwert (median, sonst low) mal
+   Anzahl Exemplare, über alle Einträge mit bekanntem Wert. */
+
+function itemStueckwert(item) {
+  const r = item.releases;
+  if (!r) return null;
+  const wert = r.value_median ?? r.value_low;
+  return wert == null ? null : Number(wert);
+}
+
+function collectionValueSummary(items) {
+  let summe = 0;
+  let bewertet = 0;
+  let waehrung = null;
+  for (const item of items) {
+    const stueck = itemStueckwert(item);
+    if (stueck == null) continue;
+    bewertet += 1;
+    summe += stueck * clampQty(item.quantity);
+    waehrung = waehrung || item.releases?.value_currency;
+  }
+  return { summe, bewertet, gesamt: items.length, waehrung };
+}
+
+function clampQty(value) {
+  const n = Math.round(Number(value));
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 10) : 1;
+}
+
+const WAEHRUNGSZEICHEN = { EUR: "€", USD: "$", GBP: "£", JPY: "¥" };
+
+function formatMoney(value, currency) {
+  const zeichen = WAEHRUNGSZEICHEN[currency] || (currency ? `${currency} ` : "");
+  return `${zeichen}${value.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** true, solange irgendein Eintrag eine discogs_id, aber noch keinen
+    (aktuellen) Marktwert hat -- genau die Einträge, die "Werte
+    aktualisieren" nachladen würde. */
+function hatUnbewertete(items) {
+  return items.some((item) => item.discogs_id && itemStueckwert(item) == null);
+}
+
+function renderValueSummary() {
+  if (!valueSummaryEl) return;
+  if (allItems.length === 0) {
+    valueSummaryEl.innerHTML = "";
+    return;
+  }
+  const { summe, bewertet, gesamt, waehrung } = collectionValueSummary(allItems);
+  const nachladbar = hatUnbewertete(allItems);
+
+  if (bewertet === 0) {
+    // Noch nirgends ein Wert im Cache -- erst dann anbieten, wenn es
+    // überhaupt etwas zu holen gibt (discogs_id vorhanden).
+    valueSummaryEl.innerHTML = nachladbar
+      ? `<div class="value-summary">
+           <button class="btn-secondary" type="button" id="value-refresh" style="height:36px; padding:0 12px; font-size:13px;">
+             Sammlungswert schätzen
+           </button>
+         </div>`
+      : "";
+    wireValueRefresh();
+    return;
+  }
+
+  valueSummaryEl.innerHTML = `
+    <div class="value-summary">
+      <div>
+        <div class="value-summary-amount">${escapeHtml(formatMoney(summe, waehrung))}</div>
+        <div class="value-summary-hint">
+          Geschätzter Sammlungswert · ${bewertet} von ${gesamt} Platten bewertet
+        </div>
+      </div>
+      ${nachladbar ? `<button class="btn-secondary" type="button" id="value-refresh" style="height:36px; padding:0 12px; font-size:13px;">Fehlende nachladen</button>` : ""}
+    </div>`;
+  wireValueRefresh();
+}
+
+/** Lädt Preise für Einträge ohne Marktwert nach, einer nach dem anderen
+    mit kurzer Pause -- Discogs' Preisvorschlag-Endpunkt zählt gegen
+    dasselbe Kontingent wie die Suche (60/Minute mit Token, siehe
+    discogs-preis). Ein einzelner Klick lädt darum höchstens 40 Stück;
+    bei größeren Sammlungen reicht ein zweiter Klick für den Rest. */
+async function ladeFehlendeWerte() {
+  const button = document.getElementById("value-refresh");
+  if (!button) return;
+  const fehlend = allItems.filter((item) => item.discogs_id && itemStueckwert(item) == null).slice(0, 40);
+  if (fehlend.length === 0) return;
+
+  button.disabled = true;
+  for (let i = 0; i < fehlend.length; i++) {
+    const item = fehlend[i];
+    button.textContent = `Lädt … (${i + 1}/${fehlend.length})`;
+    const preis = await discogsPreis(item.discogs_id);
+    if (preis && (preis.median != null || preis.low != null)) {
+      item.releases = {
+        value_low: preis.low,
+        value_median: preis.median,
+        value_high: preis.high,
+        value_currency: preis.currency,
+      };
+      renderValueSummary();
+    }
+    if (i < fehlend.length - 1) await new Promise((r) => setTimeout(r, 350));
+  }
+}
+
+function wireValueRefresh() {
+  document.getElementById("value-refresh")?.addEventListener("click", ladeFehlendeWerte, { once: true });
 }
 
 /* ---------- CSV-Export ----------
@@ -225,6 +342,7 @@ async function init() {
     saveOfflineCollection(user.id, allItems);
     renderChips();
     renderGrid();
+    renderValueSummary();
     showFreeLimitHint(user, allItems.length);
   } catch (e) {
     // Kein Netz? Dann den letzten gespeicherten Stand zeigen, statt nur
@@ -234,6 +352,7 @@ async function init() {
       allItems = cached.items;
       renderChips();
       renderGrid();
+      renderValueSummary();
       showOfflineNotice(cached.savedAt);
     } else {
       gridEl.innerHTML = "";

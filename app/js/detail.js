@@ -142,6 +142,58 @@ function detailsMarkup(item, release) {
     </dl>`;
 }
 
+/* ---------- Marktwert ---------- */
+
+const WAEHRUNGSZEICHEN = { EUR: "€", USD: "$", GBP: "£", JPY: "¥" };
+
+function formatMoney(value, currency) {
+  if (value == null || !Number.isFinite(value)) return null;
+  const zeichen = WAEHRUNGSZEICHEN[currency] || (currency ? `${currency} ` : "");
+  return `${zeichen}${value.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** Zeigt einen Bereich nur, wenn low und high tatsächlich auseinanderliegen –
+    beim lowest_price-Fallback (discogs-preis.ts) sind sie identisch. */
+function valueRangeText(preis) {
+  if (preis.low == null || preis.high == null || preis.low === preis.high) return null;
+  return `${formatMoney(preis.low, preis.currency)} – ${formatMoney(preis.high, preis.currency)}`;
+}
+
+function valueTotalText(item, preis) {
+  const n = clampQuantity(item.quantity);
+  const stueckwert = preis.median ?? preis.low;
+  if (n <= 1 || stueckwert == null) return null;
+  return `${formatMoney(stueckwert * n, preis.currency)} für ${n} Exemplare`;
+}
+
+/** "" (kein Markup), solange Discogs nichts liefert – kein leerer Kasten. */
+function valueMarkup(item, preis) {
+  if (!preis || (preis.median == null && preis.low == null)) return "";
+  const hauptwert = preis.median ?? preis.low;
+  const range = valueRangeText(preis);
+  const total = valueTotalText(item, preis);
+  return `
+    <div class="value-zone" id="value-zone">
+      <div>
+        <div class="value-label">Marktwert</div>
+        <span class="value-hint">${range ? escapeHtml(range) : "laut Discogs-Marktplatz"}</span>
+      </div>
+      <div style="text-align:right;">
+        <div class="value-amount" id="value-amount">${escapeHtml(formatMoney(hauptwert, preis.currency))}</div>
+        <div class="value-range" id="value-total">${total ? escapeHtml(total) : ""}</div>
+      </div>
+    </div>`;
+}
+
+/** Nur die Gesamt-Zeile nachziehen, wenn sich die Anzahl ändert –
+    kein voller Re-Render nötig (spart einen Discogs-Preisabruf). */
+function paintValueZone(item, preis) {
+  const total = document.getElementById("value-total");
+  if (!total || !preis) return;
+  const text = valueTotalText(item, preis);
+  total.textContent = text || "";
+}
+
 function communityMarkup(release) {
   const have = release?.community?.have;
   if (!have) return "";
@@ -247,6 +299,7 @@ async function setQuantity(item, next) {
 
   item.quantity = value;
   paintQuantity(value);
+  paintValueZone(item, currentPreis);
 }
 
 /* ---------- Löschen (zweistufig) ---------- */
@@ -285,9 +338,12 @@ async function confirmDelete(item) {
 
 /** Der gerade angezeigte Eintrag – der Klick-Listener unten liest ihn aus. */
 let currentItem = null;
+/** Zuletzt geladener Marktwert, für paintValueZone() bei Anzahl-Änderungen. */
+let currentPreis = null;
 
-function render(item, release) {
+function render(item, release, preis) {
   currentItem = item;
+  currentPreis = preis || null;
   document.title = `${item.title} – CollectView`;
   shell.setAttribute("aria-busy", "false");
   shell.innerHTML = `
@@ -297,6 +353,7 @@ function render(item, release) {
       <div class="detail-artist">${escapeHtml(item.artist || "Unbekannter Interpret")}</div>
       <div class="detail-meta">${metaLine(item, release)}</div>
       ${quantityMarkup(item)}
+      ${valueMarkup(item, preis)}
       ${saleButtonMarkup()}
       ${tracklistMarkup(item, release)}
       ${detailsMarkup(item, release)}
@@ -375,15 +432,18 @@ async function init() {
 
     // Erst mit den gespeicherten Daten rendern, dann mit Discogs anreichern:
     // die Seite ist sofort da, auch wenn Discogs langsam ist oder ausfällt.
-    render(item, null);
-    const release = await fetchRelease(item.discogs_id);
-    if (release) render(item, release);
+    render(item, null, null);
+    const [release, preis] = await Promise.all([
+      fetchRelease(item.discogs_id),
+      discogsPreis(item.discogs_id),
+    ]);
+    if (release || preis) render(item, release, preis);
   } catch (e) {
     // Kein Netz? Dann den Eintrag aus dem letzten Offline-Stand der
     // Sammlung zeigen (ohne Discogs-Anreicherung -- die braucht Netz).
     const cached = loadOfflineItem(user.id, itemId);
     if (cached) {
-      render(cached, null);
+      render(cached, null, null);
       const notice = document.createElement("div");
       notice.className = "muted";
       notice.style.cssText = "font-size:12.5px; margin:10px 20px 0; padding:8px 12px; background:var(--surface-2); border-radius:var(--radius-sm);";

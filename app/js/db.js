@@ -31,9 +31,14 @@ async function deleteItem(id) {
 
 /** Alle Einträge des angemeldeten Users, neueste zuerst. RLS filtert nach user_id. */
 async function fetchCollection() {
+  // releases(...) ist ein Embed über collection_items.release_id (siehe
+  // db/releases.sql): liefert den gecachten Marktwert mit, ohne pro
+  // Sammlung erneut bei Discogs anzufragen (der wohnt am Release, siehe
+  // db/release-value.sql). item.releases ist null, wenn der Eintrag noch
+  // keinem Katalog-Release zugeordnet ist (alte/manuelle Einträge).
   const { data, error } = await sb
     .from("collection_items")
-    .select("*")
+    .select("*, releases(value_low, value_median, value_high, value_currency, value_fetched_at)")
     .order("created_at", { ascending: false });
 
   if (error) throw error;

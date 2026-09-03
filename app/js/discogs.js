@@ -14,6 +14,7 @@
 
 const DISCOGS_PROXY = `${SUPABASE_URL}/functions/v1/discogs-suche`;
 const DISCOGS_RELEASE_PROXY = `${SUPABASE_URL}/functions/v1/discogs-release-bilder`;
+const DISCOGS_PREIS_PROXY = `${SUPABASE_URL}/functions/v1/discogs-preis`;
 
 /**
  * Einmal als nicht verfügbar erkannt, nicht bei jedem Scan erneut
@@ -84,5 +85,35 @@ async function discogsReleaseBilder(discogsId) {
     return { front: daten.front || null, back: daten.back || null };
   } catch {
     return { front: null, back: null };
+  }
+}
+
+/**
+ * Marktwert eines Release (niedrig/median/hoch, laut Discogs-Marktplatz).
+ * Gecacht in releases.value_* (siehe db/release-value.sql), die Funktion
+ * fragt Discogs deshalb höchstens alle 7 Tage pro Release neu.
+ * Gibt { low, median, high, currency } zurück, alle ggf. null, wenn
+ * Discogs keine Daten hat oder der Proxy nicht erreichbar ist – die
+ * Detail-/Sammlungsseite blendet den Marktwert dann einfach aus.
+ */
+async function discogsPreis(discogsId) {
+  const leer = { low: null, median: null, high: null, currency: null };
+  try {
+    const { data } = await sb.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token || !discogsId) return leer;
+    const res = await fetch(`${DISCOGS_PREIS_PROXY}?id=${encodeURIComponent(discogsId)}`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+    });
+    if (!res.ok) return leer;
+    const daten = await res.json();
+    return {
+      low: daten.low ?? null,
+      median: daten.median ?? null,
+      high: daten.high ?? null,
+      currency: daten.currency ?? null,
+    };
+  } catch {
+    return leer;
   }
 }
