@@ -37,6 +37,26 @@ async function renderAdminStats(container) {
   }
 }
 
+/** "Wer ist online" -- nur für Admin/Mod, die staff_presence-View filtert selbst. */
+async function renderOnlineList(container) {
+  container.innerHTML = `<div class="muted">Lade …</div>`;
+  try {
+    const rows = await fetchOnlinePresence();
+    const online = rows.filter((r) => r.online);
+    container.innerHTML = online.length
+      ? online.map((r) => `
+          <div class="list-card list-card-plain" style="cursor:default;">
+            <div style="min-width:0;">
+              <div class="list-card-title">${escapeHtml(r.display_name)}</div>
+              <div class="list-card-sub">${roleLabel(r.role) === r.role ? "Nutzer" : roleLabel(r.role)} &middot; zuletzt ${new Date(r.last_seen_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}</div>
+            </div>
+          </div>`).join("")
+      : `<div class="muted">Gerade niemand online.</div>`;
+  } catch (e) {
+    container.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
+  }
+}
+
 async function renderStaffList(container) {
   container.innerHTML = `<div class="muted">Lade …</div>`;
   try {

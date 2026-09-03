@@ -40,27 +40,36 @@
   const content = document.getElementById("content");
 
   let isAdmin = false;
+  let isMod = false;
   try {
-    isAdmin = await fetchIsAdmin(user.id);
+    [isAdmin, isMod] = await Promise.all([fetchIsAdmin(user.id), fetchIsModerator(user.id)]);
   } catch (e) {
     content.innerHTML = errorState(e.message);
     return;
   }
 
-  if (!isAdmin) {
-    content.innerHTML = errorState("Diese Seite ist nur für Admins.");
+  if (!isAdmin && !isMod) {
+    content.innerHTML = errorState("Diese Seite ist nur für Admins und Moderatoren.");
     return;
   }
 
   content.innerHTML = `
     <h1 class="page-title" style="font-size:26px; margin:10px 0 6px;">Admin</h1>
-    <p class="muted" style="margin:0 0 22px;">Rollen vergeben – maximal 2 Admins, maximal 3 Moderatoren (von der Datenbank erzwungen).</p>
+    <p class="muted" style="margin:0 0 22px;">${isAdmin ? "Rollen vergeben – maximal 2 Admins, maximal 3 Moderatoren (von der Datenbank erzwungen)." : "Als Moderator siehst du, wer gerade online ist."}</p>
 
+    ${isAdmin ? `
     <div class="card" style="margin-bottom:18px;">
       <div class="section-title">Nutzerzahlen</div>
       <div id="admin-stats"></div>
+    </div>` : ""}
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="section-title">Online jetzt</div>
+      <p class="muted" style="margin:0 0 10px; font-size:12.5px;">Nur für Admin/Mod sichtbar. Zeigt angemeldete Nutzer mit Benutzername, aktiv in den letzten 5 Minuten.</p>
+      <div id="online-list"></div>
     </div>
 
+    ${isAdmin ? `
     <div class="card" style="margin-bottom:18px;">
       <div class="section-title">Rolle vergeben</div>
       <form id="admin-form">
@@ -77,13 +86,17 @@
     <div class="card">
       <div class="section-title">Aktuelle Moderatoren &amp; Admins</div>
       <div id="staff-list"></div>
-    </div>
+    </div>` : ""}
   `;
 
-  const staffList = document.getElementById("staff-list");
-  wireAdminForm(document.getElementById("admin-form"), document.getElementById("admin-result"), staffList);
-  renderStaffList(staffList);
-  renderAdminStats(document.getElementById("admin-stats"));
+  renderOnlineList(document.getElementById("online-list"));
+
+  if (isAdmin) {
+    const staffList = document.getElementById("staff-list");
+    wireAdminForm(document.getElementById("admin-form"), document.getElementById("admin-result"), staffList);
+    renderStaffList(staffList);
+    renderAdminStats(document.getElementById("admin-stats"));
+  }
 })();
 </script>
 </body>

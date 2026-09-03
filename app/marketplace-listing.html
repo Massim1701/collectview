@@ -261,6 +261,9 @@
         const errorEl = document.getElementById("msg-error");
         errorEl.textContent = "";
         if (!text) { errorEl.textContent = "Bitte eine Nachricht eingeben."; return; }
+        // Benutzername ist Pflicht, bevor eine Nachricht rausgeht -- siehe
+        // requireDisplayName() in auth.js.
+        if (!(await requireDisplayName(user))) return;
         try {
           await sendListingMessage(id, listing.seller_id, text);
           document.getElementById("msg-text").value = "";
@@ -276,6 +279,7 @@
       const errorEl = document.getElementById("msg-error");
       errorEl.textContent = "";
       if (!text) { errorEl.textContent = "Bitte eine Nachricht eingeben."; return; }
+      if (!(await requireDisplayName(user))) return;
       try {
         await sendListingMessage(id, listing.seller_id, text);
         document.getElementById("msg-text").value = "";

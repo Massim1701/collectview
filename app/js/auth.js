@@ -62,7 +62,49 @@ async function requireAuth() {
       // Ohne Profil-Antwort bleibt die Standardfarbe stehen.
     });
 
+  // Ebenfalls nicht blockierend -- Grundlage für die Online-Liste
+  // (staff_presence, nur Admin/Mod). Ein Fehlschlag hier darf nie eine
+  // Seite lahmlegen.
+  touchLastSeen(currentUser.id).catch(() => {});
+
   return currentUser;
+}
+
+/**
+ * Erzwingt einen Benutzernamen, bevor eine Nachricht geschrieben werden
+ * kann -- Wunsch von Massimo (03.09.2026): angemeldete Nutzer sollen sich
+ * im Chat nie als "Unbekannter Nutzer" oder gar über ihre E-Mail zeigen
+ * (die App zeigt anderen Nutzern ohnehin nirgends die E-Mail, siehe
+ * renderAccountRow oben -- das hier schließt die letzte Lücke: ganz ohne
+ * Namen). Gibt den gesetzten Namen zurück, oder null, wenn abgebrochen
+ * wurde -- Aufrufer soll dann selbst nichts senden.
+ */
+async function requireDisplayName(user) {
+  let profile;
+  try {
+    profile = await fetchMyProfile(user.id);
+  } catch (e) {
+    alert(e.message);
+    return null;
+  }
+  if (profile?.display_name) return profile.display_name;
+
+  const input = prompt(
+    "Bevor du Nachrichten schreiben kannst, brauchst du einen Benutzernamen " +
+    "(3–20 Zeichen: Buchstaben, Ziffern, _ oder -).\nSichtbar für andere Nutzer, nie deine E-Mail:",
+    "",
+  );
+  if (input == null) return null;
+  const name = input.trim();
+  if (!name) return null;
+
+  try {
+    await setDisplayName(user.id, name);
+    return name;
+  } catch (e) {
+    alert(e.message);
+    return null;
+  }
 }
 
 /**

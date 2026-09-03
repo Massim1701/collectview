@@ -50,11 +50,16 @@ async function fetchCollection() {
  * "CD, Album, Reissue" – deshalb wird der Format-String durchsucht,
  * nicht exakt verglichen.
  */
-/** Hat der Nutzer ein aktives CollectView-Plus-Abo? */
+/**
+ * Hat der Nutzer Zugriff auf die Plus-Funktionen? Aktives Abo, oder
+ * Admin/Moderator -- die sind aus dem Jahresbeitrag-Zyklus raus (Spiegel
+ * von is_subscribed() in der DB, siehe db/staff-access-presence.sql; die
+ * RLS-Policies gelten unabhängig davon, hier geht es nur um die UI).
+ */
 async function fetchIsSubscribed(userId) {
-  const { data, error } = await sb.from("profiles").select("subscription_status").eq("id", userId).maybeSingle();
+  const { data, error } = await sb.from("profiles").select("subscription_status, role").eq("id", userId).maybeSingle();
   if (error) throw error;
-  return data?.subscription_status === "active";
+  return data?.subscription_status === "active" || data?.role === "admin" || data?.role === "moderator";
 }
 
 /** Eigenes Profil (Benutzername, Rolle, Abo-Status, Akzentfarbe). */
@@ -123,6 +128,27 @@ async function fetchSellerBadges(userIds) {
   return map;
 }
 
+/**
+ * Setzt "zuletzt gesehen" auf jetzt -- Grundlage für die Online-Liste
+ * (staff_presence, nur für Admin/Mod sichtbar). Wird von requireAuth()
+ * bei jedem Aufruf einer geschützten Seite angestoßen, nicht blockierend:
+ * schlägt es fehl, soll das nie eine Seite lahmlegen.
+ */
+async function touchLastSeen(userId) {
+  const { error } = await sb.from("profiles").update({ last_seen_at: new Date().toISOString() }).eq("id", userId);
+  if (error) throw error;
+}
+
+/** Wer ist gerade online? Nur für Admin/Mod (staff_presence-View filtert selbst). */
+async function fetchOnlinePresence() {
+  const { data, error } = await sb
+    .from("staff_presence")
+    .select("id, display_name, role, last_seen_at, online")
+    .order("last_seen_at", { ascending: false, nullsFirst: false });
+  if (error) throw error;
+  return data || [];
+}
+
 /** Ist der Nutzer Admin? (role = 'admin') */
 async function fetchIsAdmin(userId) {
   const { data, error } = await sb.from("profiles").select("role").eq("id", userId).maybeSingle();
@@ -164,10 +190,13 @@ async function fetchAdminStats() {
 
   const wocheAb = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
+  // is_anonymous ausgeschlossen: jeder Gast-Scan ohne Konto (siehe
+  // db/scan-limit-unlimited.sql) legt eine anonyme Supabase-Sitzung an,
+  // die sonst als "registrierter Nutzer" mitgezählt würde.
   const [gesamt, aktiv, neuDieseWoche, aktivZeilen] = await Promise.all([
-    zaehlen(sb.from("profiles").select("id", { count: "exact", head: true })),
+    zaehlen(sb.from("profiles").select("id", { count: "exact", head: true }).eq("is_anonymous", false)),
     zaehlen(sb.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_status", "active")),
-    zaehlen(sb.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", wocheAb)),
+    zaehlen(sb.from("profiles").select("id", { count: "exact", head: true }).eq("is_anonymous", false).gte("created_at", wocheAb)),
     // Für die Aufschlüsselung nach Kanal reicht die (kleine) Menge der
     // aktiven Abos -- nicht die ganze Nutzertabelle laden.
     sb.from("profiles").select("store_platform").eq("subscription_status", "active"),
