@@ -83,6 +83,17 @@ const I18N = {
     marketplace_translate: "Übersetzen",
     marketplace_original: "Original anzeigen",
     marketplace_translating: "Übersetze …",
+
+
+    // Nutzungsregeln (03.09.2026)
+    login_rules_prefix: "Ich akzeptiere die",
+    login_rules_link: "Nutzungsregeln",
+    login_rules_required: "Bitte akzeptiere die Nutzungsregeln.",
+    rules_title: "Nutzungsregeln",
+    rules_intro: "CollectView ist ein Ort für alle, die Musik und ihre Sammlung lieben. Damit das so bleibt, gilt für alle dieselben, ganz normalen Regeln.",
+    rules_items: "Keine Gewalt, keine Gewaltverherrlichung, keine Drohungen gegen andere Nutzer:innen.\nKein Rassismus, kein Antisemitismus, keine nationalsozialistischen Symbole, Parolen oder Lieder, keine anderweitig menschenverachtenden Inhalte.\nKeine Belästigung oder Beleidigung anderer Nutzer:innen.\nKeine illegalen Inhalte oder Angebote, z. B. Raubkopien oder gestohlene Ware.\nKein Spam und keine Werbung außerhalb des Marktplatzes.\nRespektvoller Umgang miteinander, auch bei Meinungsverschiedenheiten.",
+    rules_violation: "Verstöße gegen diese Regeln führen zur sofortigen Beendigung von CollectView Plus, ohne Erstattung bereits gezahlter Beiträge. In schweren Fällen wird der Zugang zur App vollständig gesperrt.",
+    rules_accept_note: "Mit der Registrierung akzeptierst du diese Nutzungsregeln.",
   },
 
   en: {
@@ -154,6 +165,15 @@ const I18N = {
     marketplace_translate: "Translate",
     marketplace_original: "Show original",
     marketplace_translating: "Translating …",
+    // Nutzungsregeln (03.09.2026)
+    login_rules_prefix: "I accept the",
+    login_rules_link: "Community Guidelines",
+    login_rules_required: "Please accept the Community Guidelines.",
+    rules_title: "Community Guidelines",
+    rules_intro: "CollectView is a place for everyone who loves music and collecting. To keep it that way, the same simple rules apply to everyone.",
+    rules_items: "No violence, glorification of violence, or threats against other users.\nNo racism, antisemitism, Nazi symbols, slogans or songs, or any other dehumanizing content.\nNo harassment or insulting other users.\nNo illegal content or listings, e.g. pirated or stolen goods.\nNo spam or advertising outside the marketplace.\nTreat each other with respect, even when you disagree.",
+    rules_violation: "Violating these rules leads to immediate termination of CollectView Plus, without refund of fees already paid. In serious cases, access to the app will be blocked entirely.",
+    rules_accept_note: "By registering, you accept these Community Guidelines.",
   },
 
   it: {
@@ -225,6 +245,15 @@ const I18N = {
     marketplace_translate: "Traduci",
     marketplace_original: "Mostra originale",
     marketplace_translating: "Traduzione …",
+    // Nutzungsregeln (03.09.2026)
+    login_rules_prefix: "Accetto le",
+    login_rules_link: "Regole della community",
+    login_rules_required: "Accetta le regole della community per continuare.",
+    rules_title: "Regole della community",
+    rules_intro: "CollectView è un luogo per chi ama la musica e il collezionismo. Per restare così, valgono per tutti le stesse regole di buon senso.",
+    rules_items: "Nessuna violenza, apologia della violenza o minacce verso altri utenti.\nNessun contenuto razzista, antisemita, simboli, slogan o canzoni nazionalsociste, né altri contenuti disumanizzanti.\nNessuna molestia o insulto verso altri utenti.\nNessun contenuto o annuncio illegale, ad es. copie pirata o merce rubata.\nNiente spam o pubblicità al di fuori del mercatino.\nRispetto reciproco, anche in caso di disaccordo.",
+    rules_violation: "La violazione di queste regole comporta la chiusura immediata di CollectView Plus, senza rimborso degli importi già pagati. Nei casi gravi, l'accesso all'app verrà bloccato completamente.",
+    rules_accept_note: "Registrandoti, accetti queste regole della community.",
   },
 
   pl: {
@@ -296,6 +325,15 @@ const I18N = {
     marketplace_translate: "Przetłumacz",
     marketplace_original: "Pokaż oryginał",
     marketplace_translating: "Tłumaczenie …",
+    // Nutzungsregeln (03.09.2026)
+    login_rules_prefix: "Akceptuję",
+    login_rules_link: "zasady społeczności",
+    login_rules_required: "Zaakceptuj zasady społeczności, aby kontynuować.",
+    rules_title: "Zasady społeczności",
+    rules_intro: "CollectView to miejsce dla wszystkich, którzy kochają muzykę i kolekcjonowanie. Aby tak pozostało, dla wszystkich obowiązują te same, zwyczajne zasady.",
+    rules_items: "Żadnej przemocy, gloryfikacji przemocy ani gróźb wobec innych użytkowników.\nŻadnych treści rasistowskich, antysemickich, symboli, haseł czy piosenek nazistowskich ani innych treści poniżających godność człowieka.\nŻadnego nękania ani obrażania innych użytkowników.\nŻadnych nielegalnych treści ani ofert, np. pirackich kopii czy skradzionych towarów.\nŻadnego spamu ani reklam poza rynkiem.\nWzajemny szacunek, także w przypadku różnicy zdań.",
+    rules_violation: "Naruszenie tych zasad prowadzi do natychmiastowego zakończenia CollectView Plus, bez zwrotu już zapłaconych opłat. W poważnych przypadkach dostęp do aplikacji zostanie całkowicie zablokowany.",
+    rules_accept_note: "Rejestrując się, akceptujesz te zasady społeczności.",
   },
 
   es: {
@@ -367,6 +405,15 @@ const I18N = {
     marketplace_translate: "Traducir",
     marketplace_original: "Mostrar original",
     marketplace_translating: "Traduciendo …",
+    // Nutzungsregeln (03.09.2026)
+    login_rules_prefix: "Acepto las",
+    login_rules_link: "normas de la comunidad",
+    login_rules_required: "Acepta las normas de la comunidad para continuar.",
+    rules_title: "Normas de la comunidad",
+    rules_intro: "CollectView es un lugar para quienes aman la música y coleccionar. Para que siga siendo así, se aplican a todos las mismas normas de sentido común.",
+    rules_items: "Nada de violencia, apología de la violencia ni amenazas contra otros usuarios.\nNada de contenido racista, antisemita, símbolos, consignas o canciones nazis, ni otro contenido que atente contra la dignidad humana.\nNada de acoso ni insultos hacia otros usuarios.\nNada de contenido u ofertas ilegales, por ejemplo copias piratas o mercancía robada.\nNada de spam ni publicidad fuera del mercado.\nTrato respetuoso entre todos, incluso en caso de desacuerdo.",
+    rules_violation: "Incumplir estas normas conlleva la baja inmediata de CollectView Plus, sin reembolso de las cuotas ya pagadas. En casos graves, el acceso a la aplicación se bloqueará por completo.",
+    rules_accept_note: "Al registrarte, aceptas estas normas de la comunidad.",
   },
 };
 

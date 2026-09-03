@@ -146,8 +146,19 @@ async function signIn(email, password) {
   if (error) throw error;
 }
 
+/**
+ * Registrierung. rules_accepted_at wandert als user_metadata mit (siehe
+ * db/nutzungsregeln.sql, handle_new_user() spiegelt es nach profiles) --
+ * so steht der Zeitpunkt auch dann fest, wenn eine E-Mail-Bestätigung
+ * noch aussteht und deshalb noch keine Sitzung existiert, aus der heraus
+ * profiles direkt beschrieben werden könnte.
+ */
 async function signUp(email, password) {
-  const { error } = await sb.auth.signUp({ email, password });
+  const { error } = await sb.auth.signUp({
+    email,
+    password,
+    options: { data: { rules_accepted_at: new Date().toISOString() } },
+  });
   if (error) throw error;
 }
 

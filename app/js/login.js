@@ -49,6 +49,11 @@ async function submit(mode) {
     return;
   }
 
+  if (mode === "sign-up" && !document.getElementById("rules-accept").checked) {
+    errorEl.textContent = t("login_rules_required");
+    return;
+  }
+
   setBusy(true, mode === "sign-up" ? "Konto wird angelegt …" : "Anmeldung läuft …");
   try {
     if (mode === "sign-up") {

@@ -52,6 +52,11 @@
         <button type="button" class="linklike" id="forgot-password" style="font-size:12.5px;padding:6px 2px;">Passwort vergessen?</button>
       </div>
 
+      <label id="rules-check-row" style="display:flex;align-items:flex-start;gap:8px;margin:0 0 14px;font-size:12.5px;line-height:1.5;color:var(--text-muted);">
+        <input type="checkbox" id="rules-accept" style="margin-top:3px;">
+        <span><span data-i18n="login_rules_prefix">Ich akzeptiere die</span> <a href="regeln.html" target="_blank" rel="noopener noreferrer" data-i18n="login_rules_link">Nutzungsregeln</a></span>
+      </label>
+
       <div class="row">
         <button class="btn-primary" type="submit" data-action="sign-in" data-i18n="login_submit">Anmelden</button>
         <button class="btn-secondary" type="button" data-action="sign-up" data-i18n="login_create_account">Registrieren</button>

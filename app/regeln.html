@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de" data-theme="studio">
+<head>
+<title>Nutzungsregeln – CollectView</title>
+<meta charset="utf-8">
+<script>(function(){var m=new Date().getMonth();var s=(m<2||m===11)?"winter":m<5?"fruehling":m<8?"sommer":"herbst";document.documentElement.dataset.season=s;})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" sizes="192x192" href="./favicon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon-180.png">
+<meta name="theme-color" content="#0E0E10">
+<link rel="stylesheet" href="./vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="./app.css">
+<style>
+  .rules-shell{ max-width:560px; padding-top:40px; padding-bottom:60px; }
+  .rules-shell ul{ margin:14px 0; padding-left:20px; }
+  .rules-shell li{ margin:8px 0; line-height:1.55; }
+  .rules-violation{ margin-top:22px; padding:14px; border-radius:10px; background:var(--surface-2); font-size:13.5px; line-height:1.6; }
+</style>
+</head>
+<body>
+<main class="shell rules-shell">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+    <a href="login.html" style="display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-weight:700; font-size:13.5px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common_back">Zurück</span>
+    </a>
+    <span id="rules-lang-slot"></span>
+  </div>
+
+  <h1 class="page-title" style="margin:0 0 14px;" data-i18n="rules_title">Nutzungsregeln</h1>
+  <p class="muted" id="rules-intro" style="line-height:1.6;"></p>
+  <ul id="rules-items"></ul>
+  <div class="rules-violation" id="rules-violation"></div>
+
+</main>
+
+<script src="./js/i18n.js"></script>
+<script src="./js/ui.js"></script>
+<script>
+function renderRules() {
+  document.getElementById("rules-intro").textContent = t("rules_intro");
+  document.getElementById("rules-items").innerHTML = t("rules_items")
+    .split("\n")
+    .map((item) => `<li>${escapeHtml(item)}</li>`)
+    .join("");
+  document.getElementById("rules-violation").textContent = t("rules_violation");
+  applyI18n(document);
+}
+renderRules();
+renderLangSwitcher(document.getElementById("rules-lang-slot"));
+document.getElementById("rules-lang-slot").addEventListener("change", renderRules);
+</script>
+</body>
+</html>
