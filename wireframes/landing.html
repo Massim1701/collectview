@@ -16,7 +16,7 @@
      nicht indexiert werden (siehe robots.txt). render-landing.mjs macht
      aus den relativen Pfaden hier absolute für die Cloudflare-Auslieferung
      unter "/", die Meta-Tags unten sind schon absolut. -->
-<meta name="description" content="Schallplatten und CDs per Barcode oder Kamera erkennen, in einer durchsuchbaren Sammlung verwalten und direkt bei YouTube und Spotify reinhören. CollectView – kostenlos starten.">
+<meta name="description" content="Schallplatten und CDs per Barcode oder Kamera erkennen und den Marktwert sehen – komplett kostenlos, ganz ohne Konto. Für die eigene, durchsuchbare Sammlung mit Höranbindung gibt es CollectView Plus.">
 <link rel="canonical" href="https://collectview.site/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CollectView">
@@ -37,12 +37,12 @@
   "url": "https://collectview.site/",
   "applicationCategory": "MusicApplication",
   "operatingSystem": "iOS, Android, Web",
-  "description": "Schallplatten und CDs per Barcode oder Kamera erkennen, in einer durchsuchbaren Sammlung verwalten und direkt bei YouTube und Spotify reinhören.",
+  "description": "Schallplatten und CDs per Barcode oder Kamera erkennen und den Marktwert sehen, komplett kostenlos ohne Konto. CollectView Plus fügt eine durchsuchbare Sammlung mit Höranbindung zu YouTube und Spotify hinzu.",
   "offers": {
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "EUR",
-    "description": "Kostenlose Nutzung mit CollectView Plus als Upgrade"
+    "description": "Scannen und Marktwert ansehen sind kostenlos und ohne Konto nutzbar. CollectView Plus (Sammlung verwalten) ist ein kostenpflichtiges Upgrade."
   }
 }
 </script>
@@ -73,7 +73,7 @@
         <a href="#how">So funktioniert's</a>
         <a href="./pricing.html">Preise</a>
         <a href="../app/login.html">Login</a>
-        <a href="../app/login.html"><button class="btn-primary" style="padding:12px 22px;">Kostenlos starten</button></a>
+        <a href="../app/scanner.html"><button class="btn-primary" style="padding:12px 22px;">Kostenlos scannen</button></a>
       </div>
     </div>
   </div>
@@ -83,12 +83,12 @@
       <div style="flex:1;">
         <div class="studio-badge">&#9679; REC &mdash; Browser + App &middot; 1 Konto</div>
         <h1 class="hero-headline">Scan.<br>Erkannt.<br><em>Geh&ouml;rt.</em></h1>
-        <div class="hero-copy">Barcode scannen oder Cover fotografieren – CollectView erkennt deine Schallplatten und CDs automatisch, verlinkt sie direkt mit YouTube und Spotify zum Reinhören und legt sie in deiner persönlichen Sammlung ab.</div>
+        <div class="hero-copy">Barcode scannen oder Cover fotografieren – CollectView erkennt deine Schallplatten und CDs automatisch und zeigt sofort den ungefähren Marktwert. Komplett kostenlos, ganz ohne Konto. Für die eigene, durchsuchbare Sammlung mit direkter Höranbindung zu YouTube und Spotify gibt es CollectView Plus.</div>
         <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
-          <a href="../app/login.html"><button class="btn-primary" style="padding:16px 30px;font-size:15.5px;">App kostenlos starten</button></a>
+          <a href="../app/scanner.html"><button class="btn-primary" style="padding:16px 30px;font-size:15.5px;">Jetzt kostenlos scannen</button></a>
           <span class="studio-price">2,91&nbsp;&euro;/Monat im Jahresabo &middot; 3,99&nbsp;&euro;/Monat ohne Jahresabo</span>
         </div>
-        <div style="margin-top:14px;font-size:13px;color:var(--text-faint);">Die iOS- und Android-App wartet aktuell noch auf die Freigabe in den App Stores. Bis dahin funktioniert CollectView im Browser &ndash; das Scannen läuft dort über die Webcam.</div>
+        <div style="margin-top:14px;font-size:13px;color:var(--text-faint);">Scannen und Marktwert ansehen geht sofort im Browser, ganz ohne Konto. Die iOS- und Android-App wartet noch auf die Freigabe in den App Stores.</div>
       </div>
       <div class="hero-visual">
         <div class="studio-card">
@@ -101,6 +101,7 @@
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
               <span style="width:7px;height:7px;border-radius:999px;background:var(--accent);box-shadow:0 0 6px 1px var(--accent-soft);"></span>
               <div style="font-size:11px;color:var(--text-faint);letter-spacing:.1em;text-transform:uppercase;">Treffer &middot; Barcode <span id="demo-barcode">075992277627</span></div>
+              <span id="demo-value" style="margin-left:auto;font-size:12.5px;font-weight:800;color:var(--accent-text);white-space:nowrap;">&asymp; 18 &euro;</span>
             </div>
             <div style="display:flex;gap:16px;margin-bottom:20px;">
               <img id="demo-cover" src="https://i.discogs.com/X2kgbJ7rhk0HNH39Nep8tTD_Fly6pmHk2KR_Lptjk88/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUyNjM1/MS0xMjkyMjkzNjg1/LmpwZWc.jpeg" alt="" style="width:84px;height:84px;border-radius:4px;flex:0 0 auto;object-fit:cover;background:var(--surface-2);">
@@ -128,7 +129,7 @@
         <div class="feature">
           <div class="icon-badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="8" width="10" height="8" rx="1"/><path d="M4 8V6a2 2 0 0 1 2-2h2M20 8V6a2 2 0 0 0-2-2h-2M4 16v2a2 2 0 0 0 2 2h2M20 16v2a2 2 0 0 1-2 2h-2"/></svg></div>
           <h3 class="feature-title">Barcode-Scan</h3>
-          <div class="feature-copy">Handy zücken, Barcode scannen, fertig – neuere Tonträger sind in Sekunden erkannt und katalogisiert.</div>
+          <div class="feature-copy">Handy zücken, Barcode scannen, fertig – neuere Tonträger sind in Sekunden erkannt, inklusive Marktwert. Ganz ohne Konto.</div>
         </div>
         <div class="feature">
           <div class="icon-badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 16l5-5 4 4 4-4 5 5"/><circle cx="8" cy="9" r="1.5"/></svg></div>
@@ -175,7 +176,7 @@
 
   <div class="cta-band">
     <div class="cta-heading">Bereit, deine Sammlung zu digitalisieren?</div>
-    <a href="../app/login.html"><button class="btn-primary" style="padding:17px 34px;font-size:16px;">Jetzt kostenlos starten</button></a>
+    <a href="../app/scanner.html"><button class="btn-primary" style="padding:17px 34px;font-size:16px;">Jetzt kostenlos scannen</button></a>
   </div>
 
   <div class="landing-footer">
@@ -230,26 +231,26 @@
   // Discogs-Treffer wie das jeweilige Cover, damit nichts auseinanderlaeuft.
   (function () {
     var DEMO = [
-      { titel: "Rumours", interpret: "Fleetwood Mac", meta: "1977 · Vinyl LP · US", barcode: "075992277627", cover: "https://i.discogs.com/X2kgbJ7rhk0HNH39Nep8tTD_Fly6pmHk2KR_Lptjk88/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUyNjM1/MS0xMjkyMjkzNjg1/LmpwZWc.jpeg" },
-      { titel: "Thriller", interpret: "Michael Jackson", meta: "1982 · Vinyl LP · US", barcode: "050086027326", cover: "https://i.discogs.com/X0i1NYuaGTA3LsiyysmL-w2Nmj7Lv7mUqUvRMWMN884/rs:fit/g:sm/q:90/h:630/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5MTEy/OTMtMTUxNjE0NDE1/NC01NDk5LmpwZWc.jpeg" },
-      { titel: "Wild Is The Wind", interpret: "Nina Simone", meta: "2016 · Vinyl LP · Europe", barcode: "886443982423", cover: "https://i.discogs.com/TPQsKr0AF4KywW-kxtYaM8lEiB-tXyOPo44Ead9cHwc/rs:fit/g:sm/q:90/h:576/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg4ODA3/MTgtMTYxMjg4NTI0/MS04Mzk3LmpwZWc.jpeg" },
-      { titel: "Trans Europa Express", interpret: "Kraftwerk", meta: "1977 · Vinyl LP · Germany", barcode: "509996550316", cover: "https://i.discogs.com/GyBdJdkNpWOefmm5E9QdmT5ufQFlD2UZQWELhNk9sB4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc1NTQ3/LTE1ODAwNzUyNzUt/NzE1Ny5qcGVn.jpeg" },
-      { titel: "Back To Black", interpret: "Amy Winehouse", meta: "2006 · Vinyl LP · US", barcode: "602517189541", cover: "https://i.discogs.com/NdldQe0P5ktTkjDoBFm9HLE0iiQ4xlqnDR2vNQ_Z0WU/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4NDgw/MDktMTM5MDk5MDQ4/OS02OTc5LmpwZWc.jpeg" },
-      { titel: "Discovery", interpret: "Daft Punk", meta: "2001 · Vinyl LP · Europe", barcode: "724384960928", cover: "https://i.discogs.com/OG3sHYS5v6DYm7GMRoOQv7gg0IcDjxcUsBmzEnJmhH4/rs:fit/g:sm/q:90/h:608/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4Nzkt/MTIzNjAzNTQ3Mi5q/cGVn.jpeg" },
-      { titel: "The Dark Side Of The Moon", interpret: "Pink Floyd", meta: "2016 · Vinyl LP · Europe", barcode: "724358421920", cover: "https://i.discogs.com/1fwskTLM6cfxbdNmBDJ8expl6wab0tEgxvuloLIqKh8/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkyODc4/MDktMTQ3OTc1MzIz/Ni05NjE3LmpwZWc.jpeg" },
-      { titel: "Head Hunters", interpret: "Herbie Hancock", meta: "1973 · Vinyl LP · US", barcode: "025218607529", cover: "https://i.discogs.com/PzhEnDeEy-u3foEvF-q1mPZDeTGt__d6k4j9XUZ7q_c/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMzgx/LTE0MzMyNTkxNDMt/ODUyMi5qcGVn.jpeg" },
-      { titel: "Arrival", interpret: "ABBA", meta: "1976 · Vinyl LP · Sweden", barcode: "042281608720", cover: "https://i.discogs.com/HbVLld3bdJl171NknKOC0ViXdwOE44NuBK2KNINNpUo/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ0MTE2/NS0xNDc5NzUzODY1/LTE4MDQuanBlZw.jpeg" },
-      { titel: "Paul's Boutique", interpret: "Beastie Boys", meta: "2009 · Vinyl LP · US", barcode: "077778611526", cover: "https://i.discogs.com/bGAlx3TL63noIQKqaRy9yyRMajcv6CinhsL3QUiHKLA/rs:fit/g:sm/q:90/h:501/w:505/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2NTE1/NDItMTc4NTg4ODU5/Ni00MzgxLnBuZw.jpeg" },
-      { titel: "OK Computer", interpret: "Radiohead", meta: "2008 · Vinyl LP · US", barcode: "634904078412", cover: "https://i.discogs.com/VnYA9gk2yWIQtPwljiI9I4_d_lXODBY582RquPzs_sg/rs:fit/g:sm/q:90/h:609/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1ODcx/NjgtMTY0NzQ0NTg0/My00ODU0LmpwZWc.jpeg" },
-      { titel: "Abbey Road", interpret: "The Beatles", meta: "2019 · Vinyl LP · Worldwide", barcode: "602547261717", cover: "https://i.discogs.com/Tq4RLJXx26PDGwUs7f_x2MrkQD2wn3e7XAaUkWnAvA4/rs:fit/g:sm/q:90/h:607/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0MTg2/NDQxLTE1Njk0ODcx/NjEtNzMxNC5qcGVn.jpeg" },
-      { titel: "Legend", interpret: "Bob Marley & The Wailers", meta: "2015 · Vinyl LP · Europe", barcode: "600753507703", cover: "https://i.discogs.com/KKZdvpp6clCzTNxIuMA5GC8vnp1dS6-AMuRdG9cB1BY/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ0MTg0/MzgtMTY2NDM1NTE4/MS04MzA3LmpwZWc.jpeg" },
-      { titel: "I Never Loved A Man The Way I Love You", interpret: "Aretha Franklin", meta: "2019 · Vinyl LP · US", barcode: "603497851898", cover: "https://i.discogs.com/INExta7HzUJ-8aUjtLXE2eR_micRcsFc6yp-yco8LM0/rs:fit/g:sm/q:90/h:603/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NTA5/MzAzLTE1Nzc3NzE5/NDctNzk0OC5qcGVn.jpeg" },
-      { titel: "The Rise And Fall Of Ziggy Stardust", interpret: "David Bowie", meta: "2016 · Vinyl LP · Worldwide", barcode: "190295995933", cover: "https://i.discogs.com/9JCin7Zj5m1DG4de-SnowglKx_nDZm1jUEU78Jqrh7s/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTgxNjIx/ODgtMTQ1NjY3NjQy/MC0xNjU4LmpwZWc.jpeg" },
-      { titel: "Kind Of Blue", interpret: "Miles Davis", meta: "2010 · Vinyl LP · France", barcode: "888072300317", cover: "https://i.discogs.com/HocOgI_8yE8Ggm3X0gCbXOy0IjNiP_rNr2a24dizxz4/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NzI0/MzItMTMwMjg0NjQ4/OC5qcGVn.jpeg" },
-      { titel: "21", interpret: "Adele", meta: "2011 · Vinyl LP · Europe", barcode: "886979348416", cover: "https://i.discogs.com/pbgKc7liXRhTdGM1zNhToDidUDYjK7_CQsxNaXxQTtE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NjQ1/ODktMTQ1MjI2OTk5/NS03Mjk4LnBuZw.jpeg" },
-      { titel: "A Night At The Opera", interpret: "Queen", meta: "2008 · Vinyl LP · USA & Canada", barcode: "602517497608", cover: "https://i.discogs.com/vzcIT3z-LQJDvV7ypdky0vL_wPXnxjPhAjgfzmrhRRY/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxNzA4/ODUtMTQxNzYzMTIw/MC0xNzg2LmpwZWc.jpeg" },
-      { titel: "Mezzanine", interpret: "Massive Attack", meta: "2013 · Vinyl LP · Europe", barcode: "5028386128617", cover: "https://i.discogs.com/gqCkCURexqaNgtuxxr1sZDNAdi6lBphQL2dfuNX_It0/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUwNzcx/ODctMTYzMjgzNjky/OC01NTkzLmpwZWc.jpeg" },
-      { titel: "Songs In The Key Of Life", interpret: "Stevie Wonder", meta: "1976 · Vinyl LP · US", barcode: "731454057515", cover: "https://i.discogs.com/cmalBxXo_YdO90ufVWF7sBjqvA6H4dkbTagkhkMbSZk/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NjY1/MC0xNDkxMDEwNTM4/LTcyNzUuanBlZw.jpeg" },
+      { titel: "Rumours", wert: "18 €", interpret: "Fleetwood Mac", meta: "1977 · Vinyl LP · US", barcode: "075992277627", cover: "https://i.discogs.com/X2kgbJ7rhk0HNH39Nep8tTD_Fly6pmHk2KR_Lptjk88/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUyNjM1/MS0xMjkyMjkzNjg1/LmpwZWc.jpeg" },
+      { titel: "Thriller", wert: "22 €", interpret: "Michael Jackson", meta: "1982 · Vinyl LP · US", barcode: "050086027326", cover: "https://i.discogs.com/X0i1NYuaGTA3LsiyysmL-w2Nmj7Lv7mUqUvRMWMN884/rs:fit/g:sm/q:90/h:630/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5MTEy/OTMtMTUxNjE0NDE1/NC01NDk5LmpwZWc.jpeg" },
+      { titel: "Wild Is The Wind", wert: "24 €", interpret: "Nina Simone", meta: "2016 · Vinyl LP · Europe", barcode: "886443982423", cover: "https://i.discogs.com/TPQsKr0AF4KywW-kxtYaM8lEiB-tXyOPo44Ead9cHwc/rs:fit/g:sm/q:90/h:576/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg4ODA3/MTgtMTYxMjg4NTI0/MS04Mzk3LmpwZWc.jpeg" },
+      { titel: "Trans Europa Express", wert: "35 €", interpret: "Kraftwerk", meta: "1977 · Vinyl LP · Germany", barcode: "509996550316", cover: "https://i.discogs.com/GyBdJdkNpWOefmm5E9QdmT5ufQFlD2UZQWELhNk9sB4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc1NTQ3/LTE1ODAwNzUyNzUt/NzE1Ny5qcGVn.jpeg" },
+      { titel: "Back To Black", wert: "30 €", interpret: "Amy Winehouse", meta: "2006 · Vinyl LP · US", barcode: "602517189541", cover: "https://i.discogs.com/NdldQe0P5ktTkjDoBFm9HLE0iiQ4xlqnDR2vNQ_Z0WU/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4NDgw/MDktMTM5MDk5MDQ4/OS02OTc5LmpwZWc.jpeg" },
+      { titel: "Discovery", wert: "40 €", interpret: "Daft Punk", meta: "2001 · Vinyl LP · Europe", barcode: "724384960928", cover: "https://i.discogs.com/OG3sHYS5v6DYm7GMRoOQv7gg0IcDjxcUsBmzEnJmhH4/rs:fit/g:sm/q:90/h:608/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4Nzkt/MTIzNjAzNTQ3Mi5q/cGVn.jpeg" },
+      { titel: "The Dark Side Of The Moon", wert: "28 €", interpret: "Pink Floyd", meta: "2016 · Vinyl LP · Europe", barcode: "724358421920", cover: "https://i.discogs.com/1fwskTLM6cfxbdNmBDJ8expl6wab0tEgxvuloLIqKh8/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkyODc4/MDktMTQ3OTc1MzIz/Ni05NjE3LmpwZWc.jpeg" },
+      { titel: "Head Hunters", wert: "45 €", interpret: "Herbie Hancock", meta: "1973 · Vinyl LP · US", barcode: "025218607529", cover: "https://i.discogs.com/PzhEnDeEy-u3foEvF-q1mPZDeTGt__d6k4j9XUZ7q_c/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMzgx/LTE0MzMyNTkxNDMt/ODUyMi5qcGVn.jpeg" },
+      { titel: "Arrival", wert: "20 €", interpret: "ABBA", meta: "1976 · Vinyl LP · Sweden", barcode: "042281608720", cover: "https://i.discogs.com/HbVLld3bdJl171NknKOC0ViXdwOE44NuBK2KNINNpUo/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ0MTE2/NS0xNDc5NzUzODY1/LTE4MDQuanBlZw.jpeg" },
+      { titel: "Paul's Boutique", wert: "38 €", interpret: "Beastie Boys", meta: "2009 · Vinyl LP · US", barcode: "077778611526", cover: "https://i.discogs.com/bGAlx3TL63noIQKqaRy9yyRMajcv6CinhsL3QUiHKLA/rs:fit/g:sm/q:90/h:501/w:505/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2NTE1/NDItMTc4NTg4ODU5/Ni00MzgxLnBuZw.jpeg" },
+      { titel: "OK Computer", wert: "32 €", interpret: "Radiohead", meta: "2008 · Vinyl LP · US", barcode: "634904078412", cover: "https://i.discogs.com/VnYA9gk2yWIQtPwljiI9I4_d_lXODBY582RquPzs_sg/rs:fit/g:sm/q:90/h:609/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1ODcx/NjgtMTY0NzQ0NTg0/My00ODU0LmpwZWc.jpeg" },
+      { titel: "Abbey Road", wert: "26 €", interpret: "The Beatles", meta: "2019 · Vinyl LP · Worldwide", barcode: "602547261717", cover: "https://i.discogs.com/Tq4RLJXx26PDGwUs7f_x2MrkQD2wn3e7XAaUkWnAvA4/rs:fit/g:sm/q:90/h:607/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0MTg2/NDQxLTE1Njk0ODcx/NjEtNzMxNC5qcGVn.jpeg" },
+      { titel: "Legend", wert: "22 €", interpret: "Bob Marley & The Wailers", meta: "2015 · Vinyl LP · Europe", barcode: "600753507703", cover: "https://i.discogs.com/KKZdvpp6clCzTNxIuMA5GC8vnp1dS6-AMuRdG9cB1BY/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ0MTg0/MzgtMTY2NDM1NTE4/MS04MzA3LmpwZWc.jpeg" },
+      { titel: "I Never Loved A Man The Way I Love You", wert: "24 €", interpret: "Aretha Franklin", meta: "2019 · Vinyl LP · US", barcode: "603497851898", cover: "https://i.discogs.com/INExta7HzUJ-8aUjtLXE2eR_micRcsFc6yp-yco8LM0/rs:fit/g:sm/q:90/h:603/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NTA5/MzAzLTE1Nzc3NzE5/NDctNzk0OC5qcGVn.jpeg" },
+      { titel: "The Rise And Fall Of Ziggy Stardust", wert: "28 €", interpret: "David Bowie", meta: "2016 · Vinyl LP · Worldwide", barcode: "190295995933", cover: "https://i.discogs.com/9JCin7Zj5m1DG4de-SnowglKx_nDZm1jUEU78Jqrh7s/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTgxNjIx/ODgtMTQ1NjY3NjQy/MC0xNjU4LmpwZWc.jpeg" },
+      { titel: "Kind Of Blue", wert: "20 €", interpret: "Miles Davis", meta: "2010 · Vinyl LP · France", barcode: "888072300317", cover: "https://i.discogs.com/HocOgI_8yE8Ggm3X0gCbXOy0IjNiP_rNr2a24dizxz4/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NzI0/MzItMTMwMjg0NjQ4/OC5qcGVn.jpeg" },
+      { titel: "21", wert: "18 €", interpret: "Adele", meta: "2011 · Vinyl LP · Europe", barcode: "886979348416", cover: "https://i.discogs.com/pbgKc7liXRhTdGM1zNhToDidUDYjK7_CQsxNaXxQTtE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NjQ1/ODktMTQ1MjI2OTk5/NS03Mjk4LnBuZw.jpeg" },
+      { titel: "A Night At The Opera", wert: "24 €", interpret: "Queen", meta: "2008 · Vinyl LP · USA & Canada", barcode: "602517497608", cover: "https://i.discogs.com/vzcIT3z-LQJDvV7ypdky0vL_wPXnxjPhAjgfzmrhRRY/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxNzA4/ODUtMTQxNzYzMTIw/MC0xNzg2LmpwZWc.jpeg" },
+      { titel: "Mezzanine", wert: "30 €", interpret: "Massive Attack", meta: "2013 · Vinyl LP · Europe", barcode: "5028386128617", cover: "https://i.discogs.com/gqCkCURexqaNgtuxxr1sZDNAdi6lBphQL2dfuNX_It0/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUwNzcx/ODctMTYzMjgzNjky/OC01NTkzLmpwZWc.jpeg" },
+      { titel: "Songs In The Key Of Life", wert: "35 €", interpret: "Stevie Wonder", meta: "1976 · Vinyl LP · US", barcode: "731454057515", cover: "https://i.discogs.com/cmalBxXo_YdO90ufVWF7sBjqvA6H4dkbTagkhkMbSZk/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NjY1/MC0xNDkxMDEwNTM4/LTcyNzUuanBlZw.jpeg" },
     ];
     var scanLine = document.getElementById("scan-line");
     var coverEl = document.getElementById("demo-cover");
@@ -257,7 +258,8 @@
     var artistEl = document.getElementById("demo-artist");
     var metaEl = document.getElementById("demo-meta");
     var barcodeEl = document.getElementById("demo-barcode");
-    if (!scanLine || !coverEl || !titleEl || !artistEl || !metaEl || !barcodeEl) return;
+    var valueEl = document.getElementById("demo-value");
+    if (!scanLine || !coverEl || !titleEl || !artistEl || !metaEl || !barcodeEl || !valueEl) return;
 
     var i = 0;
     setInterval(function () {
@@ -275,6 +277,10 @@
         metaEl.textContent = d.meta;
         barcodeEl.textContent = d.barcode;
         coverEl.src = d.cover;
+        // Marktwert: schätzungsweise/illustrativ, wie im echten Scan-Ergebnis
+        // (app/js/scanner.js attachScanValue) -- hier nur ohne Live-Discogs-
+        // Abfrage, damit die Demo nicht von der API-Quote abhängt.
+        valueEl.textContent = "≈ " + d.wert;
       }, 350);
     }, 10000);
   })();
