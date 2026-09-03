@@ -21,6 +21,13 @@
   .ml-cover-box img{ width:100%; height:100%; object-fit:cover; display:block; }
   .ml-cover-label{ position:absolute; bottom:4px; right:6px; font-size:10px; font-weight:800;
     color:#fff; background:rgba(0,0,0,.45); padding:1px 6px; border-radius:999px; letter-spacing:.03em; text-transform:uppercase; }
+  .ml-cover-box[data-full]{ cursor:zoom-in; }
+  #cover-lightbox{ max-width:min(92vw, 640px); max-height:88vh; width:100%; border:0; border-radius:var(--radius-md);
+    background:transparent; padding:0; }
+  #cover-lightbox::backdrop{ background:rgba(0,0,0,.8); }
+  #cover-lightbox img{ display:block; width:100%; max-height:88vh; object-fit:contain; border-radius:var(--radius-md); }
+  #cover-lightbox-close{ position:absolute; top:10px; right:10px; width:36px; height:36px; border-radius:999px;
+    background:rgba(0,0,0,.55); color:#fff; border:0; font-size:20px; line-height:1; cursor:pointer; }
   .ml-price{ font-family:var(--font-display); font-style:italic; font-size:32px; margin:4px 0 4px; }
   .ml-fx{ color:var(--text-muted); font-size:13px; font-weight:700; margin:0 0 14px; }
   .ml-date{ color:var(--text-muted); font-size:12.5px; margin-top:2px; }
@@ -38,6 +45,11 @@
   </a>
 
   <div id="content"></div>
+
+  <dialog id="cover-lightbox">
+    <button type="button" id="cover-lightbox-close" aria-label="Schließen">&times;</button>
+    <img id="cover-lightbox-img" src="" alt="">
+  </dialog>
 
 </main>
 
@@ -102,19 +114,20 @@
   const fxLine = listingFxLine(listing, fxRates);
 
   const coversMarkup = (() => {
-    const front = listing.cover_url
-      ? `<img src="${escapeHtml(listing.cover_url)}" alt="Vorderseite" loading="lazy">`
-      : "";
-    const back = listing.cover_url_back
-      ? `<img src="${escapeHtml(listing.cover_url_back)}" alt="Rückseite" loading="lazy">`
-      : "";
+    const frontUrl = listing.cover_url || "";
+    const backUrl = listing.cover_url_back || "";
+    const front = frontUrl ? `<img src="${escapeHtml(frontUrl)}" alt="Vorderseite" loading="lazy">` : "";
+    const back = backUrl ? `<img src="${escapeHtml(backUrl)}" alt="Rückseite" loading="lazy">` : "";
     if (!front && !back) {
       return `<div class="ml-covers single"><div class="ml-cover-box ${coverClass(listing.title)}"></div></div>`;
     }
+    // data-full: welches Bild beim Anklicken groß im Lightbox-Dialog
+    // erscheint (lesbar, siehe Nutzeranfrage) – nur gesetzt, wo es
+    // wirklich ein Bild gibt, sonst bleibt der Platzhalter unklickbar.
     return `
       <div class="ml-covers${back ? "" : " single"}">
-        <div class="ml-cover-box ${front ? "" : coverClass(listing.title)}">${front}${back ? '<span class="ml-cover-label">Vorne</span>' : ""}</div>
-        ${back ? `<div class="ml-cover-box">${back}<span class="ml-cover-label">Hinten</span></div>` : ""}
+        <div class="ml-cover-box ${front ? "" : coverClass(listing.title)}" ${front ? `data-full="${escapeHtml(frontUrl)}"` : ""}>${front}${back ? '<span class="ml-cover-label">Vorne</span>' : ""}</div>
+        ${back ? `<div class="ml-cover-box" data-full="${escapeHtml(backUrl)}">${back}<span class="ml-cover-label">Hinten</span></div>` : ""}
       </div>`;
   })();
 
@@ -167,6 +180,23 @@
   `;
 
   applyI18n(content);
+
+  // Cover groß anzeigen: Klick auf Vorder-/Rückseite öffnet sie lesbar
+  // im Lightbox-Dialog (Nutzeranfrage: Rückseiten-Text ist im 50%-
+  // kleinen Cover sonst kaum zu lesen).
+  const lightbox = document.getElementById("cover-lightbox");
+  const lightboxImg = document.getElementById("cover-lightbox-img");
+  content.querySelectorAll(".ml-cover-box[data-full]").forEach((box) => {
+    box.addEventListener("click", () => {
+      lightboxImg.src = box.dataset.full;
+      lightboxImg.alt = box.querySelector("img")?.alt || "";
+      lightbox.showModal();
+    });
+  });
+  document.getElementById("cover-lightbox-close").addEventListener("click", () => lightbox.close());
+  lightbox.addEventListener("click", (e) => {
+    if (e.target === lightbox) lightbox.close();
+  });
 
   const descBtn = document.getElementById("translate-desc");
   if (descBtn) wireTranslateToggle(descBtn, document.getElementById("listing-desc"), () => listing.description);

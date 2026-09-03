@@ -27,12 +27,14 @@ async function fetchActiveListings() {
   return data || [];
 }
 
-/** Alle eigenen Angebote (auch verkaufte/entfernte), neueste zuerst. */
+/** Eigene Angebote (auch verkaufte), neueste zuerst – entfernte
+    ("Entfernen"-Button) tauchen hier bewusst nicht mehr auf. */
 async function fetchMyListings(userId) {
   const { data, error } = await sb
     .from("marketplace_listings")
     .select("*")
     .eq("seller_id", userId)
+    .neq("status", "removed")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data || [];
