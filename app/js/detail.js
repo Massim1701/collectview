@@ -174,14 +174,17 @@ function valueMarkup(item, preis) {
   const total = valueTotalText(item, preis);
   return `
     <div class="value-zone" id="value-zone">
-      <div>
-        <div class="value-label">Marktwert</div>
-        <span class="value-hint">${range ? escapeHtml(range) : "laut Discogs-Marktplatz"}</span>
+      <div class="value-zone-row">
+        <div>
+          <div class="value-label">Marktwert</div>
+          <span class="value-hint">${range ? escapeHtml(range) : "laut Discogs-Marktplatz"}</span>
+        </div>
+        <div style="text-align:right;">
+          <div class="value-amount" id="value-amount">${escapeHtml(formatMoney(hauptwert, preis.currency))}</div>
+          <div class="value-range" id="value-total">${total ? escapeHtml(total) : ""}</div>
+        </div>
       </div>
-      <div style="text-align:right;">
-        <div class="value-amount" id="value-amount">${escapeHtml(formatMoney(hauptwert, preis.currency))}</div>
-        <div class="value-range" id="value-total">${total ? escapeHtml(total) : ""}</div>
-      </div>
+      <p class="value-disclaimer">Richtpreis, kein garantierter Verkaufspreis – was Käufer oder Händler tatsächlich zahlen, kann abweichen.</p>
     </div>`;
 }
 

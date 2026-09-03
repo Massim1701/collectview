@@ -347,26 +347,34 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 /* Marktwert: gleicher Kasten-Look wie .qty-zone, damit beide als
    zusammengehöriges Paar aus "wie viele" / "wie viel wert" wirken. */
 .value-zone{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:var(--space-4); flex-wrap:wrap;
   background:var(--surface-2); border:1px solid var(--border);
   border-radius:var(--radius-md); padding:var(--space-3) var(--space-4);
   margin-bottom:var(--space-6);
+}
+.value-zone-row{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--space-4); flex-wrap:wrap;
 }
 .value-label{ font-size:var(--text-sm); font-weight:700; }
 .value-hint{ display:block; font-weight:500; font-size:var(--text-xs); color:var(--text-muted); margin-top:2px; }
 .value-amount{ font-size:var(--text-lg); font-weight:800; font-variant-numeric:tabular-nums; color:var(--accent-text); }
 .value-range{ font-size:var(--text-xs); color:var(--text-muted); margin-top:2px; }
 .value-range:empty{ display:none; }
+.value-disclaimer{
+  font-size:11.5px; color:var(--text-faint); margin:10px 0 0; padding-top:10px;
+  border-top:1px solid var(--border); line-height:1.4;
+}
 /* Sammlungs-Gesamtwert, oben auf collection.html -- breiterer Streifen
    statt Kasten, damit er sich von .value-zone (Detailseite, ein Eintrag)
    unterscheidet. */
 .value-summary{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:var(--space-4); flex-wrap:wrap;
   background:var(--surface-2); border:1px solid var(--border);
   border-radius:var(--radius-md); padding:var(--space-3) var(--space-4);
   margin-bottom:var(--space-4);
+}
+.value-summary-row{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--space-4); flex-wrap:wrap;
 }
 .value-summary-amount{ font-size:var(--text-xl); font-weight:800; font-variant-numeric:tabular-nums; color:var(--accent-text); }
 .value-summary-hint{ font-size:var(--text-xs); color:var(--text-muted); margin-top:2px; }

@@ -188,13 +188,16 @@ function renderValueSummary() {
 
   valueSummaryEl.innerHTML = `
     <div class="value-summary">
-      <div>
-        <div class="value-summary-amount">${escapeHtml(formatMoney(summe, waehrung))}</div>
-        <div class="value-summary-hint">
-          Geschätzter Sammlungswert · ${bewertet} von ${gesamt} Platten bewertet
+      <div class="value-summary-row">
+        <div>
+          <div class="value-summary-amount">${escapeHtml(formatMoney(summe, waehrung))}</div>
+          <div class="value-summary-hint">
+            Geschätzter Sammlungswert · ${bewertet} von ${gesamt} Platten bewertet
+          </div>
         </div>
+        ${nachladbar ? `<button class="btn-secondary" type="button" id="value-refresh" style="height:36px; padding:0 12px; font-size:13px;">Fehlende nachladen</button>` : ""}
       </div>
-      ${nachladbar ? `<button class="btn-secondary" type="button" id="value-refresh" style="height:36px; padding:0 12px; font-size:13px;">Fehlende nachladen</button>` : ""}
+      <p class="value-disclaimer">Richtpreis, kein garantierter Verkaufspreis – was Käufer oder Händler tatsächlich zahlen, kann abweichen.</p>
     </div>`;
   wireValueRefresh();
 }
