@@ -7,7 +7,8 @@
      format, year, price_cents (optional), currency, description, cover_url,
      status, kind ('biete' | 'gesucht'), created_at
    marketplace_messages: id, listing_id, sender_id, recipient_id, body,
-     created_at
+     created_at, read_at (Posteingang: Umschlag-Symbol mit Zähler,
+     siehe fetchUnreadMessageCount/markConversationRead, db/marketplace-inbox.sql)
 
    Nur für Nutzer mit aktivem Abo (profiles.subscription_status = 'active'):
    RLS erlaubt Ansehen fremder Angebote, Erstellen und Nachrichten nur dann.
@@ -63,6 +64,28 @@ async function fetchListingMessages(listingId) {
     .order("created_at", { ascending: true });
   if (error) throw error;
   return data || [];
+}
+
+/** Anzahl ungelesener Nachrichten an den Nutzer (für das Umschlag-Symbol). */
+async function fetchUnreadMessageCount(userId) {
+  const { count, error } = await sb
+    .from("marketplace_messages")
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_id", userId)
+    .is("read_at", null);
+  if (error) throw error;
+  return count || 0;
+}
+
+/** Markiert alle empfangenen Nachrichten zu einem Angebot als gelesen. */
+async function markConversationRead(listingId, userId) {
+  const { error } = await sb
+    .from("marketplace_messages")
+    .update({ read_at: new Date().toISOString() })
+    .eq("listing_id", listingId)
+    .eq("recipient_id", userId)
+    .is("read_at", null);
+  if (error) throw error;
 }
 
 async function sendListingMessage(listingId, recipientId, body) {

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="de" data-theme="studio">
+<head>
+<title>Nachrichten – CollectView</title>
+<meta charset="utf-8">
+<script>(function(){var m=new Date().getMonth();var s=(m<2||m===11)?"winter":m<5?"fruehling":m<8?"sommer":"herbst";document.documentElement.dataset.season=s;})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" sizes="192x192" href="./favicon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon-180.png">
+<meta name="theme-color" content="#0E0E10">
+<link rel="stylesheet" href="./vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="./app.css">
+<style>
+  .inbox-row{ display:flex; align-items:flex-start; gap:12px; padding:14px 4px; border-bottom:1px solid var(--border); }
+  .inbox-row:last-child{ border-bottom:none; }
+  .inbox-row .dot{ flex:0 0 auto; width:9px; height:9px; border-radius:999px; background:#FF4D5E; margin-top:6px; }
+  .inbox-row .dot.read{ background:transparent; }
+  .inbox-title{ font-weight:700; }
+  .inbox-title.unread{ font-weight:800; }
+  .inbox-preview{ color:var(--text-muted); font-size:13.5px; margin-top:2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .inbox-meta{ flex:0 0 auto; font-size:11.5px; color:var(--text-faint); white-space:nowrap; margin-top:2px; }
+</style>
+</head>
+<body>
+<main class="shell">
+
+  <a href="marketplace.html" style="display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-weight:700; font-size:13.5px; margin:30px 0 18px;">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Marktplatz
+  </a>
+
+  <h1 class="page-title" style="margin:0 0 18px;">Nachrichten</h1>
+
+  <div id="content"></div>
+
+</main>
+
+<div class="bottomnav" id="bottomnav"></div>
+
+<script src="./vendor/supabase.js"></script>
+<script src="./config.js"></script>
+<script src="./js/i18n.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/db.js"></script>
+<script src="./js/marketplace.js"></script>
+<script>
+(async function () {
+  const user = await requireAuth();
+  if (!user) return;
+  renderBottomNav(document.getElementById("bottomnav"), "forum");
+
+  const content = document.getElementById("content");
+  content.innerHTML = skeletonList(4);
+
+  try {
+    const rows = await fetchMyConversations(user.id);
+    // Nur eingegangene Nachrichten (an mich) interessieren hier – Verkäufer:innen
+    // sehen so, wer sich zu ihren Angeboten gemeldet hat. Gruppiert je Angebot,
+    // weil marketplace-listing.html Nachrichten dort gemeinsam anzeigt.
+    const incoming = rows.filter((m) => m.recipient_id === user.id);
+
+    if (incoming.length === 0) {
+      content.innerHTML = emptyState({
+        iconName: "grid",
+        title: "Noch keine Nachrichten",
+        text: "Sobald sich jemand zu einem deiner Angebote meldet, erscheint es hier.",
+      });
+      return;
+    }
+
+    const byListing = new Map();
+    incoming.forEach((m) => {
+      const key = m.listing_id;
+      if (!byListing.has(key)) {
+        byListing.set(key, {
+          listing: m.marketplace_listings,
+          latest: m,
+          unread: 0,
+        });
+      }
+      const entry = byListing.get(key);
+      if (new Date(m.created_at) > new Date(entry.latest.created_at)) entry.latest = m;
+      if (!m.read_at) entry.unread += 1;
+    });
+
+    const groups = [...byListing.values()].sort(
+      (a, b) => new Date(b.latest.created_at) - new Date(a.latest.created_at),
+    );
+
+    content.innerHTML = groups.map((g) => {
+      const title = g.listing?.title || "Entferntes Angebot";
+      const href = g.listing ? `marketplace-listing.html?id=${encodeURIComponent(g.listing.id)}` : "#";
+      const isUnread = g.unread > 0;
+      return `
+        <a class="inbox-row" href="${href}" style="text-decoration:none; color:inherit;">
+          <div class="dot${isUnread ? "" : " read"}"></div>
+          <div style="min-width:0; flex:1;">
+            <div class="inbox-title${isUnread ? " unread" : ""}">${escapeHtml(title)}</div>
+            <div class="inbox-preview">${escapeHtml(g.latest.body)}</div>
+          </div>
+          <div class="inbox-meta">${new Date(g.latest.created_at).toLocaleDateString("de-DE")}</div>
+        </a>`;
+    }).join("");
+  } catch (e) {
+    content.innerHTML = errorState(e.message);
+  }
+})();
+</script>
+</body>
+</html>

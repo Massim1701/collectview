@@ -206,7 +206,25 @@ a.list-card-plus:hover{ border-color:var(--plus-color); }
   display:flex; justify-content:space-around; align-items:center;
 }
 /* 44px+ Touch-Ziel, auch wenn das Label klein ist */
-.navitem{ min-width:58px; min-height:46px; justify-content:center; cursor:pointer; transition:color .15s ease; }
+.navitem{ min-width:58px; min-height:46px; justify-content:center; cursor:pointer; transition:color .15s ease; position:relative; }
+.navitem-badge{
+  position:absolute; top:-2px; right:2px;
+  background:var(--accent); color:var(--accent-ink);
+  font-size:8.5px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+  padding:1px 5px; border-radius:999px; line-height:1.4;
+}
+
+/* Umschlag-Symbol im Topbar/Kopfbereich: roter Zähler statt E-Mail-Versand
+   (siehe db/marketplace-inbox.sql, ui.js renderInboxBadge). */
+.inbox-btn{ position:relative; }
+.inbox-badge{
+  position:absolute; top:-3px; right:-3px;
+  min-width:16px; height:16px; padding:0 4px;
+  display:flex; align-items:center; justify-content:center;
+  background:#FF4D5E; color:#fff;
+  font-size:10px; font-weight:800; line-height:1;
+  border-radius:999px; border:2px solid var(--bg);
+}
 
 /* Seit dbe2093 stehen fünf Einträge plus FAB in der Leiste. Bei 58px
    Mindestbreite braucht die Reihe 5×58 + 58 + 32 = 380px – auf 360px

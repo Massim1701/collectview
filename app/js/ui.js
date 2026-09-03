@@ -177,7 +177,7 @@ function renderBottomNav(container, active) {
     const isActive = key === active;
     const tag = isActive ? "span" : "a";
     return `
-      <${tag} class="navitem${isActive ? " active" : ""}"${isActive ? ' aria-current="page"' : ` href="${href}"`}>
+      <${tag} class="navitem${isActive ? " active" : ""}" data-navkey="${key}"${isActive ? ' aria-current="page"' : ` href="${href}"`}>
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>
         ${label}
@@ -199,4 +199,57 @@ function renderBottomNav(container, active) {
       ${item("search", "collection.html?focus=suche", t("nav_search"), ICONS.search)}
       ${item("account", "index.html#konto", t("nav_account"), '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.8-4 5-6 8-6s6.2 2 8 6"/>')}
     </nav>`;
+
+  markForumNavIfFree(container);
+}
+
+/**
+ * Umschlag-Symbol mit Ungelesen-Zähler (statt E-Mail-Versand): steuert ein
+ * bestehendes <button>-Element im Markup der Seite an (z. B. #inbox-btn),
+ * hängt bei Bedarf ein rotes Zähler-Badge an und blendet es ohne Nachrichten
+ * wieder aus. Läuft still im Hintergrund – ohne Session/Fehler bleibt der
+ * Button einfach ohne Badge stehen, wie bei markForumNavIfFree.
+ */
+async function renderInboxBadge(button) {
+  if (!button) return;
+  try {
+    const { data } = await sb.auth.getUser();
+    if (!data?.user) return;
+    const count = await fetchUnreadMessageCount(data.user.id);
+    let badge = button.querySelector(".inbox-badge");
+    if (count <= 0) {
+      if (badge) badge.remove();
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "inbox-badge";
+      button.appendChild(badge);
+    }
+    badge.textContent = count > 9 ? "9+" : String(count);
+  } catch {
+    /* kein Badge ist besser als ein kaputter Header */
+  }
+}
+
+/**
+ * "Plus"-Hinweis am Marktplatz-Icon für Nutzer ohne aktives Abo – der
+ * Marktplatz ist seit db/free-tier-gate.sql komplett Plus-exklusiv, das
+ * soll schon in der Navigation erkennbar sein, nicht erst nach dem Klick.
+ * Läuft still im Hintergrund nach; ohne Session oder bei einem Fehler
+ * bleibt das Icon einfach unverändert – kein Grund, die Navigation
+ * deswegen zu blockieren.
+ */
+async function markForumNavIfFree(container) {
+  try {
+    const { data } = await sb.auth.getUser();
+    if (!data?.user) return;
+    if (await fetchIsSubscribed(data.user.id)) return;
+
+    const forumItem = container.querySelector('[data-navkey="forum"]');
+    if (!forumItem || forumItem.querySelector(".navitem-badge")) return;
+    forumItem.insertAdjacentHTML("beforeend", '<span class="navitem-badge">Plus</span>');
+  } catch {
+    /* kein Hinweis ist besser als eine kaputte Navigation */
+  }
 }

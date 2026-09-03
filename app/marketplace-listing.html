@@ -172,6 +172,14 @@
     } catch (e) {
       messagesEl.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
     }
+
+    // Beim Ansehen als gelesen markieren – der Ungelesen-Zähler im
+    // Umschlag-Symbol (renderInboxBadge) soll dann wieder stimmen.
+    try {
+      await markConversationRead(id, user.id);
+    } catch (e) {
+      /* kein Beinbruch, wenn das Markieren mal fehlschlägt */
+    }
   } else if (isMod) {
     const modRemoveBtn = document.getElementById("mod-remove-listing");
     if (modRemoveBtn) modRemoveBtn.addEventListener("click", async () => {

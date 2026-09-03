@@ -63,6 +63,7 @@ async function init() {
 
   wireAccountMenu(document.getElementById("account-menu-btn"), user, { openNow: location.hash === "#konto" });
   initFeedback();
+  renderInboxBadge(document.getElementById("inbox-btn"));
 
   recentEl.innerHTML = `<div class="rail-item">${skeletonGrid(1)}</div>`.repeat(3);
 

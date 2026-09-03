@@ -1218,8 +1218,22 @@ async function refreshScanQuota() {
 
 function paintScanQuota() {
   const el = document.getElementById("scan-quota");
-  if (!el) return;
-  el.textContent = scanQuota.known ? scanQuotaText(scanQuota.used, scanQuota.subscribed) : "";
+  if (el) el.textContent = freeTierHintText(scanQuota.subscribed);
+  applyFreeTierScanUI(scanQuota.subscribed);
+}
+
+/**
+ * Kamera-Scan (Barcode + Cover-Foto) ist CollectView Plus vorbehalten.
+ * Free bleibt nur das manuelle Code-Formular weiter unten auf der Seite
+ * – das kann beliebig oft genutzt werden, nur das Ergebnis lässt sich
+ * ohne Abo nicht speichern (siehe renderResult/saveToCollection).
+ */
+function applyFreeTierScanUI(subscribed) {
+  if (subscribed) return; // einmal gesetzt, bleibt es für die Sitzung so
+  if (scanning) stopScan();
+  scanBtn.hidden = true;
+  modeToggle.hidden = true;
+  if (cameraSelect) cameraSelect.hidden = true;
 }
 
 /**
@@ -1520,12 +1534,15 @@ function renderResult(item) {
     ${scanStatusMarkup(status)}
     ${streamingMarkup(item)}
     <div class="scan-actions">
-      <button class="btn-primary" type="button" data-action="add-collection"${status.inCollection ? " disabled" : ""}>
-        ${status.inCollection ? "Schon in der Sammlung" : "Zur Sammlung"}
-      </button>
+      ${scanQuota.subscribed
+        ? `<button class="btn-primary" type="button" data-action="add-collection"${status.inCollection ? " disabled" : ""}>
+             ${status.inCollection ? "Schon in der Sammlung" : "Zur Sammlung"}
+           </button>`
+        : `<a class="btn-primary" href="../wireframes/pricing.html" style="display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">Mit Plus speichern</a>`}
       <button class="btn-secondary" type="button" data-action="add-wishlist"${status.inCollection || status.onWishlist ? " disabled" : ""}>Auf Wunschliste</button>
       <button class="btn-secondary" type="button" data-action="weiter">Weiter scannen</button>
     </div>
+    ${scanQuota.subscribed ? "" : `<p class="manual-hint" style="text-align:left;">Nachschlagen ist kostenlos. Zum Speichern in deine Sammlung brauchst du <a href="../wireframes/pricing.html">CollectView Plus</a>.</p>`}
     <p class="err" id="scan-error" role="alert"></p>`;
 }
 
@@ -1604,8 +1621,12 @@ async function saveToCollection(item) {
   });
 
   if (error) {
-    scanError(/limit/i.test(error.message)
-      ? "Das Free-Limit ist erreicht. Mit CollectView Plus ist die Sammlung unbegrenzt."
+    // RLS lehnt den Insert ab, wenn kein aktives Abo besteht (siehe
+    // db/free-tier-gate.sql) – das ist der Normalfall bei Free, kein
+    // Serverfehler. Der Button dafür ist eigentlich schon ausgeblendet
+    // (renderResult), das hier ist nur die zweite Absicherung.
+    scanError(/row-level security|policy/i.test(error.message)
+      ? "Das Speichern in die Sammlung ist mit CollectView Plus möglich."
       : "Konnte nicht gespeichert werden: " + error.message);
     return;
   }

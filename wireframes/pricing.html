@@ -75,10 +75,8 @@
       <div class="plan-price">0 €</div>
       <div class="plan-note">für immer kostenlos</div>
       <ul class="plan-features">
-        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Barcode-Scan &amp; Cover-Erkennung</li>
-        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Eigene Sammlung, durchsuchbar</li>
-        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>YouTube-/Spotify-Links</li>
-        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Zugriff auf den Marktplatz</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Platten per Barcode-Ziffern nachschlagen</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>YouTube-/Spotify-Links ansehen</li>
       </ul>
       <a href="../app/login.html"><button class="btn-secondary" type="button">Kostenlos starten</button></a>
     </div>
@@ -90,22 +88,31 @@
       <div class="plan-note" id="plus-note">monatlich kündbar</div>
       <ul class="plan-features">
         <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Alles aus Free</li>
-        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Unbegrenzte Scans ohne Limit</li>
-        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Marktplatz-Angebote hervorgehoben</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Kamera-Scan: Barcode &amp; Cover-Erkennung</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Eigene Sammlung, durchsuchbar &amp; unbegrenzt</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Zugriff auf den Marktplatz</li>
         <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Werbefrei &amp; bevorzugter Support</li>
       </ul>
-      <button class="btn-primary" type="button" id="upgrade-btn">Jetzt upgraden</button>
-      <p class="manual-hint" style="text-align:left; margin-top:10px;">
-        Schon gekauft?
-        <button type="button" class="linklike" id="restore-btn">Kauf wiederherstellen</button>
-      </p>
+      <div id="upgrade-cta">
+        <button class="btn-primary" type="button" id="upgrade-btn">Jetzt upgraden</button>
+        <p class="manual-hint" style="text-align:left; margin-top:10px;">
+          Schon gekauft?
+          <button type="button" class="linklike" id="restore-btn">Kauf wiederherstellen</button>
+        </p>
+      </div>
+      <div id="already-plus" hidden>
+        <button class="btn-secondary" type="button" disabled>Du hast CollectView Plus</button>
+        <p class="manual-hint" style="text-align:left; margin-top:10px;">
+          Egal ob über die App oder die Website gekauft – dein Abo gilt für deinen Account überall.
+        </p>
+      </div>
       <div class="err" id="upgrade-note" style="margin-top:12px; font-size:12.5px; color:var(--text-muted);"></div>
     </div>
   </div>
 
   <div class="checkout-note">
-    Die Bezahlung läuft sicher über unseren Zahlungsanbieter. In dieser Vorschau ist die Zahlungsanbindung
-    noch nicht aktiv – Konto und Abo-Status sind aber bereits vorbereitet.
+    Am Rechner läuft die Bezahlung sicher über Stripe, direkt hier auf der Website – ohne App-Umweg.
+    In der App läuft sie stattdessen über den App Store bzw. Google Play.
   </div>
 
   <div class="landing-footer">
@@ -132,17 +139,40 @@
      werden sie unten durch die echten Store-Preise ersetzt – fest
      eingetragene Preise stimmen sonst nur in Deutschland und nur so
      lange, bis jemand sie in der Console ändert. */
-  const PRICES = {
-    monthly: { amount: "3,99 €", unit: "/ Monat", note: "monatlich kündbar" },
-    yearly: { amount: "34,90 €", unit: "/ Jahr", note: "jährlich kündbar" },
-  };
-  let cycle = "monthly";
+  // Im Browser (kein Store) gibt es keine Store-Preisabfrage – hier gelten
+  // die tatsächlichen Stripe-Preise direkt, günstiger als im Store: ohne
+  // die Vermittlungsgebühr von Apple/Google an CollectView weitergegeben.
+  const PRICES = storePlattform()
+    ? { monthly: { amount: "3,99 €", unit: "/ Monat", note: "monatlich kündbar" },
+        yearly: { amount: "34,90 €", unit: "/ Jahr", note: "jährlich kündbar" } }
+    : { monthly: { amount: "2,99 €", unit: "/ Monat", note: "monatlich kündbar · direkt hier bezahlt" },
+        yearly: { amount: "24,90 €", unit: "/ Jahr", note: "entspricht 2,08 €/Monat · jährlich kündbar · direkt hier bezahlt" } };
+  // Kein Store im Browser -> kein monatlicher Stripe-Preis hinterlegt.
+  // Umschalter dort ausblenden und direkt auf jaehrlich starten, statt
+  // einen Klick auf "Monatlich" ins Leere laufen zu lassen.
+  let cycle = storePlattform() ? "monthly" : "yearly";
 
   function zeigePreis() {
     const p = PRICES[cycle];
     document.getElementById("plus-price").innerHTML = `${p.amount} <span>${p.unit}</span>`;
     document.getElementById("plus-note").textContent = p.note;
   }
+
+  if (!storePlattform()) {
+    const toggle = document.getElementById("billing-toggle");
+    toggle.style.display = "none";
+    document.querySelectorAll("#billing-toggle .segmented-item").forEach((el) => {
+      el.classList.toggle("active", el.dataset.cycle === "yearly");
+    });
+  }
+
+  // Statisches HTML zeigt immer "3,99 € / Monat" (App-Store-Preis) als
+  // Platzhalter. zeigePreis() wurde bisher nur beim Umschalter-Klick oder
+  // nach erfolgreicher Store-Preisabfrage aufgerufen – im Browser gibt es
+  // beides nicht (Umschalter jetzt ausgeblendet, kein Store da), also
+  // blieb der falsche Platzhalter für immer stehen. Einmal beim Laden
+  // aufrufen, dann stimmt der Preis von Anfang an.
+  zeigePreis();
 
   /* Die echten Preise nachladen, sobald der Store da ist. Schlägt es
      fehl, bleibt die Seite bei den Platzhaltern stehen – ein fehlender
@@ -198,10 +228,25 @@
 
     const knopf = ev.currentTarget;
     knopf.disabled = true;
+    const zyklus = cycle === "yearly" ? "jaehrlich" : "monatlich";
+
+    // Im Browser gibt es keinen Store: Stripe Checkout statt In-App-Kauf.
+    // stripeCheckoutStarten() leitet bei Erfolg direkt zu Stripe weiter
+    // (location.href) – der catch-Block läuft dann nur noch bei Fehlern.
+    if (!storePlattform()) {
+      melde("Weiterleitung zur Kasse …", false);
+      try {
+        await stripeCheckoutStarten(zyklus);
+      } catch (e) {
+        melde(e.message, true);
+        knopf.disabled = false;
+      }
+      return;
+    }
+
     melde("Kauf wird beim Store angefragt …", false);
     try {
-      // cycle ist "monthly"/"yearly" aus der Umschaltung oben.
-      await kaufeAbo(cycle === "yearly" ? "jaehrlich" : "monatlich");
+      await kaufeAbo(zyklus);
       melde("Abo ist aktiv. Viel Freude mit CollectView Plus.", false);
     } catch (e) {
       melde(e.message, true);
@@ -209,6 +254,39 @@
       knopf.disabled = false;
     }
   });
+
+  // Ist der eingeloggte Nutzer schon Plus-Kunde (egal ob App oder Web
+  // gekauft – beides landet im selben profiles.subscription_status)?
+  // Still im Hintergrund geprüft, ohne bei fehlender Session zum Login
+  // umzuleiten – das soll hier nicht erzwungen werden, nur informieren.
+  (async () => {
+    if (!sb) return;
+    const { data } = await sb.auth.getSession();
+    if (!data.session) return;
+
+    const { data: profil } = await sb
+      .from("profiles")
+      .select("subscription_status")
+      .eq("id", data.session.user.id)
+      .maybeSingle();
+
+    if (profil?.subscription_status === "active") {
+      document.getElementById("upgrade-cta").hidden = true;
+      document.getElementById("already-plus").hidden = false;
+    }
+  })();
+
+  // Rückkehr von Stripe Checkout: der Webhook setzt das Abo im
+  // Hintergrund frei, das kann ein paar Sekunden dauern – deshalb hier
+  // nur eine Zwischenmeldung, kein sofortiger Abo-Status.
+  (() => {
+    const ergebnis = new URLSearchParams(location.search).get("checkout");
+    if (ergebnis === "erfolg") {
+      melde("Zahlung erfolgreich – dein Abo wird gerade aktiviert. Das kann einen Moment dauern.", false);
+    } else if (ergebnis === "abgebrochen") {
+      melde("Der Kauf wurde abgebrochen.", true);
+    }
+  })();
 
   // Apple verlangt einen Weg, einen früheren Kauf ohne erneute Zahlung
   // zurückzuholen – Gerätewechsel, Neuinstallation.

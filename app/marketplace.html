@@ -25,12 +25,17 @@
 
   <div class="mp-head">
     <h1 class="page-title" data-i18n="marketplace_title">Forum</h1>
-    <a class="btn-primary" id="new-btn" style="height:42px; padding:0 18px; display:inline-flex; align-items:center;" href="listing-new.html" data-i18n="marketplace_new_post">Neuer Beitrag</a>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <a class="avatar inbox-btn" id="inbox-btn" href="inbox.html" aria-label="Nachrichten">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+      </a>
+      <a class="btn-primary" id="new-btn" style="height:42px; padding:0 18px; display:inline-flex; align-items:center;" href="listing-new.html" data-i18n="marketplace_new_post">Neuer Beitrag</a>
+    </div>
   </div>
 
   <div id="paywall" hidden class="card" style="text-align:center; padding:20px 24px; margin-bottom:18px;">
-    <p class="muted" style="margin:0;">Du siehst den Marktplatz nur lesend. Eigene Beiträge und Nachrichten
-      an Verkäufer:innen gibt es mit <a href="../wireframes/pricing.html" style="color:var(--accent-text); font-weight:700;">CollectView Plus</a>.</p>
+    <p class="muted" style="margin:0;">Der Marktplatz ist CollectView Plus vorbehalten – Ansehen, eigene Beiträge
+      und Nachrichten an Verkäufer:innen gibt es mit <a href="../wireframes/pricing.html" style="color:var(--accent-text); font-weight:700;">CollectView Plus</a>.</p>
   </div>
 
   <div id="browse">
@@ -59,7 +64,7 @@
   if (!user) return;
   renderBottomNav(document.getElementById("bottomnav"), null);
 
-  // Ansehen ist für alle offen (read-only); nur Erstellen braucht ein Abo.
+  // Der ganze Marktplatz ist CollectView Plus vorbehalten, siehe db/free-tier-gate.sql.
   let subscribed = false;
   try {
     subscribed = await fetchIsSubscribed(user.id);
@@ -68,6 +73,11 @@
   }
   document.getElementById("paywall").hidden = subscribed;
   document.getElementById("new-btn").hidden = !subscribed;
+  document.getElementById("inbox-btn").hidden = !subscribed;
+  document.getElementById("browse").hidden = !subscribed;
+  if (!subscribed) return;
+
+  renderInboxBadge(document.getElementById("inbox-btn"));
 
   const list = document.getElementById("list");
   const tabs = document.getElementById("tabs");

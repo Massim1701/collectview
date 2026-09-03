@@ -64,13 +64,15 @@ async function fetchScanCount(userId) {
   return count || 0;
 }
 
-/** "Noch 3 von 5 freien Scans." – mit Abo bleibt die Zeile leer. */
-function scanQuotaText(used, subscribed) {
+/**
+ * Free-Hinweis unter dem Scan-Bereich. Ersetzt die frühere "noch X von 5"-
+ * Anzeige: es gibt kein Kontingent mehr, sondern eine feste Grenze –
+ * Kamera-Scan und Speichern sind CollectView Plus vorbehalten, das
+ * manuelle Nachschlagen (Code-Formular) bleibt unbegrenzt.
+ */
+function freeTierHintText(subscribed) {
   if (subscribed) return "";
-  const left = Math.max(0, FREE_SCAN_LIMIT - used);
-  if (left === 0) return `Keine freien Scans mehr (${FREE_SCAN_LIMIT} von ${FREE_SCAN_LIMIT} verbraucht).`;
-  if (left === 1) return `Noch 1 von ${FREE_SCAN_LIMIT} freien Scans.`;
-  return `Noch ${left} von ${FREE_SCAN_LIMIT} freien Scans.`;
+  return "Kamera-Scan und Speichern in die Sammlung gibt's mit CollectView Plus – nachschlagen per Barcode-Ziffern geht hier trotzdem, so oft du willst.";
 }
 
 /** Hinweis, wenn nichts mehr frei ist. */

@@ -60,6 +60,7 @@ function aboProdukte() {
 }
 
 const ABO_PRUEFEN_URL = `${SUPABASE_URL}/functions/v1/abo-pruefen`;
+const STRIPE_CHECKOUT_URL = `${SUPABASE_URL}/functions/v1/stripe-checkout`;
 
 /** "apple", "google" – oder null im Browser. */
 function storePlattform() {
@@ -72,6 +73,42 @@ function storePlattform() {
 /** Ist eine Kaufschnittstelle da? Im Browser nie. */
 function storeVerfuegbar() {
   return !!storePlattform() && typeof CdvPurchase !== "undefined" && !!CdvPurchase.store;
+}
+
+/**
+ * Web-Kauf starten (Stripe Checkout) – der Weg für alle, die die App
+ * nicht wollen. Leitet bei Erfolg direkt zu Stripe weiter; ob das Abo
+ * wirklich aktiv wird, entscheidet danach ausschließlich der Webhook
+ * (stripe-webhook), nie diese Funktion oder der Client.
+ *
+ * `zyklus` ist "monatlich" oder "jaehrlich", wie bei kaufeAbo().
+ */
+async function stripeCheckoutStarten(zyklus) {
+  const { data } = await sb.auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) throw new Error("Bitte zuerst anmelden.");
+
+  const res = await fetch(STRIPE_CHECKOUT_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: SUPABASE_ANON_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ zyklus }),
+  });
+
+  let antwort = {};
+  try { antwort = await res.json(); } catch { /* leerer Rumpf ist auch eine Antwort */ }
+
+  if (res.status === 503) {
+    throw new Error(antwort.error || "Der Kauf über die Website ist noch nicht eingerichtet.");
+  }
+  if (!res.ok || !antwort.url) {
+    throw new Error(antwort.error || `Checkout konnte nicht gestartet werden (${res.status}).`);
+  }
+
+  location.href = antwort.url;
 }
 
 /**

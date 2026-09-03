@@ -368,9 +368,30 @@ const I18N_LANGS = [
   ["es", "Español"],
 ];
 
+/**
+ * Browsersprache als Fallback, bevor der Nutzer selbst etwas wählt.
+ * navigator.languages ist die volle Präferenzliste (z. B. ["en-US","de"])
+ * und geht vor navigator.language, damit auch die zweite/dritte
+ * bevorzugte Sprache noch zählt, wenn die erste nicht unterstützt wird.
+ * Nur der Sprachteil zählt ("de-CH" -> "de"), die Region hat hier keine
+ * eigene Übersetzung.
+ */
+function detectBrowserLang() {
+  const kandidaten = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language])
+    .filter(Boolean)
+    .map((code) => code.slice(0, 2).toLowerCase());
+  return kandidaten.find((code) => I18N[code]) || null;
+}
+
+/**
+ * Erst die gespeicherte Wahl, sonst die Browsersprache, sonst Deutsch.
+ * Eine einmal getroffene Wahl (setLang) hat immer Vorrang – die
+ * Erkennung greift nur, solange pr_lang noch nicht gesetzt ist.
+ */
 function getLang() {
   const stored = localStorage.getItem("pr_lang");
-  return I18N[stored] ? stored : "de";
+  if (I18N[stored]) return stored;
+  return detectBrowserLang() || "de";
 }
 
 function setLang(lang) {
