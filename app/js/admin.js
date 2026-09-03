@@ -8,6 +8,35 @@ function roleLabel(role) {
   return { admin: "Admin", moderator: "Moderator" }[role] || role;
 }
 
+/** Kacheln mit Nutzerzahlen oben auf der Admin-Seite. */
+async function renderAdminStats(container) {
+  container.innerHTML = `<div class="muted">Lade …</div>`;
+  try {
+    const s = await fetchAdminStats();
+    container.innerHTML = `
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin-bottom:14px;">
+        <div>
+          <div style="font-size:24px; font-weight:800;">${s.gesamt}</div>
+          <div class="muted" style="font-size:12.5px;">Registrierte Nutzer</div>
+        </div>
+        <div>
+          <div style="font-size:24px; font-weight:800; color:var(--accent-text);">${s.aktiv}</div>
+          <div class="muted" style="font-size:12.5px;">Aktive Pro-Abos</div>
+        </div>
+        <div>
+          <div style="font-size:24px; font-weight:800;">${s.neuDieseWoche}</div>
+          <div class="muted" style="font-size:12.5px;">Neu diese Woche</div>
+        </div>
+      </div>
+      <div class="muted" style="font-size:12.5px;">
+        Abos nach Kanal: ${s.nachKanal.website} Website &middot; ${s.nachKanal.apple} App Store &middot; ${s.nachKanal.google} Play Store
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = `<div class="err">${escapeHtml(e.message)}</div>`;
+  }
+}
+
 async function renderStaffList(container) {
   container.innerHTML = `<div class="muted">Lade …</div>`;
   try {

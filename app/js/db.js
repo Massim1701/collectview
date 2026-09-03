@@ -148,6 +148,43 @@ async function findUserByUsername(name) {
   return data;
 }
 
+/**
+ * Zahlen fürs Admin-Dashboard: Gesamt-Nutzer, aktive Pro-Abos (gesamt und
+ * nach Kanal), neu diese Woche. Reine count-Abfragen (head: true) statt
+ * ganze Zeilen zu laden -- skaliert auch bei sehr vielen Nutzern noch.
+ * Funktioniert nur für Admins: profiles_select_admin (db/roles.sql) lässt
+ * sie alle Zeilen sehen, RLS blockt jeden anderen auf die eigene Zeile.
+ */
+async function fetchAdminStats() {
+  const zaehlen = async (query) => {
+    const { count, error } = await query;
+    if (error) throw error;
+    return count || 0;
+  };
+
+  const wocheAb = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [gesamt, aktiv, neuDieseWoche, aktivZeilen] = await Promise.all([
+    zaehlen(sb.from("profiles").select("id", { count: "exact", head: true })),
+    zaehlen(sb.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_status", "active")),
+    zaehlen(sb.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", wocheAb)),
+    // Für die Aufschlüsselung nach Kanal reicht die (kleine) Menge der
+    // aktiven Abos -- nicht die ganze Nutzertabelle laden.
+    sb.from("profiles").select("store_platform").eq("subscription_status", "active"),
+  ]);
+
+  const nachKanal = { apple: 0, google: 0, website: 0 };
+  if (!aktivZeilen.error) {
+    for (const row of aktivZeilen.data || []) {
+      if (row.store_platform === "apple") nachKanal.apple += 1;
+      else if (row.store_platform === "google") nachKanal.google += 1;
+      else nachKanal.website += 1; // null/"stripe" -- Direktzahlung über die Website
+    }
+  }
+
+  return { gesamt, aktiv, neuDieseWoche, nachKanal };
+}
+
 /** Alle Nutzer mit Admin-/Moderator-Rolle (nur für Admins sichtbar dank profiles_select_admin). */
 async function fetchStaffList() {
   const { data, error } = await sb

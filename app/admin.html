@@ -57,6 +57,11 @@
     <p class="muted" style="margin:0 0 22px;">Rollen vergeben – maximal 2 Admins, maximal 3 Moderatoren (von der Datenbank erzwungen).</p>
 
     <div class="card" style="margin-bottom:18px;">
+      <div class="section-title">Nutzerzahlen</div>
+      <div id="admin-stats"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
       <div class="section-title">Rolle vergeben</div>
       <form id="admin-form">
         <input class="field" id="admin-username" type="text" placeholder="Benutzername" style="margin-bottom:10px;" required>
@@ -78,6 +83,7 @@
   const staffList = document.getElementById("staff-list");
   wireAdminForm(document.getElementById("admin-form"), document.getElementById("admin-result"), staffList);
   renderStaffList(staffList);
+  renderAdminStats(document.getElementById("admin-stats"));
 })();
 </script>
 </body>
