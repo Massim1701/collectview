@@ -13,8 +13,17 @@
 <link rel="stylesheet" href="../wireframes/styles.css">
 <link rel="stylesheet" href="./app.css">
 <style>
-  .ml-cover{ width:100%; aspect-ratio:1; border-radius:var(--radius-md); margin-bottom:18px; }
-  .ml-price{ font-family:var(--font-display); font-style:italic; font-size:32px; margin:4px 0 18px; }
+  /* 50% kleiner als vorher (war 100% Breite) – zwei halb so große Cover
+     nebeneinander, wenn eine Rückseite vorliegt; sonst ein Cover mittig. */
+  .ml-covers{ display:flex; gap:10px; max-width:50%; margin:0 0 18px; }
+  .ml-covers.single{ max-width:50%; }
+  .ml-cover-box{ flex:1; aspect-ratio:1; border-radius:var(--radius-md); overflow:hidden; position:relative; }
+  .ml-cover-box img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .ml-cover-label{ position:absolute; bottom:4px; right:6px; font-size:10px; font-weight:800;
+    color:#fff; background:rgba(0,0,0,.45); padding:1px 6px; border-radius:999px; letter-spacing:.03em; text-transform:uppercase; }
+  .ml-price{ font-family:var(--font-display); font-style:italic; font-size:32px; margin:4px 0 4px; }
+  .ml-fx{ color:var(--text-muted); font-size:13px; margin:0 0 14px; }
+  .ml-date{ color:var(--text-muted); font-size:12.5px; margin-top:2px; }
   .msg{ background:var(--surface-2); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:8px; font-size:14px; }
   .msg.own{ background:var(--accent-soft); }
   .msg-meta{ font-size:11.5px; color:var(--text-muted); margin-top:3px; }
@@ -38,6 +47,7 @@
 <script src="./js/ui.js"></script>
 <script src="./js/auth.js"></script>
 <script src="./js/db.js"></script>
+<script src="./js/currency.js"></script>
 <script src="./js/marketplace.js"></script>
 <script>
 (async function () {
@@ -83,11 +93,38 @@
     }
   }
 
+  let fxRates = null;
+  try {
+    fxRates = await fetchFxRates();
+  } catch (e) {
+    // Ohne Kurse einfach keine Umrechnungszeile.
+  }
+  const fxLine = listingFxLine(listing, fxRates);
+
+  const coversMarkup = (() => {
+    const front = listing.cover_url
+      ? `<img src="${escapeHtml(listing.cover_url)}" alt="Vorderseite" loading="lazy">`
+      : "";
+    const back = listing.cover_url_back
+      ? `<img src="${escapeHtml(listing.cover_url_back)}" alt="Rückseite" loading="lazy">`
+      : "";
+    if (!front && !back) {
+      return `<div class="ml-covers single"><div class="ml-cover-box ${coverClass(listing.title)}"></div></div>`;
+    }
+    return `
+      <div class="ml-covers${back ? "" : " single"}">
+        <div class="ml-cover-box ${front ? "" : coverClass(listing.title)}">${front}${back ? '<span class="ml-cover-label">Vorne</span>' : ""}</div>
+        ${back ? `<div class="ml-cover-box">${back}<span class="ml-cover-label">Hinten</span></div>` : ""}
+      </div>`;
+  })();
+
   content.innerHTML = `
-    <div class="ml-cover ${coverClass(listing.title)}"></div>
+    ${coversMarkup}
     <h1 class="page-title" style="font-size:26px; margin:0;">${escapeHtml(listing.title)}</h1>
     <div style="color:var(--text-muted); margin-top:4px;">${[listing.artist, listing.format, listing.year].filter(Boolean).map(escapeHtml).join(" · ")}</div>
+    <div class="ml-date">Eingestellt am ${new Date(listing.created_at).toLocaleDateString("de-DE")}</div>
     <div class="ml-price">${listingBadge(listing).text}</div>
+    ${fxLine ? `<div class="ml-fx">≈ ${escapeHtml(fxLine)}</div>` : ""}
     ${listing.description ? `
       <div id="listing-desc" style="margin-bottom:22px;">
         <p style="line-height:1.6; margin:0 0 6px;">${escapeHtml(listing.description)}</p>

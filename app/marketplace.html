@@ -57,6 +57,7 @@
 <script src="./js/ui.js"></script>
 <script src="./js/auth.js"></script>
 <script src="./js/db.js"></script>
+<script src="./js/currency.js"></script>
 <script src="./js/marketplace.js"></script>
 <script>
 (async function () {
@@ -83,6 +84,16 @@
   const tabs = document.getElementById("tabs");
   let active = "all";
 
+  initMarketplaceMessages(list);
+
+  // Einmal pro Seitenaufruf laden, nicht pro Karte – siehe currency.js.
+  let fxRates = null;
+  try {
+    fxRates = await fetchFxRates();
+  } catch (e) {
+    // Ohne Kurse zeigen die Karten einfach keine Umrechnungszeile.
+  }
+
   async function render() {
     list.innerHTML = skeletonGrid(3);
     try {
@@ -103,7 +114,13 @@
       } catch (e) {
         // Ohne Abzeichen zeigt die Liste einfach keine Plus-Markierung.
       }
-      list.innerHTML = items.map((it) => listingCardMarkup(it, { seller: sellerBadges[it.seller_id] })).join("");
+      list.innerHTML = items.map((it) => listingCardMarkup(it, {
+        seller: sellerBadges[it.seller_id],
+        rates: fxRates,
+        // Nachrichten-Icon nur bei fremden, noch aktiven Beiträgen – bei
+        // eigenen (auch im "Meine Beiträge"-Tab) ergibt es keinen Sinn.
+        showMessage: it.seller_id !== user.id && it.status === "active",
+      })).join("");
     } catch (e) {
       list.innerHTML = errorState(e.message);
     }

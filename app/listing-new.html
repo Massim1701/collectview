@@ -53,7 +53,12 @@
     </div>
     <div class="ln-row" style="margin-bottom:10px;">
       <input class="field" id="year" name="year" type="number" placeholder="Jahr" min="1900" max="2100">
-      <input class="field" id="price" name="price" type="number" placeholder="Preis in €" min="0" step="0.5" required>
+      <input class="field" id="price" name="price" type="number" placeholder="Preis" min="0" step="0.5" required style="flex:1.4;">
+      <select class="field" id="currency" name="currency" style="flex:0.8;">
+        <option value="EUR">€ EUR</option>
+        <option value="USD">$ USD</option>
+        <option value="GBP">£ GBP</option>
+      </select>
     </div>
     <div class="muted" id="price-hint" style="font-size:12.5px; margin:-4px 0 10px;">Pflichtfeld bei „Biete"</div>
     <textarea class="field" id="description" name="description" placeholder="Zustand, Details …" rows="4" style="margin-bottom:14px; resize:vertical;"></textarea>
@@ -70,6 +75,7 @@
 <script src="./js/ui.js"></script>
 <script src="./js/auth.js"></script>
 <script src="./js/db.js"></script>
+<script src="./js/discogs.js"></script>
 <script src="./js/marketplace.js"></script>
 <script>
 (async function () {
@@ -149,9 +155,10 @@
         format: document.getElementById("format").value.trim() || null,
         year: document.getElementById("year").value ? parseInt(document.getElementById("year").value, 10) : null,
         price_cents: priceEuros != null ? Math.round(priceEuros * 100) : null,
-        currency: "EUR",
+        currency: document.getElementById("currency").value,
         description: document.getElementById("description").value.trim() || null,
         cover_url: selected ? selected.cover_url : null,
+        cover_url_back: selected?.discogs_id ? (await discogsReleaseBilder(selected.discogs_id)).back : null,
       });
       location.href = `marketplace-listing.html?id=${encodeURIComponent(listing.id)}`;
     } catch (e) {

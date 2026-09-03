@@ -13,6 +13,7 @@
    ===================================================================== */
 
 const DISCOGS_PROXY = `${SUPABASE_URL}/functions/v1/discogs-suche`;
+const DISCOGS_RELEASE_PROXY = `${SUPABASE_URL}/functions/v1/discogs-release-bilder`;
 
 /**
  * Einmal als nicht verfügbar erkannt, nicht bei jedem Scan erneut
@@ -61,4 +62,27 @@ async function discogsSuche(params) {
   }
 
   return fetch(`https://api.discogs.com/database/search?${query}`);
+}
+
+/**
+ * Vorder- und Rückseiten-Cover eines Releases (für Marktplatz-Beiträge,
+ * siehe listing-new.html). Anders als discogsSuche kein Direktweg-
+ * Rückfall: ohne Proxy/Token gibt es hier schlicht kein Rückseiten-Cover,
+ * das ist kein Fehler, der die Veröffentlichung verhindern darf.
+ * Gibt { front, back } zurück, beide ggf. null.
+ */
+async function discogsReleaseBilder(discogsId) {
+  try {
+    const { data } = await sb.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token || !discogsId) return { front: null, back: null };
+    const res = await fetch(`${DISCOGS_RELEASE_PROXY}?id=${encodeURIComponent(discogsId)}`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+    });
+    if (!res.ok) return { front: null, back: null };
+    const daten = await res.json();
+    return { front: daten.front || null, back: daten.back || null };
+  } catch {
+    return { front: null, back: null };
+  }
 }
