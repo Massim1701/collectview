@@ -72,7 +72,7 @@ async function fetchIsSubscribed(userId) {
 async function fetchMyProfile(userId) {
   const { data, error } = await sb
     .from("profiles")
-    .select("display_name, role, subscription_status, accent_color")
+    .select("display_name, role, subscription_status, accent_color, broadcasts_seen_at")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -153,6 +153,55 @@ async function fetchOnlinePresence() {
     .order("last_seen_at", { ascending: false, nullsFirst: false });
   if (error) throw error;
   return data || [];
+}
+
+/**
+ * Rundnachrichten (Admin/Mod an alle) -- neueste zuerst. Absendername kommt
+ * über eine zweite Abfrage auf profiles_public (kein direktes Embedding
+ * möglich, das ist eine View ohne FK-Metadaten) -- normale Nutzer:innen
+ * dürfen fremde profiles-Zeilen sowieso nicht direkt lesen (RLS), private
+ * Felder wie E-Mail sind über profiles_public ohnehin nicht erreichbar.
+ */
+async function fetchBroadcasts(limit = 20) {
+  const { data, error } = await sb
+    .from("broadcasts")
+    .select("id, body, created_at, sender_id")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const rows = data || [];
+  if (rows.length === 0) return [];
+
+  const senderIds = [...new Set(rows.map((r) => r.sender_id).filter(Boolean))];
+  const namen = new Map();
+  if (senderIds.length > 0) {
+    const { data: sender, error: senderError } = await sb
+      .from("profiles_public")
+      .select("id, display_name")
+      .in("id", senderIds);
+    if (!senderError) {
+      for (const s of sender || []) namen.set(s.id, s.display_name);
+    }
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    body: row.body,
+    created_at: row.created_at,
+    sender_name: namen.get(row.sender_id) || "Team",
+  }));
+}
+
+/** Neue Rundnachricht verfassen -- RLS lässt nur Admin/Mod zu (is_moderator). */
+async function sendBroadcast(senderId, body) {
+  const { error } = await sb.from("broadcasts").insert({ sender_id: senderId, body: body.trim() });
+  if (error) throw error;
+}
+
+/** Markiert alle bisherigen Rundnachrichten als gelesen (Ungelesen-Badge im Posteingang). */
+async function markBroadcastsSeen(userId) {
+  const { error } = await sb.from("profiles").update({ broadcasts_seen_at: new Date().toISOString() }).eq("id", userId);
+  if (error) throw error;
 }
 
 /** Ist der Nutzer Admin? (role = 'admin') */

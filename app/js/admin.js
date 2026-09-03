@@ -137,3 +137,25 @@ function wireAdminForm(formEl, resultEl, staffContainer) {
     }
   });
 }
+
+/** Formular fürs Verfassen einer Rundnachricht an alle Nutzer:innen (Admin+Mod). */
+function wireBroadcastForm(formEl, textEl, resultEl, senderId) {
+  formEl.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    resultEl.textContent = "";
+    resultEl.className = "muted";
+
+    const body = textEl.value.trim();
+    if (!body) return;
+
+    try {
+      await sendBroadcast(senderId, body);
+      resultEl.textContent = "Gesendet.";
+      resultEl.className = "muted";
+      formEl.reset();
+    } catch (e) {
+      resultEl.textContent = e.message;
+      resultEl.className = "err";
+    }
+  });
+}
