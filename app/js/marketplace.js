@@ -194,7 +194,7 @@ function listingCardMarkup(listing, { href, seller, showMessage = false, rates }
           ${isPlus ? `<span class="plus-chip" style="--plus-color:${plusColor};" title="CollectView Plus">Plus</span>` : ""}
         </div>
         <div class="list-card-sub">${[listing.artist, listing.format].filter(Boolean).map(escapeHtml).join(" · ")}</div>
-        <div class="list-card-sub" style="font-size:11.5px; opacity:.8;">${[dateLabel, fxLine ? `≈ ${fxLine}` : ""].filter(Boolean).map(escapeHtml).join(" · ")}</div>
+        <div class="list-card-sub" style="font-size:11.5px; opacity:.8;">${escapeHtml(dateLabel)}${fxLine ? ` · <span style="font-weight:700;">≈ ${escapeHtml(fxLine)}</span>` : ""}</div>
       </div>
       <div style="flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
         <div style="font-weight:800; color:${badge.muted ? "var(--text-muted)" : "var(--accent-text)"};">${escapeHtml(badge.text)}</div>

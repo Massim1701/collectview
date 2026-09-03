@@ -9,6 +9,27 @@ function escapeHtml(s) {
   );
 }
 
+const DISCOGS_URL_RE = /(https?:\/\/(?:www\.)?discogs\.com\/\S+)/gi;
+
+/**
+ * Erkennt Discogs-Links in einem Text (z. B. aus dem Verkaufstext-
+ * Generator kopiert) und macht sie klickbar – zeigt "Discogs" statt der
+ * vollen URL. Der restliche Text wird wie mit escapeHtml behandelt.
+ */
+function linkifyDiscogsUrls(text) {
+  const raw = String(text ?? "");
+  return raw
+    .split(DISCOGS_URL_RE)
+    .map((part, i) => {
+      if (i % 2 === 0) return escapeHtml(part);
+      // Satzzeichen direkt hinter der URL gehören nicht mehr zum Link.
+      const url = part.replace(/[.,;:)\]]+$/, "");
+      const rest = part.slice(url.length);
+      return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-text); font-weight:800; text-decoration:underline;">Discogs</a>${escapeHtml(rest)}`;
+    })
+    .join("");
+}
+
 /** Deterministischer Farbverlauf-Platzhalter (cover-1 … cover-6) für Cover ohne Bild. */
 function coverClass(seed) {
   const s = String(seed || "");
