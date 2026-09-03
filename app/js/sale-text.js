@@ -22,6 +22,15 @@ const SALE_CONDITIONS = [
 let saleDialog = null;
 let saleItem = null;
 
+/**
+ * Gesetzt, wenn der Dialog aus dem Marktplatz-Formular (listing-new.html)
+ * geöffnet wurde: dann übernimmt der Haupt-Button den Text direkt ins
+ * Beschreibungsfeld statt ihn in die Zwischenablage zu kopieren – Kopieren/
+ * Einfügen entfällt. Auf den übrigen Seiten (Sammlung) bleibt null, dort
+ * kopiert der Button wie bisher.
+ */
+let saleInsertCallback = null;
+
 /* ---------- Text-Bausteine ---------- */
 
 function saleConditionLabel(key) {
@@ -75,8 +84,22 @@ function saleDialogMarkup() {
 
     <div class="row">
       <button class="btn-secondary" type="button" data-action="sale-close">Schließen</button>
-      <button class="btn-primary" type="button" data-action="sale-copy">Text kopieren</button>
+      <button class="btn-primary" type="button" data-action="sale-copy" id="sale-copy-btn">Text kopieren</button>
     </div>`;
+}
+
+/** Beschriftung/Vorschau je nachdem, ob der Text kopiert oder direkt
+    übernommen wird (siehe saleInsertCallback). */
+function applySaleDialogMode() {
+  const lead = saleDialog.querySelector(".feedback-lead");
+  const btn = saleDialog.querySelector("#sale-copy-btn");
+  if (saleInsertCallback) {
+    lead.textContent = "Zustand eintragen – der Text landet direkt in der Beschreibung.";
+    btn.textContent = "Übernehmen";
+  } else {
+    lead.textContent = "Zustand eintragen, dann kopieren – fertig zum Einfügen bei eBay, Kleinanzeigen & Co.";
+    btn.textContent = "Text kopieren";
+  }
 }
 
 function refreshSaleText() {
@@ -102,20 +125,33 @@ function ensureSaleDialog() {
   saleDialog.addEventListener("click", (e) => {
     const action = e.target.closest("[data-action]")?.dataset.action;
     if (action === "sale-close") closeSaleText();
-    if (action === "sale-copy") copySaleText();
+    if (action === "sale-copy") {
+      if (saleInsertCallback) {
+        saleInsertCallback(saleDialog.querySelector("#sale-output").value);
+        closeSaleText();
+      } else {
+        copySaleText();
+      }
+    }
   });
 
   return saleDialog;
 }
 
-/** Öffnet den Dialog für einen Eintrag. Formular startet jedes Mal leer. */
-function openSaleText(item) {
+/**
+ * Öffnet den Dialog für einen Eintrag. Formular startet jedes Mal leer.
+ * `onInsert(text)` optional: statt in die Zwischenablage zu kopieren,
+ * übernimmt der Haupt-Button den Text direkt dorthin (Marktplatz-Formular).
+ */
+function openSaleText(item, { onInsert } = {}) {
   if (!item) return;
   saleItem = item;
+  saleInsertCallback = onInsert || null;
   const dialog = ensureSaleDialog();
   dialog.querySelector("#sale-cond-medium").value = "";
   dialog.querySelector("#sale-cond-cover").value = "";
   dialog.querySelector("#sale-copied").textContent = "";
+  applySaleDialogMode();
   refreshSaleText();
   dialog.showModal();
 }
