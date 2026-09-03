@@ -24,7 +24,14 @@ android/.idea/
 # assets/ ist nur eine Kopie von app/ + wireframes/ + generierter
 # index.html fürs Deployen selbst - nicht committen, sonst dupliziert
 # sich das im Repo. wrangler.toml + worker.js gehören ins Repo.
-web/deploy/assets/
+web/deploy/assets/*
+# ...außer die beiden SEO-Dateien: die haben kein Gegenstück in app/ oder
+# wireframes/, aus dem sie generiert werden könnten, sind also selbst die
+# Quelle (siehe web/deploy/assets/robots.txt, sitemap.xml). "assets/*" statt
+# "assets/" ist hier nötig, sonst blockt Git das Verzeichnis komplett und
+# die Ausnahmen unten greifen gar nicht erst.
+!web/deploy/assets/robots.txt
+!web/deploy/assets/sitemap.xml
 
 # wrangler: lokaler Build-Cache beim Deploy, keine Quelle.
 web/deploy/.wrangler/

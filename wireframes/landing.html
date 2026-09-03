@@ -8,6 +8,43 @@
 <link rel="icon" type="image/png" sizes="32x32" href="../app/favicon-32.png">
 <link rel="apple-touch-icon" href="../app/apple-touch-icon-180.png">
 <title>Landingpage – CollectView</title>
+
+<!-- SEO: nur auf dieser Seite (öffentliche Startseite) und pricing.html,
+     nicht in app/* – die App-Seiten stehen hinter dem Login und sollen
+     nicht indexiert werden (siehe robots.txt). render-landing.mjs macht
+     aus den relativen Pfaden hier absolute für die Cloudflare-Auslieferung
+     unter "/", die Meta-Tags unten sind schon absolut. -->
+<meta name="description" content="Schallplatten und CDs per Barcode oder Kamera erkennen, in einer durchsuchbaren Sammlung verwalten und direkt bei YouTube und Spotify reinhören. CollectView – kostenlos starten.">
+<link rel="canonical" href="https://collectview.site/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CollectView">
+<meta property="og:locale" content="de_DE">
+<meta property="og:url" content="https://collectview.site/">
+<meta property="og:title" content="CollectView · Scan. Erkannt. Gehört.">
+<meta property="og:description" content="Schallplatten und CDs per Barcode oder Kamera erkennen, in einer durchsuchbaren Sammlung verwalten und direkt bei YouTube und Spotify reinhören.">
+<meta property="og:image" content="https://collectview.site/wireframes/assets/hero-studio.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CollectView · Scan. Erkannt. Gehört.">
+<meta name="twitter:description" content="Schallplatten und CDs per Barcode oder Kamera erkennen, direkt bei YouTube und Spotify reinhören und in einer durchsuchbaren Sammlung verwalten.">
+<meta name="twitter:image" content="https://collectview.site/wireframes/assets/hero-studio.jpg">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "CollectView",
+  "url": "https://collectview.site/",
+  "applicationCategory": "MusicApplication",
+  "operatingSystem": "iOS, Android, Web",
+  "description": "Schallplatten und CDs per Barcode oder Kamera erkennen, in einer durchsuchbaren Sammlung verwalten und direkt bei YouTube und Spotify reinhören.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR",
+    "description": "Kostenlose Nutzung mit CollectView Plus als Upgrade"
+  }
+}
+</script>
+
 <!-- Schriften lokal, nicht von Google: die Wireframes wandern über
      scripts/build-www.sh mit ins App-Bundle, und ein Aufruf an
      fonts.googleapis.com überträgt die IP jedes Nutzers an Google.
