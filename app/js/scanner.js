@@ -1478,7 +1478,7 @@ function renderResultList() {
     el.className = "list-card result-card";
     el.style.cssText = "width:100%;text-align:left;font-family:inherit;color:inherit;cursor:pointer;";
     el.innerHTML = `
-      ${coverMarkup(item, { size: 56 })}
+      ${coverMarkup(item, { size: 56, lazy: false })}
       <div style="min-width:0;">
         <div class="list-card-title">${escapeHtml(item.title)}</div>
         <div class="list-card-sub">${[item.artist, item.format, item.year, item.country].filter(Boolean).map(escapeHtml).join(" · ")}</div>
@@ -1577,7 +1577,7 @@ function renderResult(item) {
   resultsEl.innerHTML = `
     ${many ? `<button type="button" class="linklike" data-action="back-to-list">← Zurück zur Auswahl</button>` : ""}
     <div class="scan-result">
-      ${coverMarkup(item, { size: 92 })}
+      ${coverMarkup(item, { size: 92, lazy: false })}
       <div style="min-width:0;">
         <div class="scan-result-title">${escapeHtml(item.title)}</div>
         <div class="scan-result-artist">${escapeHtml(item.artist || "Unbekannter Interpret")}</div>
