@@ -33,6 +33,7 @@ const frameArbeit = document.getElementById("frame-arbeit");
 const frameArbeitText = document.getElementById("frame-arbeit-text");
 const cameraSelect = document.getElementById("camera-select");
 const modeToggle = document.getElementById("mode-toggle");
+const scanCardSubEl = document.getElementById("scan-card-sub");
 const statusEl = document.getElementById("scan-status");
 const noticeEl = document.getElementById("scan-notice");
 const resultsCard = document.getElementById("results-card");
@@ -94,6 +95,16 @@ function setMode(next) {
     el.classList.toggle("active", el.dataset.mode === mode);
   });
   scanBtn.textContent = mode === "barcode" ? "Barcode-Scan starten" : "Kamera starten";
+  // Nur im Cover-Modus nötig: anders als beim Barcode (der automatisch
+  // erkannt wird) muss hier der Auslöser bewusst angetippt werden – ohne
+  // Hinweis ist nicht klar, dass nach "Kamera starten" noch ein zweiter
+  // Schritt kommt.
+  if (scanCardSubEl) {
+    scanCardSubEl.textContent =
+      mode === "barcode"
+        ? "Barcode der Schallplatte oder CD erfassen"
+        : "Kamera starten, Cover ins Bild halten, dann „Foto aufnehmen“ antippen";
+  }
   // Barcode: flaches Band. Cover: höheres Fenster für die quadratische Hülle.
   frameEl.classList.toggle("cover-mode", mode === "cover");
   captureBtn.hidden = true;
