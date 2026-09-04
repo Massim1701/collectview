@@ -1277,6 +1277,45 @@ async function allowScan(source, term, counted) {
 
 /* ---------- Suche ---------- */
 
+/**
+ * Katalog-Treffer ohne Cover reparieren: erneut bei Discogs nachfragen
+ * (dieselbe Barcode-Suche wie ein frischer Scan), Cover den passenden
+ * discogs_id zuordnen und in den Katalog zurückschreiben – dann hat jeder
+ * künftige Scan dieses Barcodes ein Bild. Läuft nebenher, keine Wartezeit
+ * für den Nutzer, kein zusätzlicher Scan wird gezählt.
+ */
+async function repariereFehlendeCover(barcode, items) {
+  const fehlend = items.filter((it) => !it.cover_url);
+  if (fehlend.length === 0) return;
+
+  try {
+    const res = await discogsSuche({ barcode });
+    if (!res.ok) return;
+    const data = await res.json();
+    const roh = data.results || [];
+
+    let repariert = false;
+    for (const it of fehlend) {
+      const treffer = roh.find((r) => r.id === it.discogs_id);
+      const cover = treffer && (treffer.cover_image || treffer.thumb);
+      if (cover) {
+        it.cover_url = cover;
+        repariert = true;
+        upsertRelease(it).catch(() => {});
+      }
+    }
+
+    // Steht der Nutzer noch bei genau diesem Scan, gleich neu zeichnen –
+    // sonst zeigt die Liste weiter das (jetzt überholte) fehlende Cover.
+    if (repariert && currentScan.barcode === barcode) {
+      if (currentScan.results.length === 1) renderResult(currentScan.results[0]);
+      else renderResultList();
+    }
+  } catch {
+    // Reparatur ist ein Bonus, kein Muss – Fehler hier dürfen sonst nichts stören.
+  }
+}
+
 async function lookupBarcode(barcode, { counted = false } = {}) {
   // Erst das alte Ergebnis wegräumen, dann fragen, ob gesucht werden darf:
   // sonst steht der vorige Treffer noch da, während der Limit-Hinweis kommt.
@@ -1297,7 +1336,16 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
   const ausKatalog = await fetchReleasesByBarcode(barcode).catch(() => []);
   if (ausKatalog.length > 0) {
     hideRateLimitNotice();
-    await showScan(barcode, ausKatalog.map((r) => releaseToItem(r, barcode)), collectionByBarcode, "Katalog");
+    const katalogItems = ausKatalog.map((r) => releaseToItem(r, barcode));
+    await showScan(barcode, katalogItems, collectionByBarcode, "Katalog");
+    // Ältere Katalog-Einträge wurden geschrieben, bevor die Discogs-Cover
+    // zuverlässig ankamen (Proxy noch nicht aktiv, Session ohne Token o.ä.)
+    // und bleiben ohne Reparatur für immer ohne Bild – der Katalog wird nie
+    // neu abgefragt. Fehlt hier ein Cover, im Hintergrund nachladen und den
+    // Katalog-Eintrag reparieren, ohne die Anzeige zu blockieren.
+    if (katalogItems.some((it) => !it.cover_url)) {
+      repariereFehlendeCover(barcode, katalogItems).catch(() => {});
+    }
     return;
   }
 
