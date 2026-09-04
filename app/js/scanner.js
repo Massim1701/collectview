@@ -1098,22 +1098,6 @@ if (codeForm) {
   });
 }
 
-/* ---------- Selbsttest ---------- */
-
-const selftestBtn = document.getElementById("selftest-btn");
-if (selftestBtn) {
-  selftestBtn.addEventListener("click", async () => {
-    const ziel = document.getElementById("selftest-out");
-    selftestBtn.disabled = true;
-    ziel.innerHTML = `<p class="note"><span class="spinner"></span>Selbsttest läuft …</p>`;
-    const fertig = await selftestAusfuehren((teil) => {
-      ziel.innerHTML = selftestMarkup(teil, true);
-    });
-    ziel.innerHTML = selftestMarkup(fertig, false);
-    selftestBtn.disabled = false;
-  });
-}
-
 /* ---------- Barcode-Abgleich ---------- */
 
 /**

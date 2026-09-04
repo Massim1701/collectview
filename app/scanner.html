@@ -92,8 +92,6 @@
     <div class="tag">Scanner</div>
   </div>
 
-  <div class="notice" data-i18n="scanner_notice_pending" style="margin-bottom:14px;"></div>
-
   <div class="card" id="scan-card">
     <div class="card-head">
       <div class="icon-badge">
@@ -156,12 +154,6 @@
       <p class="err" id="code-error" role="alert"></p>
     </form>
 
-    <!-- Prüft die Kette hinter dem Scan Glied für Glied. "Geht nicht"
-         hat zu viele mögliche Ursachen, um es zu raten. -->
-    <p class="manual-hint" style="text-align:left;">
-      <button type="button" class="linklike" id="selftest-btn">Selbsttest</button>
-    </p>
-    <div id="selftest-out"></div>
   </div>
 
   <div class="card" id="results-card" style="display:none;">
@@ -230,7 +222,6 @@
 <script src="./js/scan-status.js"></script>
 <script src="./js/scan-limit.js"></script>
 <script src="./js/scan-history.js"></script>
-<script src="./js/selftest.js"></script>
 <script src="./js/scanner.js"></script>
 </body>
 </html>

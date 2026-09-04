@@ -56,7 +56,6 @@ const I18N = {
     login_no_account: "Noch kein Konto?",
     login_create_account: "Registrieren",
 
-    scanner_notice_pending: "Hinweis: Die App wartet noch auf die Freigabe in den App Stores. Aktuell funktioniert das Scannen nur über die Webcam im Browser.",
     scanner_title: "Scannen",
     scanner_sub: "Barcode der Schallplatte oder CD erfassen",
     scanner_mode_barcode: "Barcode",
@@ -138,7 +137,6 @@ const I18N = {
     login_no_account: "No account yet?",
     login_create_account: "Sign up",
 
-    scanner_notice_pending: "Note: The app is still awaiting approval in the app stores. Right now scanning only works via webcam in the browser.",
     scanner_title: "Scan",
     scanner_sub: "Scan the barcode of your record or CD",
     scanner_mode_barcode: "Barcode",
@@ -218,7 +216,6 @@ const I18N = {
     login_no_account: "Non hai un account?",
     login_create_account: "Registrati",
 
-    scanner_notice_pending: "Nota: l'app è ancora in attesa dell'approvazione negli store. Al momento la scansione funziona solo tramite webcam nel browser.",
     scanner_title: "Scansiona",
     scanner_sub: "Scansiona il codice a barre del disco o CD",
     scanner_mode_barcode: "Codice a barre",
@@ -298,7 +295,6 @@ const I18N = {
     login_no_account: "Nie masz konta?",
     login_create_account: "Zarejestruj się",
 
-    scanner_notice_pending: "Uwaga: aplikacja czeka jeszcze na zatwierdzenie w sklepach. Obecnie skanowanie działa tylko przez kamerę internetową w przeglądarce.",
     scanner_title: "Skanuj",
     scanner_sub: "Zeskanuj kod kreskowy płyty lub CD",
     scanner_mode_barcode: "Kod kreskowy",
@@ -378,7 +374,6 @@ const I18N = {
     login_no_account: "¿Aún no tienes cuenta?",
     login_create_account: "Regístrate",
 
-    scanner_notice_pending: "Aviso: la app todavía está a la espera de aprobación en las tiendas. Por ahora, el escaneo solo funciona con la webcam en el navegador.",
     scanner_title: "Escanear",
     scanner_sub: "Escanea el código de barras del disco o CD",
     scanner_mode_barcode: "Código de barras",
