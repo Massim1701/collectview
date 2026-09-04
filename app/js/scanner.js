@@ -61,6 +61,22 @@ function setStatus(text, { active = false, busy = false } = {}) {
   statusEl.innerHTML = busy ? `<span class="spinner"></span>${escapeHtml(text)}` : escapeHtml(text);
 }
 
+const lampEl = document.getElementById("scan-lamp");
+
+/**
+ * Scan-Ampel: "aus" (noch nichts los), "gelb" (Kamera sucht einen Code
+ * oder die Discogs-/Katalog-Suche läuft), "gruen" (Treffer da), "rot"
+ * (kein Barcode erkannt, keine Treffer, oder die Suche ist fehlgeschlagen).
+ * Reine Anzeige, ändert nichts am Ablauf -- darf also überall zusätzlich
+ * zu setStatus() stehen, ohne dass ein Fehler hier den Scan gefährdet.
+ */
+function setLamp(state) {
+  if (!lampEl) return;
+  lampEl.querySelectorAll(".scan-lamp-dot").forEach((dot) => {
+    dot.classList.toggle("on", dot.dataset.lamp === state);
+  });
+}
+
 function setResultsHead(title, sub) {
   resultsTitleEl.textContent = title;
   resultsSubEl.textContent = sub;
@@ -311,6 +327,7 @@ async function toggleScan() {
   if (mode !== "barcode") return;
   if (scanning) {
     stopScan();
+    setLamp("off");
     return;
   }
 
@@ -320,6 +337,7 @@ async function toggleScan() {
     scanning = true;
     scanBtn.textContent = "Scan stoppen";
     setStatus("Kamera wird gestartet …", { active: true, busy: true });
+    setLamp("yellow");
 
     // Ohne ausdrückliche Wahl NICHT raten. Die alte Annahme "Rückkamera
     // steht zuletzt" geht auf Telefonen mit mehreren Rückkameras schief:
@@ -350,6 +368,7 @@ async function toggleScan() {
     frameEl.classList.remove("live");
     scanBtn.textContent = "Barcode-Scan starten";
     setStatus("Kamera-Zugriff fehlgeschlagen: " + e.message);
+    setLamp("red");
   }
 }
 
@@ -850,6 +869,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
   resultsCard.style.display = "none";
   if (!(await allowScan("cover", text, counted))) return;
 
+  setLamp("yellow");
   setStatus("Suche bei Discogs …", { active: true, busy: true });
 
   try {
@@ -857,6 +877,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
     if (res.status === 429) {
       showRateLimitNotice(text, lookupCoverText);
       setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
+      setLamp("red");
       return;
     }
     if (!res.ok) throw new Error(`Discogs antwortete mit ${res.status}`);
@@ -867,6 +888,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
     await showScan(null, results, Promise.resolve([]));
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
+    setLamp("red");
   }
 }
 
@@ -1244,6 +1266,7 @@ async function allowScan(source, term, counted) {
     noticeEl.hidden = false;
     noticeEl.innerHTML = scanLimitNoticeMarkup();
     setStatus("");
+    setLamp("red");
     scanQuota = { ...scanQuota, used: FREE_SCAN_LIMIT, known: true };
     paintScanQuota();
     return false;
@@ -1251,6 +1274,7 @@ async function allowScan(source, term, counted) {
 
   if (!result.ok) {
     setStatus("Scan konnte nicht gezählt werden: " + result.message);
+    setLamp("red");
     return false;
   }
 
@@ -1275,6 +1299,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
   resultsCard.style.display = "none";
   if (!(await allowScan("barcode", barcode, counted))) return;
 
+  setLamp("yellow");
   setStatus("Suche bei Discogs …", { active: true, busy: true });
 
   // Schritt 3 startet hier, nicht nach der Discogs-Antwort: der Barcode
@@ -1300,6 +1325,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     if (res.status === 429) {
       showRateLimitNotice(barcode);
       setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
+      setLamp("red");
       return;
     }
 
@@ -1336,6 +1362,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
       resultsCard.style.display = "block";
       renderUnreliableBarcode(barcode, results);
       setStatus("");
+      setLamp("red");
       return;
     }
 
@@ -1347,6 +1374,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     katalogLaeuft = katalogFuellen(results);
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
+    setLamp("red");
   }
 }
 
@@ -1381,17 +1409,20 @@ async function showScan(barcode, results, collectionByBarcodePromise, quelle = "
   if (results.length === 0) {
     renderNoMatch(barcode);
     setStatus("");
+    setLamp("red");
     return;
   }
 
   if (results.length === 1) {
     renderResult(results[0]);
     setStatus("");
+    setLamp("green");
     return;
   }
 
   renderResultList();
   setStatus("");
+  setLamp("green");
 }
 
 /* ---------- Schritt 2: Trefferliste ---------- */
@@ -1724,6 +1755,7 @@ async function moveWishlistToCollection(item, wishlistRow) {
 function discardResult() {
   resultsCard.style.display = "none";
   setStatus("Verworfen. Bereit für den nächsten Scan.");
+  setLamp("off");
 }
 
 resultsEl.addEventListener("click", (e) => {

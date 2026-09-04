@@ -652,6 +652,20 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .placeholder{ font-size:14.5px; }
 .notice{ font-size:14.5px; }
 
+/* Scan-Ampel: rot = nicht erkannt/kein Treffer, gelb = Suche läuft,
+   gruen = Treffer da. Immer alle drei sichtbar, nur eine davon leuchtet --
+   klarer als ein einzelner Punkt, der Farbe wechselt und dabei
+   uebersehen werden kann. */
+.scan-lamp{ display:flex; gap:8px; align-items:center; margin:2px 0 4px; }
+.scan-lamp-dot{
+  width:11px; height:11px; border-radius:999px;
+  background:var(--border); opacity:.45;
+  transition:opacity .15s ease, box-shadow .15s ease;
+}
+.scan-lamp-dot[data-lamp="red"].on{ background:#FF4D5E; opacity:1; box-shadow:0 0 6px rgba(255,77,94,.6); }
+.scan-lamp-dot[data-lamp="yellow"].on{ background:#FFD23F; opacity:1; box-shadow:0 0 6px rgba(255,210,63,.6); }
+.scan-lamp-dot[data-lamp="green"].on{ background:#34C759; opacity:1; box-shadow:0 0 6px rgba(52,199,89,.6); }
+
 /* --- Bedienelemente: Größe UND Touch-Ziel ----------------------------- */
 .btn-secondary.small{ height:44px; font-size:14.5px; }
 
