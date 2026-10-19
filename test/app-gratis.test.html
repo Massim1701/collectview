@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Kostenlose App – Tests</title>
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="../app/vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../app/app.css">
+</head>
+<body>
+<div id="nav"></div>
+
+<!-- App-Modus erzwingen, bevor app-modus.js ihn auswertet (auf Capacitor
+     kommt er von der Plattform; hier hilft die Sitzungsvariable). -->
+<script>sessionStorage.setItem("appGratis", "1");</script>
+<script src="../app/js/app-modus.js"></script>
+<script src="../app/js/i18n.js"></script>
+<script src="../app/js/ui.js"></script>
+<script src="../app/js/scan-limit.js"></script>
+<script src="assert.js"></script>
+
+<script>
+/*
+ * Die native App ist ein kostenloser Scanner: keine Sammlung, kein
+ * Marktplatz, kein Konto, kein Weg zum Bezahlen. Apple und Google lassen
+ * Funktionen, die man außerhalb der App bezahlt, sonst nur mit zusätzlichem
+ * In-App-Kauf zu (Richtlinie 3.1.1 / 3.1.3(b)). Diese Tests halten fest,
+ * dass die Navigation und die Hinweise der App nirgends dorthin führen.
+ */
+
+test("Der App-Modus ist an", () => {
+  assert(APP_GRATIS === true, "APP_GRATIS ist nicht gesetzt");
+  assertEqual(document.documentElement.dataset.appGratis, "1");
+});
+
+test("Die Navigation hat nur Scanner und Info", () => {
+  const box = document.getElementById("nav");
+  renderBottomNav(box, "search");
+  const ziele = [...box.querySelectorAll("a[href]")].map((a) => a.getAttribute("href"));
+  assertEqual(ziele, ["info.html"], "Scanner ist aktiv (kein Link), Info der einzige Link");
+  const namen = [...box.querySelectorAll(".navitem")].map((e) => e.textContent.trim());
+  assertEqual(namen, ["Scanner", "Info"]);
+});
+
+test("Nirgends in der Navigation steht Sammlung, Forum oder Konto", () => {
+  const box = document.getElementById("nav");
+  renderBottomNav(box, "info");
+  const html = box.innerHTML;
+  for (const wort of ["collection.html", "marketplace.html", "index.html", "Plus"]) {
+    assert(!html.includes(wort), `"${wort}" taucht in der App-Navigation auf`);
+  }
+});
+
+test("Die Scan-Limit-Meldung verweist nicht auf die Preise", () => {
+  const html = scanLimitNoticeMarkup();
+  assert(!html.includes("pricing"), "Link zur Preisseite in der App");
+  assert(!html.includes("Plus"), "Hinweis auf Plus in der App");
+});
+
+runTests();
+</script>
+</body>
+</html>

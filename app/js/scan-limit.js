@@ -88,7 +88,9 @@ function scanLimitNoticeMarkup() {
     </svg>
     <div class="notice-body">
       <strong>Gerade sind keine weiteren Scans möglich</strong>
-      <span>Bitte versuch es in Kürze erneut, oder hol dir CollectView Plus.</span>
-      <a class="btn-secondary small" href="../wireframes/pricing.html">CollectView Plus ansehen</a>
+      ${typeof APP_GRATIS !== "undefined" && APP_GRATIS
+        ? "<span>Bitte versuch es in Kürze erneut.</span>"
+        : `<span>Bitte versuch es in Kürze erneut, oder hol dir CollectView Plus.</span>
+      <a class="btn-secondary small" href="../wireframes/pricing.html">CollectView Plus ansehen</a>`}
     </div>`;
 }
