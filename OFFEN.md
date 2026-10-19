@@ -8,7 +8,63 @@ DB abgleichen" verlangten, obwohl das längst erledigt war: die Listen lagen
 in `~/Downloads/*.md`, wo die jeweils andere Sitzung sie nicht sehen konnte.
 Beide Sitzungen sehen den Code — also gehört die Liste in den Code.
 
-Stand: 02.09.2026
+Stand: 19.10.2026 (Kurzfassung oben neu, der Rest der Datei ist vom 02.09.2026)
+
+## Entscheidung 19.10.2026: Die App ist kostenlos, bezahlt wird nur im Web
+
+Massimo: Die App kostet nichts, es gibt in ihr nichts freizuschalten. Nur die
+Webseite (Datenbank und Community) ist jährlich zu zahlen, per Stripe.
+
+**Warum nicht mehr In-App-Kauf:** Apple (Richtlinie 3.1.1 und 3.1.3(b)) lässt
+in der App Funktionen, die man außerhalb bezahlt hat, nur zu, wenn sie dort
+auch per In-App-Kauf angeboten werden; Links zu anderen Zahlungswegen sind
+außerhalb des US-Stores nur mit Berechtigung erlaubt. Das war der Konflikt, der
+die Arbeit vorher angehalten hat. Eine App ohne bezahlte Funktionen und ohne
+Zahlungshinweise umgeht ihn.
+
+**Gebaut auf dem Branch `app-gratis`** (noch nicht in `main`):
+
+- `app/js/app-modus.js`: `APP_GRATIS` (Capacitor-Plattform; zum Testen im
+  Browser `?app=1`).
+- Die App ist ein Scanner: Treffer mit Marktwert und Hörlinks, Verlauf lokal,
+  kein Konto, keine Sammlung, kein Marktplatz, keine Wunschliste, kein Plus-Hinweis,
+  kein Link zu Preisen. Navigation nur Scanner und Info (`app/info.html`).
+- `scripts/build-www.sh` lässt alle Web-Seiten und ihre Skripte aus dem
+  App-Paket; Einstieg ist der Scanner.
+- `cordova-plugin-purchase` ist entfernt (package.json, Lockfile, Package.swift).
+- Tests: `test/app-gratis.test.html`. Stand der Suite: 19 von 197 rot, davon 19 schon
+  vorher (überwiegend der veraltete Scan-Flow-Test aus der Zeit des 5-Scans-Limits).
+- iOS: `cap sync` sauber, Simulator-Build `BUILD SUCCEEDED`, App startet direkt im
+  Scanner (iPhone 18 Pro, Simulator). Android nicht neu gebaut.
+
+**Entfällt damit (bleibt bis zur Freigabe als Option liegen):** Abschnitt 2
+(In-App-Kauf), 2b (Preise je Store) und 3 (Abo-Produkte in App Store Connect),
+dazu Sandbox-Kauf auf dem iPhone, Jahresabo bei Apple und `APPLE_SANDBOX_ERLAUBT`.
+Die Edge Functions `abo-pruefen`, `abo-notify` und `abo-notify-google` sind weiter
+deployt, werden aber nicht mehr aufgerufen.
+
+**Neu offen:**
+
+1. **Stripe im Echtbetrieb beweisen.** Geprüft (19.10.): `stripe-checkout` und
+   `stripe-webhook` sind deployt, die Secrets gesetzt (Webhook antwortet ohne
+   Signatur mit 400), die Funktionen `stripe_abo_setzen/_aktualisiert/_beendet`
+   existieren und sind für anon/authenticated gesperrt. **Aber:** kein einziges
+   Profil hat je ein Stripe-Abo, in den Logs steht kein Stripe-Aufruf. Im
+   Stripe-Dashboard prüfen: Endpunkt
+   `https://mevmpihydpksruhmzzwr.supabase.co/functions/v1/stripe-webhook` im
+   Live-Modus mit `checkout.session.completed`,
+   `customer.subscription.updated`, `customer.subscription.deleted`; dazu die
+   Preis-IDs. Dann ein Testlauf mit der Testkarte und danach Kündigung.
+2. **Branch prüfen und in `main` übernehmen**, danach neue Builds für beide Stores.
+3. **Store-Texte:** Beschreibung nennt die App kostenlos, ohne Abo und ohne Preis.
+   Vor der Einreichung Apples Richtlinien (Überarbeitung vom 16.10.2026) und
+   Googles Play-Zahlungsrichtlinie im Wortlaut gegenlesen.
+4. **Android** mit `app-gratis` bauen und auf einem echten Gerät testen (Kamera).
+5. **Aufräumen:** `app/js/scanner.js` und `app/js/scan-limit.js` enthalten noch
+   Preis-Links, die in der App nie erscheinen (nur im App-Modus ausgeblendet).
+   `ops/keepalive/` und `supabase/functions/_diag-stripe-status/` sind im alten
+   Arbeitsverzeichnis noch nicht committet.
+
 
 ## Wer ist woran — Kurzfassung
 
@@ -125,6 +181,9 @@ Grund – ein Foto wiegt schwerer als eine IP-Adresse. Der Weg gehört in die
 Datenschutzerklärung und sollte eine bewusste Handlung bleiben.
 
 ### 2. In-App-Kauf · alles gebaut, es fehlen nur noch Store-Einträge
+
+> **Entfällt seit 19.10.2026** (App gratis, siehe oben). Nur noch Hintergrund; nicht abarbeiten.
+
 
 **Diese Produkt-IDs müssen in beiden Stores zeichengenau so heißen** — die App
 fragt genau danach, ein Tippfehler äußert sich nur als „Produkt nicht
@@ -259,6 +318,9 @@ Meldungen laufen. Offen bleibt dort allein der Preis, siehe 2b.
 
 ### 2b. Preise · die App zeigte einen anderen Preis, als der Store abbucht
 
+> **Entfällt seit 19.10.2026** (App gratis, siehe oben). Nur noch Hintergrund; nicht abarbeiten.
+
+
 **Gefunden am 01.09.2026:** `wireframes/pricing.html` hatte `3,99 €` und
 `34,90 €` fest eingetragen. Die Play-API meldet für Deutschland aber
 `4,79 €` und `41,99 €` — vermutlich netto eingetragen, brutto abgerechnet
@@ -285,6 +347,9 @@ App Store Connect direkt, nicht bei Claude Web (Kontoerstellung/Store-Produkte
 fallen unter die Ausnahme für Store-seitige Aktionen).
 
 ### 3. App Store Connect · Eintrag steht, Produkte fehlen
+
+> **Entfällt seit 19.10.2026** (App gratis, siehe oben). Nur noch Hintergrund; nicht abarbeiten.
+
 
 Der App-Eintrag **existiert** (nachgesehen am 01.09.2026): CollectView,
 Apple-ID `6807394925`, Bundle-ID `online.driftware.collectview`, Status
