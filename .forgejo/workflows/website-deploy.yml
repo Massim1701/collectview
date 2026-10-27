@@ -4,7 +4,7 @@ name: Webseite deployen
 # Branch main = Produktion, alle anderen Branches = Vorschau-Adresse (z. B. website-neu).
 # Der bisherige Worker "collectview-site" wird dadurch NICHT verändert.
 # Benötigt Forgejo-Secrets: CLOUDFLARE_API_TOKEN (Berechtigung "Cloudflare Pages: Bearbeiten"),
-# CLOUDFLARE_ACCOUNT_ID. Von Hand: Actions -> Webseite deployen -> Run workflow.
+# CLOUDFLARE_ACCOUNT_ID. Beide sind seit 27.10.2026 im Repo gesetzt (Token "Forgejo Pages Deploy collectview"). Von Hand: Actions -> Webseite deployen -> Run workflow.
 on:
   push:
     branches: [main, website-neu]
