@@ -91,6 +91,11 @@ unsigniert. **Massimo muss den Ordner ~/collectview-schluessel sichern** (Passwo
 Datentraeger): geht der Schluessel verloren, laesst sich die App nur ueber den Google-Support
 zuruecksetzen. In der Play Console "Play App Signing" aktivieren und die .aab dort hochladen.
 
+**Aufgeraeumt 27.10.2026:** `ops/keepalive/` (Worker, der plattenregal wach haelt, taeglich 05:17 UTC)
+ist jetzt im Repo; Supabase-Projekt ist ACTIVE_HEALTHY. `_diag-stripe-status` ist nicht deployt und
+bewusst nicht ins Repo uebernommen (es gaebe ohne Anmeldung Stripe-Kontodaten aus). Die Dateien im
+alten Arbeitsverzeichnis /Volumes/Daten/Dokumente/schallplatten-katalog bleiben unberuehrt.
+
 **Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
 echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
 

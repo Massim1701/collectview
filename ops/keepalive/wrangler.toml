@@ -1,0 +1,16 @@
+# Haelt die Supabase-Datenbank von CollectView ("plattenregal") wach.
+# Free-Tier-Projekte werden nach ca. 7 Tagen ohne Aktivitaet pausiert.
+# Dieser Worker fragt taeglich per REST zwei Tabellen ab (echte Datenbankabfrage,
+# Antwort wegen Row Level Security leer, das genuegt als Aktivitaet).
+name = "collectview-keepalive"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+workers_dev = false
+
+[triggers]
+crons = ["17 5 * * *"]
+
+[vars]
+SUPABASE_URL = "https://mevmpihydpksruhmzzwr.supabase.co"
+# oeffentlicher publishable Key (steht auch in app/config.js, kein Geheimnis)
+SUPABASE_KEY = "sb_publishable_0IjMR_SlDFLS-rBt7YVBww_ExbX8ke5"
