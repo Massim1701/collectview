@@ -601,6 +601,10 @@ die Adresse an neun Stellen verlinkt. Anmelde-Rücksprung `next=../plus` ist in 
 Offen dazu: Die Edge Function `stripe-checkout` kennt serverseitig weiter den Zyklus `monatlich` und gibt die alte Rückkehr-Adresse an
 (funktioniert über die Weiterleitung); den Monatspreis bei Stripe und in den Stores (Play: 3,99 €/34,90 €) bei Gelegenheit deaktivieren.
 
+**Neuer Look der Web-App (27.10.2026, live):** Theme „Porzellan" (`app/porzellan.css`, `data-theme="porzellan"` auf allen 14 Seiten;
+hell, Bricolage Grotesque, Minze). Live geprüft: Start, Sammlung, Forum, Admin, Import, Login, Preisseite. Nicht einzeln angesehen:
+Detail-, Posteingang- und Listing-Seite. Die native App bekommt den Look erst, wenn der Branch in `main` und in die App-Builds kommt.
+
 Offen: Android-/App-Store-Links in `site/download.html` eintragen, sobald die Store-Einträge live sind; Forgejo-Secrets für den
 automatischen Deploy anlegen (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`) und Actions aktivieren; Mosaik-Cover rechtlich klären;
 Kennzeichnung der KI-Fotos prüfen.
