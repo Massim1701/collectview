@@ -71,7 +71,7 @@ def kopf(hell):
 </header>"""
 
 FUSS = f"""<footer class="fuss">
-  <span>&copy; {JAHR} CollectView</span>
+  <span>&copy; {JAHR} Driftware &middot; CollectView</span>
   <span><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="support.html">Support</a></span>
 </footer>"""
 
@@ -214,7 +214,7 @@ datenschutz_inhalt = f"""<section style="padding-top:0">
     <div class="prose">
       <p class="stand">Stand: 27. Oktober 2026</p>
       <h2>Verantwortlicher</h2>
-      <p>CollectView &middot; Kontakt: <a href="mailto:{KONTAKT}">{KONTAKT}</a></p>
+      <p>Driftware, Nohlstr. 215, 46045 Oberhausen, Deutschland &middot; Kontakt: <a href="mailto:{KONTAKT}">{KONTAKT}</a></p>
       <h2>Konto &amp; Anmeldung</h2>
       <p>Für die Nutzung der App wird ein Konto (E-Mail-Adresse) angelegt. Die Anmeldedaten werden über Supabase Auth verwaltet und verschlüsselt gespeichert.</p>
       <h2>Sammlung &amp; Cover-Suche</h2>
