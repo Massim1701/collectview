@@ -1,6 +1,6 @@
 name: Webseite deployen
 
-# Veröffentlicht site/ bei Cloudflare Pages (Projekt collectview-website).
+# Veröffentlicht Webseite + Web-App (site/, app/, wireframes/) bei Cloudflare Pages (Projekt collectview-website).
 # Branch main = Produktion, alle anderen Branches = Vorschau-Adresse (z. B. website-neu).
 # Der bisherige Worker "collectview-site" wird dadurch NICHT verändert.
 # Benötigt Forgejo-Secrets: CLOUDFLARE_API_TOKEN (Berechtigung "Cloudflare Pages: Bearbeiten"),
@@ -10,6 +10,8 @@ on:
     branches: [main, website-neu]
     paths:
       - 'site/**'
+      - 'app/**'
+      - 'wireframes/**'
       - '.forgejo/workflows/website-deploy.yml'
   workflow_dispatch:
 
@@ -27,6 +29,9 @@ jobs:
       - name: Webseite prüfen (keine Originale, nur eine Adresse, alle Dateien da)
         run: python3 -I site/check.py
 
+      - name: Auslieferungspaket bauen (_pages/)
+        run: python3 -I site/stage.py
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -43,4 +48,4 @@ jobs:
             exit 1
           fi
           npx --yes wrangler@3 pages project create "$PROJEKT" --production-branch=main 2>&1 | tail -2 || true
-          npx --yes wrangler@3 pages deploy site --project-name "$PROJEKT" --branch "$BRANCH" --commit-dirty=true
+          npx --yes wrangler@3 pages deploy _pages --project-name "$PROJEKT" --branch "$BRANCH" --commit-dirty=true

@@ -55,7 +55,7 @@ css += """
 """
 
 # ---------------------------------------------------------------- Bausteine
-NAV = [("Funktionen", "index.html#funktionen", ""), ("Die App", "app.html", "opt"), ("Plus", "plus.html", ""),
+NAV = [("Funktionen", "index.html#funktionen", ""), ("Die App", "download.html", "opt"), ("Plus", "plus.html", ""),
        ("Fragen", "index.html#fragen", "opt"), ("Anmelden", "/app/login.html", "")]
 
 def kopf(hell):
@@ -112,7 +112,7 @@ haupt = re.search(r"<main>(.*)</main>", v8, re.S).group(1)
 haupt = haupt.replace("img/ki/foto-", "assets/img/foto-").replace("img/covers-mosaik-8/", "assets/img/cover/")
 haupt = haupt.replace('<section class="stage hell" id="stage">', '<section class="stage hell" id="stage">')
 # Verweise auf echte Unterseiten
-haupt = haupt.replace('<a class="pill" href="#app">App kostenlos laden', '<a class="pill" href="app.html">App kostenlos laden')
+haupt = haupt.replace('<a class="pill" href="#app">App kostenlos laden', '<a class="pill" href="download.html">App kostenlos laden')
 haupt = haupt.replace('<a class="pill" href="#plus">Plus ansehen', '<a class="pill" href="plus.html">Plus ansehen')
 haupt = haupt.replace('<a class="pill" href="#">Plus entdecken', '<a class="pill" href="plus.html">Plus entdecken')
 # Hinweis „Mockup“ und Platzhalter-Texte raus
@@ -164,7 +164,7 @@ plus_inhalt = """<section style="padding-top:0">
           <li>Marktwert und Streaming-Link</li>
           <li>Kein Konto nötig</li>
         </ul>
-        <a class="pill dunkel" href="app.html">Zur App <span aria-hidden="true">→</span></a>
+        <a class="pill dunkel" href="download.html">Zur App <span aria-hidden="true">→</span></a>
       </div>
       <div>
         <h2>Sammeln ist <b>Plus.</b></h2>
@@ -297,7 +297,7 @@ css += """
 (HIER / "assets").mkdir(exist_ok=True)
 (HIER / "assets" / "site.css").write_text(css.strip() + "\n", encoding="utf-8")
 (HIER / "assets" / "site.js").write_text(js, encoding="utf-8")
-for name, inhalt in (("index", index_html), ("app", app_html), ("plus", plus_html), ("support", support_html),
+for name, inhalt in (("index", index_html), ("download", app_html), ("plus", plus_html), ("support", support_html),
                      ("datenschutz", datenschutz_html), ("impressum", impressum_html)):
     (HIER / f"{name}.html").write_text(inhalt, encoding="utf-8")
 print("Seiten erzeugt:", ", ".join(sorted(p.name for p in HIER.glob("*.html"))))
