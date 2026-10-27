@@ -16,8 +16,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Upload-Schluessel fuer Google Play liegt bewusst AUSSERHALB des Repos
+    // (~/collectview-schluessel/, siehe OFFEN.md). Fehlt die Datei, bleibt der
+    // Release-Build unsigniert und der Debug-Build ist davon unberuehrt.
+    def signierDatei = file("${System.getProperty('user.home')}/collectview-schluessel/collectview-upload.properties")
+    if (signierDatei.exists()) {
+        def signier = new Properties()
+        signierDatei.withInputStream { signier.load(it) }
+        signingConfigs {
+            upload {
+                storeFile file(signier['storeFile'])
+                storePassword signier['storePassword']
+                keyAlias signier['keyAlias']
+                keyPassword signier['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (signierDatei.exists()) signingConfig signingConfigs.upload
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

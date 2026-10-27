@@ -82,6 +82,15 @@ Start: `$ANDROID_HOME/emulator/emulator -avd CollectView_Pixel`. Getestet: App s
 Scanner, Navigation nur Scanner/Info, Suche per Barcode (0720642442524 -> 8 Treffer, Cover,
 Marktwert, Hoerlinks), Hinweis nach dem Scan nur Text ohne Link, Info-Seite mit Anmelden,
 Kamera startet (virtuelle Szene, camera2 0 facing back), kein Absturz im Crash-Log.
+**Upload-Schluessel Android (27.10.2026):** `~/collectview-schluessel/collectview-upload.jks`
+plus `collectview-upload.properties` (Passwoerter, Rechte 600, Ordner 700), NICHT im Repo.
+SHA-256 des Zertifikats: 90:F8:CA:E8:C6:20:C7:20:E4:55:F0:AE:1A:37:80:F4:9F:3F:F4:0A:F8:90:FE:D4:58:28:E5:F0:34:86:7E:CB.
+`./gradlew bundleRelease` (mit JAVA_HOME=openjdk@21, ANDROID_HOME) baut signiert nach
+`android/app/build/outputs/bundle/release/app-release.aab`; ohne Schluesseldatei bleibt er
+unsigniert. **Massimo muss den Ordner ~/collectview-schluessel sichern** (Passwortmanager/zweiter
+Datentraeger): geht der Schluessel verloren, laesst sich die App nur ueber den Google-Support
+zuruecksetzen. In der Play Console "Play App Signing" aktivieren und die .aab dort hochladen.
+
 **Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
 echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
 
