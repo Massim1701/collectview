@@ -46,6 +46,8 @@ function sammle(verzeichnis, endung, treffer = []) {
  */
 function istProjektpfad(ziel) {
   return ziel &&
+    // Platzhalter aus JavaScript-Vorlagen (`href="${href}"`) sind keine Dateien.
+    !ziel.includes("${") &&
     !/^(https?:)?\/\//.test(ziel) &&
     !/^(data|mailto|tel|blob|javascript):/.test(ziel) &&
     !ziel.startsWith("#");
@@ -89,7 +91,11 @@ for (const datei of [...sammle("app", ".html"), ...sammle("wireframes", ".html")
     geprueft += 1;
     fehler.push(`${datei}: lädt ein Skript vom CDN statt aus app/vendor/ – ${ziel}`);
   }
-  for (const [, ziel] of text.matchAll(/<link[^>]+href="((?:https?:)?\/\/[^"]+)"/g)) {
+  // Nur echte Stylesheets: <link rel="canonical"> o. ä. zeigen bewusst nach außen.
+  for (const [tag] of text.matchAll(/<link\b[^>]*>/g)) {
+    if (!/\brel="stylesheet"/.test(tag)) continue;
+    const ziel = (tag.match(/\bhref="((?:https?:)?\/\/[^"]+)"/) || [])[1];
+    if (!ziel) continue;
     geprueft += 1;
     fehler.push(`${datei}: lädt ein Stylesheet vom CDN statt aus app/vendor/ – ${ziel}`);
   }

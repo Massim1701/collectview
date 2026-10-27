@@ -146,8 +146,8 @@
     rows = { collection_items: [], wishlist_items: [], scan_events: [], releases: [] };
     inserts = []; scanInserts = []; wishlistAdds = []; wishlistRemoves = []; rpcAufrufe = [];
     insertError = null; wishlistError = null; fetchResponse = null;
-    fetchCalls = 0; gesuchtePfade = []; scanLimitReached = false; scanTabelleFehlt = false; subscribed = false;
-    scanQuota = { used: 0, subscribed: false, known: false };
+    fetchCalls = 0; gesuchtePfade = []; scanLimitReached = false; scanTabelleFehlt = false; subscribed = true;
+    scanQuota = { used: 0, subscribed: true, known: false };
     sessionStub = null; proxyAntwort = null;
     // Merker in discogs.js: sonst schleppt ein Test das "Proxy ist tot"
     // des vorigen mit sich herum.
@@ -798,7 +798,10 @@ test("Ist die Platte im Katalog, wird Discogs gar nicht gefragt", async () => {
   resetStub();
   rows.releases = [{
     id: "rel-1", discogs_id: 1, title: "Nevermind", artist: "Nirvana",
-    format: "Vinyl, LP", year: 1991, country: "US", barcode: "111", cover_url: null,
+    format: "Vinyl, LP", year: 1991, country: "US", barcode: "111",
+    // Mit Cover: ein Katalogeintrag ohne Bild löst absichtlich eine
+    // Cover-Reparatur bei Discogs aus (repariereFehlendeCover).
+    cover_url: "https://example.test/nevermind.jpg",
   }];
   fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
 
@@ -862,11 +865,11 @@ test("Verschieben von der Wunschliste räumt dort auf", async () => {
   assertEqual(wishlistRemoves, ["w1"], "Wunschlisten-Eintrag muss weg");
 });
 
-test("Free-Limit wird als Abo-Hinweis gezeigt, nicht als roher Fehler", async () => {
+test("Abgelehntes Speichern (RLS ohne Abo) wird als Plus-Hinweis gezeigt, nicht als roher Fehler", async () => {
   resetStub();
   fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
   await lookupBarcode("111");
-  insertError = { message: "collection limit reached for free plan" };
+  insertError = { message: 'new row violates row-level security policy for table "collection_items"' };
   btn("add-collection").click();
   await tick();
 
@@ -907,18 +910,6 @@ test("Ohne Titel wird manuell nichts gespeichert", async () => {
 /* ---------- Free-Limit auf Scans ---------- */
 
 const quota = () => document.getElementById("scan-quota").textContent;
-
-test("Kontingent-Text zählt herunter", () => {
-  assertEqual(scanQuotaText(0, false), "Noch 5 von 5 freien Scans.");
-  assertEqual(scanQuotaText(4, false), "Noch 1 von 5 freien Scans.");
-  assertIncludes(scanQuotaText(5, false), "Keine freien Scans mehr");
-  assertIncludes(scanQuotaText(9, false), "Keine freien Scans mehr", "nie negativ");
-});
-
-test("Mit Abo gibt es keine Kontingent-Zeile", () => {
-  assertEqual(scanQuotaText(0, true), "");
-  assertEqual(scanQuotaText(99, true), "", "mit Abo ist die Zahl bedeutungslos");
-});
 
 test("Nur die Trigger-Meldung gilt als Limit", () => {
   assert(isScanLimitError({ message: "SCAN_LIMIT: keine freien Scans mehr" }));
@@ -979,41 +970,21 @@ test("Neuversuch nach einem Rate-Limit kostet keinen zweiten Scan", async () => 
   assertEqual(fetchCalls, 1, "gesucht werden muss trotzdem");
 });
 
-test("Die Anzeige zählt nach jedem Scan herunter", async () => {
-  resetStub();
-  currentUser = { id: "user-1" };
-  await refreshScanQuota();
-  assertEqual(quota(), "Noch 5 von 5 freien Scans.");
-
-  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
-  await lookupBarcode("111");
-  assertEqual(quota(), "Noch 4 von 5 freien Scans.");
-
-  fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
-  await lookupBarcode("222");
-  assertEqual(quota(), "Noch 3 von 5 freien Scans.");
+test("Scannen ist frei: der Hinweis nennt kein Limit, nur das Speichern braucht Plus", () => {
+  assertIncludes(freeTierHintText(false), "kostenlos");
+  assertIncludes(freeTierHintText(false), "CollectView Plus");
+  assertEqual(freeTierHintText(true), "", "mit Abo kein Hinweis");
 });
 
-test("Mit Abo bleibt die Zeile leer und der Scan läuft", async () => {
+test("Ohne Plus zeigt das Ergebnis 'Mit Plus speichern' statt 'Zur Sammlung'", async () => {
   resetStub();
-  subscribed = true;
-  await refreshScanQuota();
-  assertEqual(quota(), "", "mit Abo kein Kontingent-Hinweis");
-
+  subscribed = false;
+  scanQuota = { used: 0, subscribed: false, known: true };
   fetchResponse = discogsAnswer([discogsResult(1, "Nirvana - Nevermind")]);
   await lookupBarcode("111");
-  assertEqual(fetchCalls, 1);
-  assertEqual(quota(), "", "auch nach dem Scan nicht");
-});
-
-test("Abgelehnter Scan setzt die Anzeige auf aufgebraucht", async () => {
-  resetStub();
-  await refreshScanQuota();
-  scanLimitReached = true;
-  fetchResponse = discogsAnswer([]);
-  await lookupBarcode("111");
-
-  assertIncludes(quota(), "Keine freien Scans mehr");
+  const html = document.getElementById("results").innerHTML;
+  assert(!html.includes('data-action="add-collection"'), "Speichern ohne Plus angeboten");
+  assertIncludes(html, "Mit Plus speichern");
 });
 
 /* ---------- Kamerawahl ---------- */
