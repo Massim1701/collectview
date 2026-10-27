@@ -65,6 +65,8 @@ Katalog: ein Preis 24,90 EUR/Jahr, passt zur Webseite. Monatspreis gibt es nicht
 schickte fuer Gaeste customer_email "" -> Stripe lehnt ab. Korrigiert im Repo
 (`|| undefined`), **Deploy der Edge Function steht noch aus** (wurde blockiert).
 Echte Zahlung (Live-Modus, 24,90 EUR) nicht getestet: Muss Massimo selbst machen.
+**Entscheidung Massimo 27.10.:** Die laufende Edge Function bleibt unveraendert, der Gast-Fix wird
+nicht deployt (Repo-Stand hat ihn, live nicht). Nicht erneut als offen aufnehmen.
 
 **Store-Texte (27.10.2026):** `store/STORE-TEXTE.md` (DE/EN, Datenschutz-Angaben, Review-Hinweis).
 Gefunden: Kamera-Text in Info.plist behauptete, es werde nichts verschickt, obwohl das
