@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="de" data-theme="porzellan">
+<head>
+<title>Info – CollectView</title>
+<meta charset="utf-8">
+<script>(function(){var m=new Date().getMonth();var s=(m<2||m===11)?"winter":m<5?"fruehling":m<8?"sommer":"herbst";document.documentElement.dataset.season=s;})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" sizes="192x192" href="./favicon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon-180.png">
+<meta name="theme-color" content="#F3F3F0">
+<link rel="stylesheet" href="./vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../wireframes/styles.css">
+<link rel="stylesheet" href="./app.css">
+<link rel="stylesheet" href="./porzellan.css">
+</head>
+<body>
+<main class="shell">
+
+  <div class="page-header">
+    <div class="brand">CollectView</div>
+    <div class="tag">Info</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-head-title">Der kostenlose Scanner</div>
+        <div class="card-head-sub">Schallplatten und CDs erkennen</div>
+      </div>
+    </div>
+    <p class="muted" style="line-height:1.6;margin:0;">
+      Scanne den Barcode oder fotografiere das Cover. CollectView erkennt die
+      Veröffentlichung, zeigt Jahr, Format und Marktwert laut Discogs und
+      verlinkt zum Anhören. Dafür brauchst du kein Konto, und die App ist
+      kostenlos.
+    </p>
+  </div>
+
+  <div class="card" id="konto-card">
+    <div class="card-head">
+      <div>
+        <div class="card-head-title">Konto</div>
+        <div class="card-head-sub" id="konto-sub">Optional</div>
+      </div>
+    </div>
+    <div id="konto-body"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-head-title">Rechtliches</div>
+        <div class="card-head-sub">Anbieter, Datenschutz und Hilfe</div>
+      </div>
+    </div>
+    <p style="margin:0;line-height:2;">
+      <a href="https://collectview.site/impressum" target="_blank" rel="noopener">Impressum</a><br>
+      <a href="https://collectview.site/datenschutz" target="_blank" rel="noopener">Datenschutz</a><br>
+      <a href="https://collectview.site/support" target="_blank" rel="noopener">Support</a>
+    </p>
+  </div>
+
+</main>
+
+<div class="bottomnav" id="bottomnav"></div>
+
+<script src="./vendor/supabase.js"></script>
+<script src="./config.js"></script>
+<script src="./js/app-modus.js"></script>
+<script src="./js/i18n.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/auth.js"></script>
+<script>renderBottomNav(document.getElementById("bottomnav"), "info");</script>
+<script>
+/* Konto-Bereich der kostenlosen App: ohne Konto "Anmelden", sonst E-Mail und "Abmelden".
+   Anonyme Gast-Sitzungen (Scanner) zählen als nicht angemeldet. */
+(async () => {
+  const body = document.getElementById("konto-body");
+  const sub = document.getElementById("konto-sub");
+  const { data } = await sb.auth.getSession();
+  const user = data.session?.user;
+  if (user && !user.is_anonymous) {
+    sub.textContent = "Angemeldet";
+    body.innerHTML = `<p class="muted" style="margin:0 0 12px;"></p>
+      <button class="btn-secondary" type="button" id="abmelden">Abmelden</button>`;
+    body.querySelector("p").textContent = user.email || "";
+    document.getElementById("abmelden").addEventListener("click", async () => {
+      await signOut();
+      location.reload();
+    });
+  } else {
+    body.innerHTML = `<p class="muted" style="margin:0 0 12px;line-height:1.6;">Scannen geht ohne Konto. Mit deinem CollectView-Konto kannst du dich hier anmelden.</p>
+      <a class="btn-secondary" href="login.html?next=info.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 22px;text-decoration:none;">Anmelden</a>`;
+  }
+})();
+</script>
+</body>
+</html>

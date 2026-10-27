@@ -205,6 +205,16 @@ function renderBottomNav(container, active) {
       </${tag}>`;
   };
 
+  // Native App = kostenloser Scanner (js/app-modus.js): nur Scanner und Info.
+  if (typeof APP_GRATIS !== "undefined" && APP_GRATIS) {
+    container.innerHTML = `
+      <nav class="bottomnav-inner" aria-label="Hauptnavigation">
+        ${item("search", "scanner.html", "Scanner", '<rect x="7" y="8" width="10" height="8" rx="1"/><path d="M4 8V6a2 2 0 0 1 2-2h2M20 8V6a2 2 0 0 0-2-2h-2M4 16v2a2 2 0 0 0 2 2h2M20 16v2a2 2 0 0 1-2 2h-2"/>')}
+        ${item("info", "info.html", "Info", '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>')}
+      </nav>`;
+    return;
+  }
+
   container.innerHTML = `
     <nav class="bottomnav-inner" aria-label="Hauptnavigation">
       ${item("home", "index.html", t("nav_home"), '<path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/>')}

@@ -6,9 +6,11 @@ const noteEl = document.getElementById("auth-note");
 
 /** Nur relative Ziele zulassen – kein offener Redirect über ?next= */
 function nextTarget() {
-  const raw = new URLSearchParams(location.search).get("next") || "index.html";
+  // Native App kennt nur Scanner und Info (js/app-modus.js), index.html gibt es dort nicht.
+  const standard = APP_GRATIS ? "scanner.html" : "index.html";
+  const raw = new URLSearchParams(location.search).get("next") || standard;
   if (raw === "../plus") return raw; // Kaufseite der Webseite (feste Ausnahme)
-  return /^[\w.-]+\.html(\?[\w=&%.-]*)?$/.test(raw) ? raw : "index.html";
+  return /^[\w.-]+\.html(\?[\w=&%.-]*)?$/.test(raw) ? raw : standard;
 }
 
 // Wer schon angemeldet ist, muss sich nicht noch einmal anmelden.

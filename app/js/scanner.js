@@ -81,6 +81,24 @@ function setLamp(state) {
 function setResultsHead(title, sub) {
   resultsTitleEl.textContent = title;
   resultsSubEl.textContent = sub;
+  paintAppHinweis();
+}
+
+/**
+ * Native App: unter jedem Scan-Ergebnis ein Hinweis auf die Webseite, solange
+ * kein bezahltes Konto angemeldet ist. Gäste und kostenlose Konten sehen ihn,
+ * Plus-Konten (scanQuota.subscribed) nicht. Neutral formuliert, ohne Preis und
+ * ohne Kauf-Link (Apple 3.1.1/3.1.3, siehe app-modus.js).
+ * setResultsHead() läuft bei jeder Ergebnisansicht, auch bei "keine Treffer".
+ */
+function paintAppHinweis() {
+  const el = document.getElementById("app-hinweis");
+  if (!el) return;
+  if (!appHinweisSichtbar({ aboBekannt: aboStatusBekannt, subscribed: scanQuota.subscribed })) {
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = appHinweisMarkup(!currentUser || currentUser.is_anonymous);
 }
 
 /* ---------- Modus & Kameraauswahl ----------
@@ -1215,6 +1233,9 @@ function normalizeResult(r, barcode) {
 
 /** Stand des Kontingents für die Anzeige; verbindlich ist der Trigger. */
 let scanQuota = { used: 0, subscribed: false, known: false };
+// Erst wenn der Abo-Status geladen ist, zeigt paintAppHinweis() etwas an,
+// damit Plus-Konten den Hinweis nicht kurz aufblitzen sehen.
+let aboStatusBekannt = false;
 
 async function refreshScanQuota() {
   if (!currentUser) return;
@@ -1230,12 +1251,14 @@ async function refreshScanQuota() {
     // trotzdem, hier fehlt nur der Hinweis vorher.
     scanQuota.known = false;
   }
+  aboStatusBekannt = true;
   paintScanQuota();
+  paintAppHinweis();
 }
 
 function paintScanQuota() {
   const el = document.getElementById("scan-quota");
-  if (el) el.textContent = freeTierHintText(scanQuota.subscribed);
+  if (el) el.textContent = APP_GRATIS ? "Scannen ist kostenlos." : freeTierHintText(scanQuota.subscribed);
   // Kamera-Scan (Barcode + Cover-Foto) ist jetzt für alle frei -- auch
   // ohne Konto (ensureSession(), siehe init()). Nur das Speichern in die
   // Sammlung bleibt an CollectView Plus gebunden (renderResult,
@@ -1544,8 +1567,8 @@ function renderUnreliableBarcode(barcode, results) {
             `Damit lässt sich die Platte nicht bestimmen. Über das Cover-Foto oder von Hand klappt es.`,
     })}
     <div class="scan-actions">
-      <button class="btn-primary" type="button" data-action="manual-open">Manuell anlegen</button>
-      <button class="btn-secondary" type="button" data-action="weiter">Weiter scannen</button>
+      ${APP_GRATIS ? "" : `<button class="btn-primary" type="button" data-action="manual-open">Manuell anlegen</button>`}
+      <button class="${APP_GRATIS ? "btn-primary" : "btn-secondary"}" type="button" data-action="weiter">Weiter scannen</button>
     </div>
     <p class="manual-hint">
       <button type="button" class="linklike" data-action="show-anyway">Treffer trotzdem ansehen</button>
@@ -1553,6 +1576,7 @@ function renderUnreliableBarcode(barcode, results) {
 }
 
 function manualHintMarkup() {
+  if (APP_GRATIS) return "";
   return `
     <p class="manual-hint">Nicht dabei?
       <button type="button" class="linklike" data-action="manual-open">Manuell anlegen</button>
@@ -1600,15 +1624,17 @@ function renderResult(item) {
     ${streamingMarkup(item)}
     <div id="scan-value"></div>
     <div class="scan-actions">
-      ${scanQuota.subscribed
+      ${APP_GRATIS
+        ? `<button class="btn-primary" type="button" data-action="weiter">Weiter scannen</button>`
+        : scanQuota.subscribed
         ? `<button class="btn-primary" type="button" data-action="add-collection"${status.inCollection ? " disabled" : ""}>
              ${status.inCollection ? "Schon in der Sammlung" : "Zur Sammlung"}
            </button>`
         : `<a class="btn-primary" href="../wireframes/pricing.html" style="display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">Mit Plus speichern</a>`}
-      <button class="btn-secondary" type="button" data-action="add-wishlist"${status.inCollection || status.onWishlist ? " disabled" : ""}>Auf Wunschliste</button>
-      <button class="btn-secondary" type="button" data-action="weiter">Weiter scannen</button>
+      ${APP_GRATIS ? "" : `<button class="btn-secondary" type="button" data-action="add-wishlist"${status.inCollection || status.onWishlist ? " disabled" : ""}>Auf Wunschliste</button>
+      <button class="btn-secondary" type="button" data-action="weiter">Weiter scannen</button>`}
     </div>
-    ${scanQuota.subscribed ? "" : `<p class="manual-hint" style="text-align:left;">Nachschlagen ist kostenlos. Zum Speichern in deine Sammlung brauchst du <a href="../wireframes/pricing.html">CollectView Plus</a> – bis dahin bleibt der Treffer unten in deinem Verlauf.</p>`}
+    ${APP_GRATIS || scanQuota.subscribed ? "" : `<p class="manual-hint" style="text-align:left;">Nachschlagen ist kostenlos. Zum Speichern in deine Sammlung brauchst du <a href="../wireframes/pricing.html">CollectView Plus</a> – bis dahin bleibt der Treffer unten in deinem Verlauf.</p>`}
     <p class="err" id="scan-error" role="alert"></p>`;
 
   // Preis nachladen und lokal protokollieren, unabhängig vom Speichern
@@ -1805,7 +1831,7 @@ resultsEl.addEventListener("click", (e) => {
   const action = e.target.closest("[data-action]")?.dataset.action;
   const item = currentScan.selected;
   if (!action) return;
-  if (action === "manual-open") renderManualForm();
+  if (action === "manual-open" && !APP_GRATIS) renderManualForm();
   if (action === "back-to-list") renderResultList();
   if (action === "discard") discardResult();
   if (action === "weiter") weiterScannen("");
@@ -1872,6 +1898,11 @@ function renderScanHistory() {
   scanHistoryCardEl.style.display = "";
 
   const subEl = document.getElementById("scan-history-sub");
+  if (APP_GRATIS) {
+    if (subEl) subEl.textContent = "Nur lokal auf diesem Gerät gemerkt.";
+    scanHistoryEl.innerHTML = list.map((e) => scanHistoryRowMarkup(e)).join("");
+    return;
+  }
   if (subEl) {
     subEl.textContent = scanQuota.subscribed
       ? "Übernimm einzelne Treffer in deine Sammlung oder verwirf sie."
@@ -1968,7 +1999,8 @@ async function init() {
   });
   captureBtn.addEventListener("click", captureCoverPhoto);
   torchBtn.addEventListener("click", toggleLicht);
-  loadRecentlySaved();
+  if (APP_GRATIS && resultsSubEl) resultsSubEl.textContent = "";
+  if (!APP_GRATIS) loadRecentlySaved();
   await refreshScanQuota();
   renderScanHistory();
 }
