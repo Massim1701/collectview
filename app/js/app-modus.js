@@ -30,3 +30,27 @@ const APP_GRATIS = (() => {
 })();
 
 if (APP_GRATIS) document.documentElement.dataset.appGratis = "1";
+
+/* Webseite, auf die der Hinweis nach dem Scan verlinkt. Bewusst nur die
+   Startseite: kein Preis, kein Kauf-Link (siehe oben, Apple 3.1.1/3.1.3). */
+const APP_WEB_URL = "https://collectview.site";
+
+/** Sieht diese Person den Hinweis nach dem Scan? Nicht, solange der Abo-Status
+ *  unbekannt ist (sonst blitzt er bei Plus-Konten kurz auf) und nie mit Plus. */
+function appHinweisSichtbar({ aboBekannt, subscribed }) {
+  return APP_GRATIS && !!aboBekannt && !subscribed;
+}
+
+/** Hinweis unter dem Scan-Ergebnis. Neutral: kein Preis, kein Kauf-Link.
+ *  Gäste bekommen zusätzlich den Weg zur Anmeldung. */
+function appHinweisMarkup(gast) {
+  return `
+    <div class="notice" style="margin-top:14px;">
+      <div class="notice-body">
+        <strong>Mehr aus deinen Scans machen</strong>
+        <span>Sammlung, Wunschliste und Marktplatz findest du auf CollectView im Web.</span>
+        <a class="btn-secondary small" href="${APP_WEB_URL}" target="_blank" rel="noopener">Zu CollectView</a>
+        ${gast ? `<span style="margin-top:6px;">Schon ein Konto? <a href="login.html?next=scanner.html">Anmelden</a></span>` : ""}
+      </div>
+    </div>`;
+}

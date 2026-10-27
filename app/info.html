@@ -36,6 +36,16 @@
     </p>
   </div>
 
+  <div class="card" id="konto-card">
+    <div class="card-head">
+      <div>
+        <div class="card-head-title">Konto</div>
+        <div class="card-head-sub" id="konto-sub">Optional</div>
+      </div>
+    </div>
+    <div id="konto-body"></div>
+  </div>
+
   <div class="card">
     <div class="card-head">
       <div>
@@ -54,10 +64,35 @@
 
 <div class="bottomnav" id="bottomnav"></div>
 
+<script src="./vendor/supabase.js"></script>
 <script src="./config.js"></script>
 <script src="./js/app-modus.js"></script>
 <script src="./js/i18n.js"></script>
 <script src="./js/ui.js"></script>
+<script src="./js/auth.js"></script>
 <script>renderBottomNav(document.getElementById("bottomnav"), "info");</script>
+<script>
+/* Konto-Bereich der kostenlosen App: ohne Konto "Anmelden", sonst E-Mail und "Abmelden".
+   Anonyme Gast-Sitzungen (Scanner) zählen als nicht angemeldet. */
+(async () => {
+  const body = document.getElementById("konto-body");
+  const sub = document.getElementById("konto-sub");
+  const { data } = await sb.auth.getSession();
+  const user = data.session?.user;
+  if (user && !user.is_anonymous) {
+    sub.textContent = "Angemeldet";
+    body.innerHTML = `<p class="muted" style="margin:0 0 12px;"></p>
+      <button class="btn-secondary" type="button" id="abmelden">Abmelden</button>`;
+    body.querySelector("p").textContent = user.email || "";
+    document.getElementById("abmelden").addEventListener("click", async () => {
+      await signOut();
+      location.reload();
+    });
+  } else {
+    body.innerHTML = `<p class="muted" style="margin:0 0 12px;line-height:1.6;">Scannen geht ohne Konto. Mit deinem CollectView-Konto kannst du dich hier anmelden.</p>
+      <a class="btn-secondary" href="login.html?next=info.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 22px;text-decoration:none;">Anmelden</a>`;
+  }
+})();
+</script>
 </body>
 </html>

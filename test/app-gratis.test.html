@@ -57,6 +57,27 @@ test("Die Scan-Limit-Meldung verweist nicht auf die Preise", () => {
   assert(!html.includes("Plus"), "Hinweis auf Plus in der App");
 });
 
+test("Hinweis nach dem Scan: nur ohne Plus und erst, wenn der Abo-Status bekannt ist", () => {
+  assertEqual(appHinweisSichtbar({ aboBekannt: true, subscribed: false }), true, "Gast/kostenloses Konto sieht ihn");
+  assertEqual(appHinweisSichtbar({ aboBekannt: true, subscribed: true }), false, "Plus-Konto sieht ihn nicht");
+  assertEqual(appHinweisSichtbar({ aboBekannt: false, subscribed: false }), false, "Status unbekannt: nichts anzeigen");
+});
+
+test("Hinweis nach dem Scan verlinkt auf die Webseite, ohne Preis und Kauf", () => {
+  for (const gast of [true, false]) {
+    const html = appHinweisMarkup(gast);
+    assert(html.includes(`href="${APP_WEB_URL}"`), "Link zur Webseite fehlt");
+    for (const wort of ["pricing", "Plus", "Abo", "€", "Preis", "kaufen", "bezahl", "checkout", "stripe"]) {
+      assert(!html.toLowerCase().includes(wort.toLowerCase()), `"${wort}" steht im Hinweis`);
+    }
+  }
+});
+
+test("Nur Gäste bekommen den Weg zur Anmeldung", () => {
+  assert(appHinweisMarkup(true).includes("login.html?next=scanner.html"), "Gast ohne Anmelde-Link");
+  assert(!appHinweisMarkup(false).includes("login.html"), "angemeldetes Konto sieht den Anmelde-Link");
+});
+
 runTests();
 </script>
 </body>

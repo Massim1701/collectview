@@ -81,6 +81,24 @@ function setLamp(state) {
 function setResultsHead(title, sub) {
   resultsTitleEl.textContent = title;
   resultsSubEl.textContent = sub;
+  paintAppHinweis();
+}
+
+/**
+ * Native App: unter jedem Scan-Ergebnis ein Hinweis auf die Webseite, solange
+ * kein bezahltes Konto angemeldet ist. Gäste und kostenlose Konten sehen ihn,
+ * Plus-Konten (scanQuota.subscribed) nicht. Neutral formuliert, ohne Preis und
+ * ohne Kauf-Link (Apple 3.1.1/3.1.3, siehe app-modus.js).
+ * setResultsHead() läuft bei jeder Ergebnisansicht, auch bei "keine Treffer".
+ */
+function paintAppHinweis() {
+  const el = document.getElementById("app-hinweis");
+  if (!el) return;
+  if (!appHinweisSichtbar({ aboBekannt: aboStatusBekannt, subscribed: scanQuota.subscribed })) {
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = appHinweisMarkup(!currentUser || currentUser.is_anonymous);
 }
 
 /* ---------- Modus & Kameraauswahl ----------
@@ -1215,6 +1233,9 @@ function normalizeResult(r, barcode) {
 
 /** Stand des Kontingents für die Anzeige; verbindlich ist der Trigger. */
 let scanQuota = { used: 0, subscribed: false, known: false };
+// Erst wenn der Abo-Status geladen ist, zeigt paintAppHinweis() etwas an,
+// damit Plus-Konten den Hinweis nicht kurz aufblitzen sehen.
+let aboStatusBekannt = false;
 
 async function refreshScanQuota() {
   if (!currentUser) return;
@@ -1230,7 +1251,9 @@ async function refreshScanQuota() {
     // trotzdem, hier fehlt nur der Hinweis vorher.
     scanQuota.known = false;
   }
+  aboStatusBekannt = true;
   paintScanQuota();
+  paintAppHinweis();
 }
 
 function paintScanQuota() {
