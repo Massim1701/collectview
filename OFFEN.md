@@ -591,6 +591,8 @@ Browser-Zugriff, daher nicht weiter verfolgt.
 
 ## Neue Webseite (Branch `website-neu`, 27.10.2026)
 
-Startseite + Die App, Plus, Support, Datenschutz, Impressum im neuen Stil unter `site/` (siehe `site/README.md`).
-**Nicht live**: collectview.site kommt aus Cloudflare-Workern, Deploy braucht Zugang. Offen: Android-/App-Store-Links
-in `site/app.html` eintragen, sobald die Store-Einträge live sind; Monatspreis 3,99 € entfernen (Entscheidung 27.10.: nur Web-Jahresabo 24,90 €; steht noch in `wireframes/pricing.html`, Stripe, Stores); Support-Adresse auf Gmail im Worker-Skript durch info@driftware.online ersetzen.
+**Live seit 27.10.2026** über Cloudflare Pages (`collectview-website`), Domain im Cloudflare-Hauptkonto, Nameserver umgestellt
+(siehe `site/README.md`). Offen: Android-/App-Store-Links in `site/download.html` eintragen, sobald die Store-Einträge live sind;
+Monatspreis 3,99 € entfernen (Entscheidung 27.10.: nur Web-Jahresabo 24,90 €; steht noch in `wireframes/pricing.html`, Stripe, Stores);
+Forgejo-Secrets für den automatischen Deploy anlegen (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`) und Actions aktivieren;
+Mosaik-Cover rechtlich klären; Kennzeichnung der KI-Fotos prüfen.

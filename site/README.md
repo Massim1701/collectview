@@ -19,19 +19,16 @@ Das Paket enthält die neue Webseite (`site/`), die **Web-App** (`app/`) und die
 (`wireframes/`) unter denselben Pfaden wie auf der bisherigen Live-Seite (`/app/...`, `/wireframes/pricing`),
 dazu `robots.txt` und `sitemap.xml`. Die Seite „Die App" heißt `/download`, weil `/app/` die Web-App ist.
 
-Stand 27.10.2026:
-- Pages-Projekt angelegt und befüllt: https://collectview-website.pages.dev (Web-App geprüft: gleiche Dateien wie live).
-- Die Domain `collectview.site` ist im Hauptkonto als Website angelegt (Free, Mail-Einträge MX/SPF übernommen).
-  Zugewiesene Nameserver: `kanye.ns.cloudflare.com`, `reza.ns.cloudflare.com`. **Bei Namecheap sind sie noch
-  nicht eingetragen**, die Live-Seite läuft weiter im alten Cloudflare-Konto (Worker `collectview-site`).
+Stand 27.10.2026 (umgestellt, live):
+- Pages-Projekt `collectview-website` liefert `collectview.site` und `www.collectview.site` aus (Zertifikat aktiv).
+- Die Domain liegt als Website im Cloudflare-Hauptkonto; Nameserver `kanye.ns.cloudflare.com` und
+  `reza.ns.cloudflare.com` sind bei Namecheap eingetragen. Mail-Einträge (MX/SPF der Namecheap-Weiterleitung) sind erhalten.
+- Web-App (`/app/...`), Preisseite und Rechtstexte laufen unter denselben Pfaden wie vorher.
+- Der alte Worker `collectview-site` im früheren Cloudflare-Konto ist nicht mehr beteiligt.
+- Nicht übernommen: der Proxy `/apple/abo-notify` (nur für Apple-Abos, die App verkauft nichts mehr).
 
-Umschalten (nur der Inhaber, nacheinander):
-1. Namecheap: Nameserver von `fred`/`gloria` auf `kanye`/`reza` stellen.
-2. Cloudflare: warten, bis die Website „Active" ist.
-3. Pages-Projekt, Custom domains: `collectview.site` (und `www.collectview.site`) hinzufügen.
-4. Prüfen: Start, `/app/login`, `/wireframes/pricing`, `/impressum`.
-Rückweg: Namecheap-Nameserver wieder auf `fred`/`gloria`.
-Nicht übernommen: der Proxy `/apple/abo-notify` des alten Workers (nur für Apple-Abos, die App verkauft nichts mehr).
+Rückweg: Nameserver bei Namecheap wieder auf `fred.ns.cloudflare.com` und `gloria.ns.cloudflare.com` stellen
+(solange das alte Konto die Zone noch hält).
 
 Automatisierung (einmalig): In Forgejo (`massimo/collectview`, Einstellungen, Actions, Secrets) `CLOUDFLARE_API_TOKEN`
 (Berechtigung „Cloudflare Pages: Bearbeiten") und `CLOUDFLARE_ACCOUNT_ID` (Konto-ID aus dem Cloudflare-Dashboard) anlegen,
