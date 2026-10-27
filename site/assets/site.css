@@ -222,6 +222,12 @@ footer span:last-child{display:flex;gap:2px;margin-right:-10px}
 .cf .pill{align-self:flex-start;background:var(--ink);color:#fff}
 .honey{position:absolute;left:-9999px}
 .sub-end{margin-top:110px}
+[hidden]{display:none!important}
+.two .preis b{font-weight:700;color:var(--ink);font-size:22px;letter-spacing:-.02em}
+.hinweis{font-size:15px;line-height:1.5;color:var(--mut);margin-top:14px;max-width:46ch}
+.hinweis.fehler{color:#a82e1c}
+.status{font-size:19px;line-height:1.5;color:var(--ink);margin-top:26px;max-width:40ch}
+.pill:disabled{opacity:.55;cursor:wait}
 
 .fuss{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;padding:90px 0 28px;font-size:14px;color:var(--mut)}
 .fuss a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;text-decoration:none;color:inherit}

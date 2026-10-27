@@ -38,8 +38,7 @@ Allow: /wireframes/pricing
 Sitemap: https://collectview.site/sitemap.xml
 """, encoding="utf-8")
 
-seiten = [("", "weekly", "1.0"), ("plus", "weekly", "0.8"), ("download", "weekly", "0.8"), ("wireframes/pricing", "weekly", "0.7"),
-          ("support", "monthly", "0.3"), ("datenschutz", "yearly", "0.2"), ("impressum", "yearly", "0.2")]
+seiten = [("", "weekly", "1.0"), ("plus", "weekly", "0.8"), ("download", "weekly", "0.8"), ("support", "monthly", "0.3"), ("datenschutz", "yearly", "0.2"), ("impressum", "yearly", "0.2")]
 xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
 for pfad, freq, prio in seiten:
     xml += ["  <url>", f"    <loc>https://collectview.site/{pfad}</loc>", f"    <changefreq>{freq}</changefreq>", f"    <priority>{prio}</priority>", "  </url>"]

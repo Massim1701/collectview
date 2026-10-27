@@ -52,6 +52,12 @@ css += """
 .cf .pill{align-self:flex-start;background:var(--ink);color:#fff}
 .honey{position:absolute;left:-9999px}
 .sub-end{margin-top:110px}
+[hidden]{display:none!important}
+.two .preis b{font-weight:700;color:var(--ink);font-size:22px;letter-spacing:-.02em}
+.hinweis{font-size:15px;line-height:1.5;color:var(--mut);margin-top:14px;max-width:46ch}
+.hinweis.fehler{color:#a82e1c}
+.status{font-size:19px;line-height:1.5;color:var(--ink);margin-top:26px;max-width:40ch}
+.pill:disabled{opacity:.55;cursor:wait}
 """
 
 # ---------------------------------------------------------------- Bausteine
@@ -75,7 +81,7 @@ FUSS = f"""<footer class="fuss">
   <span><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="support.html">Support</a></span>
 </footer>"""
 
-def seite(titel, beschreibung, inhalt, hell=False, extra_klasse=""):
+def seite(titel, beschreibung, inhalt, hell=False, extra_klasse="", skripte=""):
     return f"""<!doctype html>
 <html lang="de" data-farbe="minze">
 <head>
@@ -91,12 +97,12 @@ def seite(titel, beschreibung, inhalt, hell=False, extra_klasse=""):
 <main id="inhalt">
 {inhalt}
 </main>
-<script src="assets/site.js"></script>
+{skripte}<script src="assets/site.js"></script>
 </body>
 </html>
 """
 
-def unterseite(titel, kicker, ueberschrift_html, intro, inhalt, beschreibung):
+def unterseite(titel, kicker, ueberschrift_html, intro, inhalt, beschreibung, skripte=""):
     kopfbereich = f"""<section class="sub-head">
   <div class="wrap">
     <div class="lead">{kicker}</div>
@@ -104,7 +110,7 @@ def unterseite(titel, kicker, ueberschrift_html, intro, inhalt, beschreibung):
     {f'<p>{intro}</p>' if intro else ''}
   </div>
 </section>"""
-    return seite(f"{titel} · CollectView", beschreibung, kopfbereich + "\n" + inhalt + f"\n<div class=\"wrap\">{FUSS}</div>")
+    return seite(f"{titel} · CollectView", beschreibung, kopfbereich + "\n" + inhalt + f"\n<div class=\"wrap\">{FUSS}</div>", skripte=skripte)
 
 # ---------------------------------------------------------------- Startseite aus dem Mockup
 v8 = (MOCK / "index-mosaik8.html").read_text(encoding="utf-8")   # Telefone mit 8x8-Mosaik-Covern
@@ -174,8 +180,11 @@ plus_inhalt = """<section style="padding-top:0">
           <li>Marktplatz: anbieten und schreiben</li>
           <li>Kennzahlen und CSV-Import</li>
         </ul>
-        <p class="preis">24,90 € pro Jahr (entspricht 2,08 € im Monat) · jährlich kündbar</p>
-        <a class="pill dunkel" href="/app/login.html">Anmelden und Plus wählen <span aria-hidden="true">→</span></a>
+        <p class="preis"><b>24,90 € pro Jahr</b> · entspricht 2,08 € im Monat · jährlich kündbar · direkt hier bezahlt</p>
+        <div id="upgrade-cta"><button class="pill dunkel" type="button" id="upgrade-btn">Jetzt Plus abschließen <span aria-hidden="true">→</span></button></div>
+        <div id="already-plus" hidden><p class="status">Du hast CollectView Plus. Es gilt für deinen Account überall.</p></div>
+        <div id="trial-active" hidden><p class="status" id="trial-active-label">Testzeitraum läuft</p><p class="hinweis">Danach brauchst du CollectView Plus, um weiter zu speichern und den Marktplatz zu nutzen.</p></div>
+        <p class="hinweis" id="upgrade-note" role="status" aria-live="polite"></p>
       </div>
     </div>
   </div>
@@ -191,7 +200,8 @@ plus_inhalt = """<section style="padding-top:0">
   </div>
 </section>"""
 plus_html = unterseite("Plus", "CollectView Plus", "Alles für deine <b>Sammlung.</b>", "Scannen bleibt kostenlos. Plus schaltet Sammlung, Wunschliste und Marktplatz frei.",
-                       plus_inhalt, "CollectView Plus: Sammlung, Wunschliste und Marktplatz für deine Schallplatten.")
+                       plus_inhalt, "CollectView Plus: Sammlung, Wunschliste und Marktplatz für deine Schallplatten. 24,90 € pro Jahr.",
+                       skripte='<script src="/app/vendor/supabase.js"></script>\n<script src="/app/config.js"></script>\n<script src="/app/js/abo.js"></script>\n<script src="assets/plus.js"></script>\n')
 
 # ---------------------------------------------------------------- Support
 KONTAKT = "info@driftware.online"

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plus · CollectView</title>
-<meta name="description" content="CollectView Plus: Sammlung, Wunschliste und Marktplatz für deine Schallplatten.">
+<meta name="description" content="CollectView Plus: Sammlung, Wunschliste und Marktplatz für deine Schallplatten. 24,90 € pro Jahr.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%2310C99B'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/site.css">
 </head>
@@ -50,8 +50,11 @@
           <li>Marktplatz: anbieten und schreiben</li>
           <li>Kennzahlen und CSV-Import</li>
         </ul>
-        <p class="preis">24,90 € pro Jahr (entspricht 2,08 € im Monat) · jährlich kündbar</p>
-        <a class="pill dunkel" href="/app/login.html">Anmelden und Plus wählen <span aria-hidden="true">→</span></a>
+        <p class="preis"><b>24,90 € pro Jahr</b> · entspricht 2,08 € im Monat · jährlich kündbar · direkt hier bezahlt</p>
+        <div id="upgrade-cta"><button class="pill dunkel" type="button" id="upgrade-btn">Jetzt Plus abschließen <span aria-hidden="true">→</span></button></div>
+        <div id="already-plus" hidden><p class="status">Du hast CollectView Plus. Es gilt für deinen Account überall.</p></div>
+        <div id="trial-active" hidden><p class="status" id="trial-active-label">Testzeitraum läuft</p><p class="hinweis">Danach brauchst du CollectView Plus, um weiter zu speichern und den Marktplatz zu nutzen.</p></div>
+        <p class="hinweis" id="upgrade-note" role="status" aria-live="polite"></p>
       </div>
     </div>
   </div>
@@ -71,6 +74,10 @@
   <span><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="support.html">Support</a></span>
 </footer></div>
 </main>
+<script src="/app/vendor/supabase.js"></script>
+<script src="/app/config.js"></script>
+<script src="/app/js/abo.js"></script>
+<script src="assets/plus.js"></script>
 <script src="assets/site.js"></script>
 </body>
 </html>

@@ -7,6 +7,7 @@ const noteEl = document.getElementById("auth-note");
 /** Nur relative Ziele zulassen – kein offener Redirect über ?next= */
 function nextTarget() {
   const raw = new URLSearchParams(location.search).get("next") || "index.html";
+  if (raw === "../plus") return raw; // Kaufseite der Webseite (feste Ausnahme)
   return /^[\w.-]+\.html(\?[\w=&%.-]*)?$/.test(raw) ? raw : "index.html";
 }
 
