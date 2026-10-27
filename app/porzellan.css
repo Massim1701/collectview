@@ -1,0 +1,104 @@
+/* =====================================================================
+   porzellan.css – Theme "Porzellan" für die Web-App.
+   Hell (#F3F3F0), Bricolage Grotesque in dünn und fett, ein Akzent (Minze),
+   Pillen-Knöpfe, Karten mit feinen Linien statt Schatten. Gleicher Stil wie die
+   neue Webseite (site/).
+
+   Wird nach styles.css und app.css geladen und gilt für <html data-theme="porzellan">.
+   Es ändert nur Tokens und ein paar Komponenten-Regeln, die Seiten bleiben unberührt
+   (siehe CLAUDE.md: Tokens ändern, nicht Regeln).
+
+   Schrift: Bricolage Grotesque (SIL Open Font License), variable Fassung 300-800,
+   lokal unter vendor/fonts/bricolage/ (Quelle: Driftware-Repo, dort selbst gehostet).
+   ===================================================================== */
+
+@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-weight:300 800;font-display:swap;src:url(./vendor/fonts/bricolage/BricolageGrotesque-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-weight:300 800;font-display:swap;src:url(./vendor/fonts/bricolage/BricolageGrotesque-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+/* ===== Tokens ===== */
+:root[data-theme="porzellan"]{
+  color-scheme:light;
+  --bg:#F3F3F0; --page-bg:#F3F3F0; --surface:#FFFFFF; --surface-2:#F8F8F5; --surface-3:#ECECE8;
+  --border:rgba(14,14,16,.12); --border-strong:rgba(14,14,16,.32);
+  --text:#0E0E10; --text-muted:#5E5E65; --text-faint:#6B6B72;
+  /* !important, weil styles.css den Akzent je nach Jahreszeit setzt (data-season) und das mit
+     höherer Spezifität tut. Für Porzellan gilt das ganze Jahr Minze. */
+  --accent:#10C99B !important; --accent-ink:#06231B !important;
+  --accent-soft:rgba(16,201,155,.16) !important; --accent-text:#08765B !important;
+  --danger:#D8392B; --danger-ink:#A82E1C; --danger-soft:rgba(216,57,43,.10);
+  --shadow-sm:none;
+  --shadow-md:0 1px 0 rgba(14,14,16,.05);
+  --shadow-lg:0 18px 36px -24px rgba(14,14,16,.22);
+  --shadow-frame:0 0 0 1px rgba(14,14,16,.10);
+  --font-display:'Bricolage Grotesque', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --font-body:'Bricolage Grotesque', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --radius-md:16px; --radius-lg:24px;
+}
+
+/* ===== Grundlage ===== */
+[data-theme="porzellan"] body{ background:var(--bg); color:var(--text); font-family:var(--font-body); font-weight:400; -webkit-font-smoothing:antialiased; }
+[data-theme="porzellan"] ::selection{ background:var(--accent); color:var(--accent-ink); }
+[data-theme="porzellan"] a{ text-underline-offset:3px; }
+[data-theme="porzellan"] :focus-visible{ outline:2px solid var(--text); outline-offset:3px; }
+
+/* ===== Schrift: dünn und fett gemischt, enge Laufweite ===== */
+[data-theme="porzellan"] .brand{ font-family:var(--font-display); font-style:normal; font-weight:700; letter-spacing:-.03em; text-transform:none; }
+[data-theme="porzellan"] .page-title{ font-family:var(--font-display); font-style:normal; font-weight:300; letter-spacing:-.05em; line-height:.98; }
+[data-theme="porzellan"] .page-title b,[data-theme="porzellan"] .page-title strong{ font-weight:700; }
+[data-theme="porzellan"] .section-heading,[data-theme="porzellan"] h1,[data-theme="porzellan"] h2{ font-family:var(--font-display); font-style:normal; letter-spacing:-.035em; }
+[data-theme="porzellan"] .card-head-title{ font-weight:700; letter-spacing:-.025em; }
+[data-theme="porzellan"] .card-head-sub,[data-theme="porzellan"] .muted{ color:var(--text-muted); }
+
+/* ===== Knöpfe: Pillen ===== */
+[data-theme="porzellan"] .btn-primary,
+[data-theme="porzellan"] .btn-secondary{ border-radius:999px; font-weight:600; letter-spacing:-.005em; }
+[data-theme="porzellan"] .btn-primary{ background:var(--accent); color:var(--accent-ink); border:1px solid transparent; box-shadow:none; }
+[data-theme="porzellan"] .btn-primary:hover{ filter:none; box-shadow:none; background:var(--text); color:#fff; }
+[data-theme="porzellan"] .btn-secondary{ background:transparent; color:var(--text); border:1px solid var(--border-strong); }
+[data-theme="porzellan"] .btn-secondary:hover{ border-color:var(--text); color:var(--text); background:transparent; }
+[data-theme="porzellan"] .linklike{ color:var(--accent-text); }
+
+/* ===== Karten, Felder: Linien statt Schatten ===== */
+[data-theme="porzellan"] .card{ background:var(--surface); border:1px solid var(--border); box-shadow:none; }
+[data-theme="porzellan"] .icon-badge{ background:var(--accent-soft); color:var(--accent-text); border:0; }
+[data-theme="porzellan"] .field{ background:#fff; border:1px solid var(--border-strong); border-radius:12px; color:var(--text); }
+[data-theme="porzellan"] .field::placeholder{ color:var(--text-muted); }
+[data-theme="porzellan"] .field:focus{ border-color:var(--text); outline:none; box-shadow:0 0 0 3px var(--accent-soft); }
+[data-theme="porzellan"] .notice{ background:var(--accent-soft); border:1px solid rgba(8,118,91,.25); color:var(--text); }
+
+/* ===== Navigation unten ===== */
+[data-theme="porzellan"] .bottomnav{ background:rgba(243,243,240,.96); border-top:1px solid var(--border); -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none; }
+[data-theme="porzellan"] .navitem{ color:var(--text-muted); }
+[data-theme="porzellan"] .navitem:hover{ color:var(--text); }
+[data-theme="porzellan"] .navitem.active,[data-theme="porzellan"] .navitem.active:hover{ color:var(--accent-text); }
+
+/* ===== Dialoge: neutraler Hintergrund statt warmem Braun ===== */
+[data-theme="porzellan"] .account-dialog::backdrop,
+[data-theme="porzellan"] .feedback-dialog::backdrop{ background:rgba(14,14,16,.45); }
+[data-theme="porzellan"] .account-dialog,
+[data-theme="porzellan"] .feedback-dialog{ box-shadow:0 30px 60px -28px rgba(14,14,16,.35); background:var(--surface); color:var(--text); }
+
+/* ===== Statusfarben ===== */
+[data-theme="porzellan"] .err{ color:var(--danger-ink); }
+[data-theme="porzellan"] .note{ color:var(--text-muted); }
+
+/* ===== Keine Kursive: Bricolage hat keine, der Browser würde sie nur schräg stellen ===== */
+[data-theme="porzellan"] .alpha-heading,
+[data-theme="porzellan"] .detail-title,
+[data-theme="porzellan"] .scan-result-title,
+[data-theme="porzellan"] .feedback-title,
+[data-theme="porzellan"] .gallery-title,
+[data-theme="porzellan"] .hero-headline,
+[data-theme="porzellan"] .step-num,
+[data-theme="porzellan"] .cta-heading,
+[data-theme="porzellan"] .ml-price{ font-style:normal; }
+[data-theme="porzellan"] .alpha-heading{ font-weight:700; letter-spacing:-.02em; }
+[data-theme="porzellan"] .detail-title,
+[data-theme="porzellan"] .scan-result-title,
+[data-theme="porzellan"] .feedback-title{ font-weight:700; letter-spacing:-.035em; }
+[data-theme="porzellan"] .ml-price{ font-weight:700; letter-spacing:-.03em; }
+
+/* ===== Scan-Knopf: Ring in der Hintergrundfarbe, kein Leuchten ===== */
+[data-theme="porzellan"] .fab{ box-shadow:none; }
+[data-theme="porzellan"] .fab:hover{ background:var(--text); }
+[data-theme="porzellan"] .fab:hover svg{ stroke:#fff; }

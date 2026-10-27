@@ -9,6 +9,7 @@ function nextTarget() {
   // Native App kennt nur Scanner und Info (js/app-modus.js), index.html gibt es dort nicht.
   const standard = APP_GRATIS ? "scanner.html" : "index.html";
   const raw = new URLSearchParams(location.search).get("next") || standard;
+  if (raw === "../plus") return raw; // Kaufseite der Webseite (feste Ausnahme)
   return /^[\w.-]+\.html(\?[\w=&%.-]*)?$/.test(raw) ? raw : standard;
 }
 

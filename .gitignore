@@ -35,3 +35,4 @@ web/deploy/assets/*
 
 # wrangler: lokaler Build-Cache beim Deploy, keine Quelle.
 web/deploy/.wrangler/
+_pages/
