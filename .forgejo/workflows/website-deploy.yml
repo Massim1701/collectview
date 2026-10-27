@@ -1,0 +1,46 @@
+name: Webseite deployen
+
+# Veröffentlicht site/ bei Cloudflare Pages (Projekt collectview-website).
+# Branch main = Produktion, alle anderen Branches = Vorschau-Adresse (z. B. website-neu).
+# Der bisherige Worker "collectview-site" wird dadurch NICHT verändert.
+# Benötigt Forgejo-Secrets: CLOUDFLARE_API_TOKEN (Berechtigung "Cloudflare Pages: Bearbeiten"),
+# CLOUDFLARE_ACCOUNT_ID. Von Hand: Actions -> Webseite deployen -> Run workflow.
+on:
+  push:
+    branches: [main, website-neu]
+    paths:
+      - 'site/**'
+      - '.forgejo/workflows/website-deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: website-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Webseite prüfen (keine Originale, nur eine Adresse, alle Dateien da)
+        run: python3 -I site/check.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Nach Cloudflare Pages deployen
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJEKT: collectview-website
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Forgejo-Secrets CLOUDFLARE_API_TOKEN und CLOUDFLARE_ACCOUNT_ID fehlen (Einstellungen -> Actions -> Secrets)."
+            exit 1
+          fi
+          npx --yes wrangler@3 pages project create "$PROJEKT" --production-branch=main 2>&1 | tail -2 || true
+          npx --yes wrangler@3 pages deploy site --project-name "$PROJEKT" --branch "$BRANCH" --commit-dirty=true
