@@ -123,6 +123,10 @@ CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID fehlen. Quelle der Seite: Branch webs
 Commit 66c6504. Geplant: Deploys spaeter ueber Coolify (Entscheidung Massimo, kein Umzug ueber Nacht).
 Datenschutzseite site/datenschutz.html ist noch alt (Apple bzw. Google); neuer Block: store/datenschutz-body.html.
 
+**Download-APK getestet (27.10.2026):** Die APK vom oeffentlichen Link (SHA-256 5eae915b...43f8) wurde im
+Emulator installiert (Release, versionName 1.0, versionCode 2), startet ohne Absturz, Suche per Barcode
+0720642442524 liefert 8 Treffer mit Covern (Netzwerkzugriff im Release-Build ok).
+
 **Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
 echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
 
