@@ -38,8 +38,9 @@ Texte stehen in `store/STORE-TEXTE.md`. Ich habe die Seiten dort nicht lesen kö
 - [ ] Nicht ankreuzen: Standort, Kontakte, Gesundheit, Finanzen, Werbedaten, Diagnosedaten
 
 ## 6. Versionsseite 1.0
-- [ ] Screenshots: iPhone 6,9" (1320x2868) Pflicht; iPad nur, wenn die App iPad unterstützt
-      (Info.plist hat iPad-Ausrichtungen; "Gerätefamilie" in Xcode prüfen)
+- [ ] Screenshots: iPhone 6,9" (1320x2868) Pflicht. Die App unterstützt auch das iPad
+      (TARGETED_DEVICE_FAMILY = "1,2"), deshalb zusätzlich iPad 13" (2064x2752) Pflicht.
+      Alternative: in Xcode die Gerätefamilie auf nur iPhone stellen, dann entfallen sie
 - [ ] Beschreibung, Keywords, Support-URL https://collectview.site/support, Version "Was ist neu"
 - [ ] Copyright: © 2026 Driftware
 - [ ] Build auswählen (erscheint nach der Verarbeitung, ca. 10-30 Minuten)
