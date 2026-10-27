@@ -226,17 +226,24 @@ datenschutz_inhalt = f"""<section style="padding-top:0">
       <h2>Verantwortlicher</h2>
       <p>Driftware, Nohlstr. 215, 46045 Oberhausen, Deutschland &middot; Kontakt: <a href="mailto:{KONTAKT}">{KONTAKT}</a></p>
       <h2>Konto &amp; Anmeldung</h2>
-      <p>Für die Nutzung der App wird ein Konto (E-Mail-Adresse) angelegt. Die Anmeldedaten werden über Supabase Auth verwaltet und verschlüsselt gespeichert.</p>
-      <h2>Sammlung &amp; Cover-Suche</h2>
-      <p>Bei der Suche nach Alben und Cover-Bildern werden Anfragen an die Discogs-Datenbank weitergeleitet, um Metadaten und Cover anzuzeigen.</p>
+      <p>Die CollectView-App kann ohne Konto genutzt werden. Dabei legt sie im Hintergrund ein anonymes Gastkonto an: eine technische Kennung ohne Name und ohne E-Mail-Adresse. Sie dient dazu, die Nutzung technisch zuzuordnen und Missbrauch zu verhindern.</p>
+      <p>Ein Konto mit E-Mail-Adresse und Passwort legst du auf collectview.site an. In der App kannst du dich damit anmelden. Anmeldung und Konten verwalten wir mit Supabase (Datenbank und Authentifizierung, Region EU/Frankfurt). Passwörter werden dort verschlüsselt gespeichert.</p>
+      <h2>Scannen &amp; Suche</h2>
+      <p>Den Barcode einer Platte oder CD liest die App auf deinem Gerät, dabei verlässt kein Bild das Gerät. Für die Suche nach der passenden Veröffentlichung, für Cover, Marktwerte und Hörlinks wird der Barcode oder dein Suchbegriff über unseren Server an die Discogs-Datenbank weitergeleitet.</p>
       <h2>Cover-Scan</h2>
-      <p>Beim Scannen eines Covers per Kamera wird das Foto zur Erkennung an Google (Gemini) übermittelt. Das Foto wird nur für die Erkennung verwendet und nicht dauerhaft bei uns gespeichert.</p>
-      <h2>Abo &amp; Kauf</h2>
-      <p>Abo-Käufe laufen über Apple bzw. Google. Zur Prüfung eines Kaufs kontaktiert unser Server die jeweilige Store-API (App Store Server API / Play Developer API). Es werden keine Zahlungsdaten von uns verarbeitet oder gespeichert &mdash; das übernimmt vollständig Apple bzw. Google.</p>
+      <p>Wenn du ein Cover fotografierst, wird dieses Foto zur Erkennung über unseren Server an Google (Gemini) übermittelt. Das Foto wird nur für die Erkennung verwendet und nicht dauerhaft bei uns gespeichert. Das passiert nur, wenn du den Cover-Modus bewusst nutzt.</p>
+      <h2>Scan-Verlauf &amp; Zähler</h2>
+      <p>Den Verlauf deiner letzten Scans speichert die App nur lokal auf deinem Gerät. Auf dem Server wird pro Konto lediglich gezählt, dass ein Scan stattgefunden hat (Missbrauchsschutz), ohne den Inhalt deiner Suche zu speichern.</p>
+      <h2>Abo &amp; Zahlung</h2>
+      <p>Die App ist kostenlos und enthält keine Käufe. CollectView Plus (Sammlung, Wunschliste, Marktplatz) ist ein Abo, das du ausschließlich auf der Webseite abschließt. Die Zahlung wickelt Stripe Payments Europe, Ltd. ab. Deine Zahlungsdaten gibst du direkt bei Stripe ein, wir sehen und speichern sie nicht. Von Stripe erhalten wir nur den Status deines Abos (aktiv oder beendet) und die Zuordnung zu deinem Konto. Rechtsgrundlage ist die Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO). Du kannst das Abo jederzeit zum Ende der Laufzeit kündigen.</p>
+      <h2>Eingesetzte Dienstleister</h2>
+      <p>Supabase (Datenbank und Anmeldung), Cloudflare (Auslieferung der Webseite), Stripe (Zahlung im Web), Google (Bilderkennung beim Cover-Foto) und Discogs (Katalogdaten und Marktwerte). Mit den Dienstleistern bestehen, soweit erforderlich, Verträge zur Auftragsverarbeitung.</p>
       <h2>Keine Werbung, kein Tracking</h2>
-      <p>CollectView zeigt keine Werbung und verwendet keine Tracking- oder Analyse-Dienste zu Werbezwecken.</p>
+      <p>CollectView zeigt keine Werbung und verwendet keine Tracking- oder Analyse-Dienste zu Werbezwecken. Die App verwendet keine Werbe-Kennung und gibt keine Daten an Datenhändler weiter.</p>
+      <h2>Speicherdauer &amp; Löschung</h2>
+      <p>Wir speichern deine Kontodaten, solange dein Konto besteht. Du kannst jederzeit die Löschung deines Kontos und deiner Daten verlangen, schreib uns einfach an <a href="mailto:{KONTAKT}">{KONTAKT}</a>.</p>
       <h2>Deine Rechte</h2>
-      <p>Du kannst jederzeit Auskunft, Berichtigung oder Löschung deiner Daten verlangen &mdash; schreib uns einfach an <a href="mailto:{KONTAKT}">{KONTAKT}</a>.</p>
+      <p>Du kannst jederzeit Auskunft, Berichtigung, Löschung oder Einschränkung der Verarbeitung deiner Daten sowie Datenübertragbarkeit verlangen und der Verarbeitung widersprechen. Schreib uns dazu an <a href="mailto:{KONTAKT}">{KONTAKT}</a>. Außerdem hast du das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren.</p>
     </div>
   </div>
 </section>"""
