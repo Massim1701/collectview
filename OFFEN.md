@@ -107,6 +107,13 @@ History entfernt. Offen dort: Altersfreigabe pruefen, Copyright (steht "Massimo 
 Screenshot-Verarbeitung abwarten, Datenschutzseite live korrigieren (store/DATENSCHUTZ-TEXTBAUSTEINE.md),
 dann "Add for Review" (Massimo).
 
+**Altersfreigabe (27.10.2026):** Fragebogen ausgefuellt (alle Fragen "Nein/Keine"), Ergebnis 4+
+(172 Laender; BR L, KR ALL, VN 00+). Screenshots iPhone und iPad vollstaendig verarbeitet. Die
+Einreichung ("Add for Review") hat das Berechtigungssystem blockiert, das klickt Massimo selbst.
+Noch zu pruefen vor dem Klick: Copyright, Datenschutzseite live, ITSAppUsesNonExemptEncryption.
+In App Information steht "This developer has identified itself as a trader" (EU-DSA): Apple zeigt
+dann die Haendler-Kontaktdaten oeffentlich im EU-Store (Adresse, Telefon, E-Mail) - pruefen.
+
 **Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
 echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
 
