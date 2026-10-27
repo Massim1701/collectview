@@ -588,3 +588,10 @@ gedacht (`claude plugin marketplace add cloudflare/skills` etc.), diese
 Session läuft aber als Cowork ohne passendes Plugin im Katalog — für die
 eigentliche Aufgabe (Cloudflare-Dashboard, Deploy) reicht der bestehende
 Browser-Zugriff, daher nicht weiter verfolgt.
+
+## Neue Webseite (Branch `website-neu`, 27.10.2026)
+
+Startseite + Die App, Plus, Support, Datenschutz, Impressum im neuen Stil unter `site/` (siehe `site/README.md`).
+**Nicht live**: collectview.site kommt aus Cloudflare-Workern, Deploy braucht Zugang. Offen: Android-/App-Store-Links
+in `site/app.html` eintragen, sobald die Store-Einträge live sind; Preise nennen (Preisseite 3,99 €/Monat vs. alte
+Landing 24,90 €/Jahr widersprechen sich); Support-Adresse auf Gmail im Worker-Skript durch info@driftware.online ersetzen.
