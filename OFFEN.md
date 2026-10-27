@@ -75,6 +75,16 @@ sagt noch "Abo-Kaeufe laufen ueber Apple bzw. Google", muss auf Stripe/Web umges
 werden (Cloudflare-Deploy offen). Android-Manifest ist ok (Kamera-Recht, camera optional),
 applicationId online.driftware.collectview, versionCode 2.
 
+**Android im Emulator getestet (27.10.2026):** Java 21 (brew openjdk@21), SDK unter
+/opt/homebrew/share/android-commandlinetools (ANDROID_HOME, JAVA_HOME=openjdk@21 setzen),
+`./gradlew assembleDebug` ok (12 MB), AVD `CollectView_Pixel` (Pixel 8, Android 36, arm64).
+Start: `$ANDROID_HOME/emulator/emulator -avd CollectView_Pixel`. Getestet: App startet im
+Scanner, Navigation nur Scanner/Info, Suche per Barcode (0720642442524 -> 8 Treffer, Cover,
+Marktwert, Hoerlinks), Hinweis nach dem Scan nur Text ohne Link, Info-Seite mit Anmelden,
+Kamera startet (virtuelle Szene, camera2 0 facing back), kein Absturz im Crash-Log.
+**Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
+echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
+
 **Neu offen:**
 
 1. **Stripe im Echtbetrieb beweisen.** Geprüft (19.10.): `stripe-checkout` und
