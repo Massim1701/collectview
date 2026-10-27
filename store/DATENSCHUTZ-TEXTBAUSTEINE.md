@@ -1,5 +1,7 @@
 # Datenschutzerklärung: Korrekturen für collectview.site/datenschutz
 
+**Fertiger Block zum Einfügen: `store/datenschutz-body.html`** (ganzer Inhalt von `<h1>` bis zum letzten `</p>`, passend zur Live-Seite mit Anschrift). Die Abschnitte unten sind die Begründung.
+
 Stand 27.10.2026. Die Live-Seite (Cloudflare Worker `collectview-site`, Quick Edit) sagt noch
 "Abo-Käufe laufen über Apple bzw. Google". Das stimmt nicht mehr: Die App ist kostenlos, das
 Abo gibt es nur im Web per Stripe. Die Abschnitte unten ersetzen die gleichnamigen Abschnitte
