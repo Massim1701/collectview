@@ -593,5 +593,4 @@ Browser-Zugriff, daher nicht weiter verfolgt.
 
 Startseite + Die App, Plus, Support, Datenschutz, Impressum im neuen Stil unter `site/` (siehe `site/README.md`).
 **Nicht live**: collectview.site kommt aus Cloudflare-Workern, Deploy braucht Zugang. Offen: Android-/App-Store-Links
-in `site/app.html` eintragen, sobald die Store-Einträge live sind; Preise nennen (Preisseite 3,99 €/Monat vs. alte
-Landing 24,90 €/Jahr widersprechen sich); Support-Adresse auf Gmail im Worker-Skript durch info@driftware.online ersetzen.
+in `site/app.html` eintragen, sobald die Store-Einträge live sind; Monatspreis 3,99 € entfernen (Entscheidung 27.10.: nur Web-Jahresabo 24,90 €; steht noch in `wireframes/pricing.html`, Stripe, Stores); Support-Adresse auf Gmail im Worker-Skript durch info@driftware.online ersetzen.

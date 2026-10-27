@@ -18,5 +18,5 @@ den Seiten hier. `wrangler deploy` braucht Zugänge, die in der Entwicklungssitz
 
 ## Offen
 - Android-Download und App-Store-Link: `app.html` zeigt „demnächst"; Links eintragen, sobald die Store-Einträge live sind.
-- Preise: bewusst nicht genannt (Preisseite und alte Landingpage nannten unterschiedliche Beträge: 3,99 €/Monat bzw. 24,90 €/Jahr).
+- Preis: nur das Web-Jahresabo (24,90 € pro Jahr). Der monatliche Preis (3,99 €) entfällt laut Entscheidung vom 27.10.2026; in `wireframes/pricing.html` und bei Stripe/den Stores steht er noch.
 - Impressum/Datenschutz verwenden die Anbieterangaben von driftware.online (Driftware, Nohlstr. 215, Oberhausen, info@driftware.online).
