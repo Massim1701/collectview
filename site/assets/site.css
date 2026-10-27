@@ -190,8 +190,7 @@ footer span:last-child{display:flex;gap:2px;margin-right:-10px}
 .js .rv.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.js .rv{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
 
-.shelf .cv{aspect-ratio:1/1;border-radius:4px}
-.res .cv{width:64px;flex:0 0 64px;aspect-ratio:1/1;border-radius:6px}
+.shelf img,.res .cover{image-rendering:pixelated}
 
 /* ---- Unterseiten ---- */
 .sub-head{padding:160px 0 56px}

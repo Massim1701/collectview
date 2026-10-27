@@ -20,8 +20,7 @@ css = re.sub(r"html\.shot[^\n]*\n", "", css)                       # Vorschau-Hi
 css = css.replace("/* Vorschau-Modus", "/* (entfernt) Vorschau-Modus")
 # gezeichnete Cover im Regal und im Treffer (im Mockup durch echte Cover ersetzt)
 css += """
-.shelf .cv{aspect-ratio:1/1;border-radius:4px}
-.res .cv{width:64px;flex:0 0 64px;aspect-ratio:1/1;border-radius:6px}
+.shelf img,.res .cover{image-rendering:pixelated}
 
 /* ---- Unterseiten ---- */
 .sub-head{padding:160px 0 56px}
@@ -108,16 +107,16 @@ def unterseite(titel, kicker, ueberschrift_html, intro, inhalt, beschreibung):
     return seite(f"{titel} · CollectView", beschreibung, kopfbereich + "\n" + inhalt + f"\n<div class=\"wrap\">{FUSS}</div>")
 
 # ---------------------------------------------------------------- Startseite aus dem Mockup
-v8 = (MOCK / "index-v8-gezeichnete-cover.html").read_text(encoding="utf-8")
+v8 = (MOCK / "index-mosaik8.html").read_text(encoding="utf-8")   # Telefone mit 8x8-Mosaik-Covern
 haupt = re.search(r"<main>(.*)</main>", v8, re.S).group(1)
-haupt = haupt.replace("img/ki/foto-", "assets/img/foto-")
+haupt = haupt.replace("img/ki/foto-", "assets/img/foto-").replace("img/covers-mosaik-8/", "assets/img/cover/")
 haupt = haupt.replace('<section class="stage hell" id="stage">', '<section class="stage hell" id="stage">')
 # Verweise auf echte Unterseiten
 haupt = haupt.replace('<a class="pill" href="#app">App kostenlos laden', '<a class="pill" href="app.html">App kostenlos laden')
 haupt = haupt.replace('<a class="pill" href="#plus">Plus ansehen', '<a class="pill" href="plus.html">Plus ansehen')
 haupt = haupt.replace('<a class="pill" href="#">Plus entdecken', '<a class="pill" href="plus.html">Plus entdecken')
 # Hinweis „Mockup“ und Platzhalter-Texte raus
-haupt = re.sub(r'\s*<p class="rv" style="margin-top:14px[^"]*">Mockup:.*?</p>', "", haupt, flags=re.S)
+haupt = re.sub(r'\s*<p class="rv" style="margin-top:14px[^"]*">Vorschau:.*?</p>', "", haupt, flags=re.S)
 haupt = re.sub(r'<footer>.*?</footer>', FUSS.replace('class="fuss"', ''), haupt, flags=re.S)
 haupt = haupt.replace("Preis folgt · jährlich kündbar", "Preise siehst du vor dem Abschluss")
 index_html = seite("CollectView – Platten erkennen und sammeln",

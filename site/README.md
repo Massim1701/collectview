@@ -6,7 +6,9 @@ Stil: helles „Porzellan", Bricolage Grotesque (dünn/fett), ein Akzent (Minze)
 - `build.py` erzeugt die HTML-Dateien (`python3 site/build.py`). Die Vorlage der Startseite liegt auf dem
   Rechner des Autors (`~/Entwicklung/collectview-mockup`), die erzeugten Dateien sind committet und maßgeblich.
 - `assets/` enthält CSS, JS, die Schrift und fünf KI-erzeugte Fotos (ChatGPT/Grok, erfundene Personen).
-- **Keine echten Plattencover** in dieser Seite: Cover sind aus CSS gezeichnet (Rechte der Cover liegen bei Dritten).
+- **Plattencover nur als 8×8-Mosaik** (`assets/img/cover/`, je wenige hundert Bytes, Farbfelder statt Bildinhalt).
+  Die Originale liegen nicht im Repo. Die Rechte an den Covern liegen bei Dritten; ob das Mosaik für die
+  Veröffentlichung reicht, ist nicht rechtlich geklärt, vor dem Livegang prüfen (oder auf gezeichnete Cover zurückgehen).
 
 ## Nicht deployt
 collectview.site wird von Cloudflare-Workern ausgeliefert (siehe `web/README.md`). Dieser Branch ändert die
