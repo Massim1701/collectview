@@ -52,6 +52,7 @@ css += """
 .cf .pill{align-self:flex-start;background:var(--ink);color:#fff}
 .honey{position:absolute;left:-9999px}
 .sub-end{margin-top:110px}
+.ki-hinweis{flex:0 0 100%;font-size:13px;line-height:1.5;opacity:.85;margin-top:-6px}
 [hidden]{display:none!important}
 .two .preis b{font-weight:700;color:var(--ink);font-size:22px;letter-spacing:-.02em}
 .hinweis{font-size:15px;line-height:1.5;color:var(--mut);margin-top:14px;max-width:46ch}
@@ -123,7 +124,9 @@ haupt = haupt.replace('<a class="pill" href="#plus">Plus ansehen', '<a class="pi
 haupt = haupt.replace('<a class="pill" href="#">Plus entdecken', '<a class="pill" href="plus.html">Plus entdecken')
 # Hinweis „Mockup“ und Platzhalter-Texte raus
 haupt = re.sub(r'\s*<p class="rv" style="margin-top:14px[^"]*">Vorschau:.*?</p>', "", haupt, flags=re.S)
-haupt = re.sub(r'<footer>.*?</footer>', FUSS.replace('class="fuss"', ''), haupt, flags=re.S)
+KI_HINWEIS = '<span class="ki-hinweis">Die Fotos auf dieser Seite wurden mit KI erstellt. Die abgebildeten Personen sind erfunden.</span>'
+FUSS_START = FUSS.replace('class="fuss"', '').replace("</footer>", "  " + KI_HINWEIS + "\n</footer>")
+haupt = re.sub(r'<footer>.*?</footer>', FUSS_START, haupt, flags=re.S)
 haupt = haupt.replace("Preis folgt · jährlich kündbar", "Preise siehst du vor dem Abschluss")
 index_html = seite("CollectView – Platten erkennen und sammeln",
                    "Barcode scannen oder Cover fotografieren: CollectView erkennt deine Schallplatten und CDs, zeigt Pressung, Jahr und Marktwert und baut daraus deine Sammlung.",

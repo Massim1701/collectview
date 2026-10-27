@@ -23,6 +23,8 @@ for f in sorted(SITE.glob("*.html")):
     for mail in re.findall(r"[A-Za-z0-9._-]+@[A-Za-z0-9._-]+\.[a-z]+", s):
         if mail not in ERLAUBT_MAIL:
             fehler.append(f"{f.name}: unerlaubte E-Mail-Adresse {mail}")
+    if f.name == "index.html" and "mit KI erstellt" not in s:
+        fehler.append("index.html: Kennzeichnung der KI-Fotos fehlt")
     for wort in ("Mockup", "covers-echt", "pexels"):
         if wort.lower() in s.lower():
             fehler.append(f"{f.name}: enthält \"{wort}\"")

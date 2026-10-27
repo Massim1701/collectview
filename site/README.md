@@ -34,6 +34,8 @@ Automatisierung (einmalig): In Forgejo (`massimo/collectview`, Einstellungen, Ac
 (Berechtigung „Cloudflare Pages: Bearbeiten") und `CLOUDFLARE_ACCOUNT_ID` (Konto-ID aus dem Cloudflare-Dashboard) anlegen,
 Actions für das Repo einschalten.
 
+- **KI-Fotos** sind auf der Startseite in der Fußzeile gekennzeichnet („mit KI erstellt, Personen erfunden"); `check.py` bricht ab, wenn der Hinweis fehlt.
+
 ## Offen
 - Android-Download und App-Store-Link: `download.html` zeigt „demnächst"; Links eintragen, sobald die Store-Einträge live sind.
 - Preis: nur das Web-Jahresabo (24,90 € pro Jahr). Der monatliche Preis (3,99 €) entfällt laut Entscheidung vom 27.10.2026; in `wireframes/pricing.html` und bei Stripe/den Stores steht er noch.
