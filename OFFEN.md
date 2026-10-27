@@ -135,6 +135,13 @@ Region EU/Frankfurt, Gastkonto nur anonyme Kennung, Auftragsverarbeitungsvertrae
 iOS: Info.plist hat jetzt ITSAppUsesNonExemptEncryption=false (gilt ab dem naechsten Build; Build 1
 ist schon hochgeladen).
 
+**Stand 27.10. abends:** Copyright im App-Store-Entwurf auf "© 2026 Driftware" (Massimo: immer Driftware).
+Snoxi iOS 2.3.7 veroeffentlicht (Ready for Distribution). Forgejo-Secrets CLOUDFLARE_ACCOUNT_ID und
+CLOUDFLARE_API_TOKEN (Pages: Edit, Token "Forgejo Pages Deploy collectview") gesetzt; Lauf #7 (Datenschutz
+neu + Android-Link) wartet auf den Runner. Offen bei Massimo: Paid Apps Agreement annehmen (Business),
+driftware-Schritt 5 beim Server-Claude, CollectView bei Apple einreichen (erst wenn die neue
+Datenschutzseite live ist), Android Play Console/Geraetetest.
+
 **Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
 echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
 
