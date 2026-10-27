@@ -66,6 +66,13 @@ schickte fuer Gaeste customer_email "" -> Stripe lehnt ab. Korrigiert im Repo
 (`|| undefined`), **Deploy der Edge Function steht noch aus** (wurde blockiert).
 Echte Zahlung (Live-Modus, 24,90 EUR) nicht getestet: Muss Massimo selbst machen.
 
+**Store-Texte (27.10.2026):** `store/STORE-TEXTE.md` (DE/EN, Datenschutz-Angaben, Review-Hinweis).
+Gefunden: Kamera-Text in Info.plist behauptete, es werde nichts verschickt, obwohl das
+Cover-Foto an Gemini geht; korrigiert. Datenschutzerklaerung (Worker `web/worker.js`)
+sagt noch "Abo-Kaeufe laufen ueber Apple bzw. Google", muss auf Stripe/Web umgestellt
+werden (Cloudflare-Deploy offen). Android-Manifest ist ok (Kamera-Recht, camera optional),
+applicationId online.driftware.collectview, versionCode 2.
+
 **Neu offen:**
 
 1. **Stripe im Echtbetrieb beweisen.** Geprüft (19.10.): `stripe-checkout` und

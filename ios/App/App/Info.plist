@@ -25,7 +25,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>CollectView liest den Barcode oder das Cover deiner Platten und CDs über die Kamera. Es werden keine Fotos gespeichert oder verschickt.</string>
+	<string>CollectView liest den Barcode oder das Cover deiner Platten und CDs über die Kamera. Beim Cover-Foto wird das Bild nur zur Erkennung an einen Bilderkennungsdienst gesendet und nicht gespeichert; Barcodes werden auf dem Gerät gelesen.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
