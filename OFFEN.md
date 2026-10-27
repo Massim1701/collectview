@@ -127,6 +127,14 @@ Datenschutzseite site/datenschutz.html ist noch alt (Apple bzw. Google); neuer B
 Emulator installiert (Release, versionName 1.0, versionCode 2), startet ohne Absturz, Suche per Barcode
 0720642442524 liefert 8 Treffer mit Covern (Netzwerkzugriff im Release-Build ok).
 
+**Datenschutz neu (27.10.2026, noch NICHT live):** site/datenschutz.html + build.py auf Branch website-neu
+(Commit 6a69d50, [skip ci]); Paket mit neuem Text und Android-Link liegt in ~/collectview-pages.
+Live geht es per `npx --yes wrangler@3 pages deploy ~/collectview-pages --project-name collectview-website
+--branch main` (Massimo; Claude darf Produktions-Deploys nicht). Vor dem Deploy gegenpruefen: Supabase
+Region EU/Frankfurt, Gastkonto nur anonyme Kennung, Auftragsverarbeitungsvertraege mit Dienstleistern.
+iOS: Info.plist hat jetzt ITSAppUsesNonExemptEncryption=false (gilt ab dem naechsten Build; Build 1
+ist schon hochgeladen).
+
 **Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
 echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
 
