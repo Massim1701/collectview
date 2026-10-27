@@ -114,6 +114,15 @@ Noch zu pruefen vor dem Klick: Copyright, Datenschutzseite live, ITSAppUsesNonEx
 In App Information steht "This developer has identified itself as a trader" (EU-DSA): Apple zeigt
 dann die Haendler-Kontaktdaten oeffentlich im EU-Store (Adresse, Telefon, E-Mail) - pruefen.
 
+**Android-Download live (27.10.2026):** `https://collectview.site/download` zeigt "APK laden" mit Version 1.0,
+10,2 MB und SHA-256; Link auf https://driftware.online/dl/CollectView-1.0.apk (Datei auf fornetta
+/srv/www/dl/, signierte Release-APK, Upload-Schluessel). Deploy von Hand per
+`wrangler pages deploy ~/collectview-pages --project-name collectview-website --branch main`
+(Pages-Projekt, Direct Upload); der Forgejo-Workflow website-deploy scheitert, weil die Secrets
+CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID fehlen. Quelle der Seite: Branch website-neu (site/),
+Commit 66c6504. Geplant: Deploys spaeter ueber Coolify (Entscheidung Massimo, kein Umzug ueber Nacht).
+Datenschutzseite site/datenschutz.html ist noch alt (Apple bzw. Google); neuer Block: store/datenschutz-body.html.
+
 **Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
 echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
 
