@@ -40,6 +40,13 @@ const resultsCard = document.getElementById("results-card");
 const resultsEl = document.getElementById("results");
 const resultsTitleEl = document.getElementById("results-title");
 const resultsSubEl = document.getElementById("results-sub");
+
+/* Vor setResultsHead() deklariert, das paintAppHinweis() schon beim ersten
+   Aufruf liest (let: sonst Zugriff vor der Initialisierung). */
+let scanQuota = { used: 0, subscribed: false, known: false };
+// Erst wenn der Abo-Status geladen ist, zeigt paintAppHinweis() etwas an,
+// damit Plus-Konten den Hinweis nicht kurz aufblitzen sehen.
+let aboStatusBekannt = false;
 const recentEl = document.getElementById("recent-saved");
 const codeForm = document.getElementById("code-form");
 const codeInput = document.getElementById("code-input");
@@ -1232,10 +1239,6 @@ function normalizeResult(r, barcode) {
 /* ---------- Free-Limit auf Scans ---------- */
 
 /** Stand des Kontingents für die Anzeige; verbindlich ist der Trigger. */
-let scanQuota = { used: 0, subscribed: false, known: false };
-// Erst wenn der Abo-Status geladen ist, zeigt paintAppHinweis() etwas an,
-// damit Plus-Konten den Hinweis nicht kurz aufblitzen sehen.
-let aboStatusBekannt = false;
 
 async function refreshScanQuota() {
   if (!currentUser) return;

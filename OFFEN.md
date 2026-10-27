@@ -43,6 +43,14 @@ dazu Sandbox-Kauf auf dem iPhone, Jahresabo bei Apple und `APPLE_SANDBOX_ERLAUBT
 Die Edge Functions `abo-pruefen`, `abo-notify` und `abo-notify-google` sind weiter
 deployt, werden aber nicht mehr aufgerufen.
 
+**Branch-Review 27.10.2026:** Zwei Fehler gefunden und behoben. (1) `scanQuota`
+und `aboStatusBekannt` standen unterhalb von `setResultsHead()`; der neue Hinweis
+las sie vor der Initialisierung (`let`), dadurch brachen alle Scan-Flow-Tests.
+Deklaration nach oben gezogen. (2) `build-www.sh` warf `login.html`, `regeln.html`
+und `reset-password.html` aus dem App-Paket, obwohl die Anmeldung in der App
+dorthin führt; bleiben jetzt drin. Suite: 19 rot wie auf `main` (5 assets,
+14 veraltete Scan-Flow-Tests), alle neuen Tests grün.
+
 **Neu offen:**
 
 1. **Stripe im Echtbetrieb beweisen.** Geprüft (19.10.): `stripe-checkout` und

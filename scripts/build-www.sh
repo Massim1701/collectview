@@ -21,11 +21,13 @@ mkdir -p www
 cp -R app www/app
 cp -R wireframes www/wireframes
 
-# Reine Web-Seiten und ihre Skripte bleiben draußen. Verlinkt irgendwo noch
+# Reine Web-Seiten und ihre Skripte bleiben draußen. login, regeln und
+# reset-password bleiben drin: die Anmeldung in der App (Info-Seite, Hinweis
+# nach dem Scan) führt dorthin. Verlinkt irgendwo noch
 # jemand dorthin, endet der Link im Leeren statt bei einem Bezahlweg --
 # test/assets.js prüft zusätzlich, dass alle Skripte der Seiten im Paket sind.
-WEB_SEITEN="admin collection detail import inbox index listing-new login marketplace-listing marketplace regeln reset-password wishlist"
-WEB_SKRIPTE="abo admin collection csv-import detail feedback home login marketplace offline-cache reset-password sale-text"
+WEB_SEITEN="admin collection detail import inbox index listing-new marketplace-listing marketplace wishlist"
+WEB_SKRIPTE="abo admin collection csv-import detail feedback home marketplace offline-cache sale-text"
 for n in $WEB_SEITEN; do rm -f "www/app/$n.html"; done
 for n in $WEB_SKRIPTE; do rm -f "www/app/js/$n.js"; done
 rm -f www/wireframes/*.html www/wireframes/DESIGN-SYSTEM.md
