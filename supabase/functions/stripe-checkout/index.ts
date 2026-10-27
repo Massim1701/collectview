@@ -83,7 +83,8 @@ Deno.serve(async (req) => {
       mode: "subscription",
       line_items: [{ price: preisId, quantity: 1 }],
       client_reference_id: nutzer.id,
-      customer_email: nutzer.email ?? undefined,
+      // Gäste (anonyme Konten) haben email ""; Stripe lehnt eine leere Adresse ab.
+      customer_email: nutzer.email || undefined,
       success_url: `${SITE_URL}/wireframes/pricing.html?checkout=erfolg`,
       cancel_url: `${SITE_URL}/wireframes/pricing.html?checkout=abgebrochen`,
     });

@@ -51,6 +51,21 @@ und `reset-password.html` aus dem App-Paket, obwohl die Anmeldung in der App
 dorthin führt; bleiben jetzt drin. Suite: 19 rot wie auf `main` (5 assets,
 14 veraltete Scan-Flow-Tests), alle neuen Tests grün.
 
+**Store-Regeln gegengelesen (27.10.2026):** Apple 3.1.1(a): außerhalb der USA keine
+Links oder Handlungsaufforderungen zu anderen Zahlwegen; 5.1.1(v): wer Konten
+anlegen lässt, muss Kontolöschung in der App bieten. Google Payments: kein Link,
+der zu einem anderen Zahlweg führen kann. Folgen: Hinweis nach dem Scan ist nur noch
+Text (kein Link zur Webseite), "Registrieren" und Nutzungsregeln-Häkchen sind in
+der App ausgeblendet (nur Anmelden). Damit entfällt die Löschpflicht in der App;
+neue Konten entstehen nur im Web.
+**Stripe geprüft (27.10.2026):** Webhook im Dashboard aktiv, 3 Ereignisse
+(checkout.session.completed, customer.subscription.updated/deleted), URL stimmt;
+Katalog: ein Preis 24,90 EUR/Jahr, passt zur Webseite. Monatspreis gibt es nicht
+(Webseite bietet im Browser nur Jaehrlich). Fehler gefunden: stripe-checkout
+schickte fuer Gaeste customer_email "" -> Stripe lehnt ab. Korrigiert im Repo
+(`|| undefined`), **Deploy der Edge Function steht noch aus** (wurde blockiert).
+Echte Zahlung (Live-Modus, 24,90 EUR) nicht getestet: Muss Massimo selbst machen.
+
 **Neu offen:**
 
 1. **Stripe im Echtbetrieb beweisen.** Geprüft (19.10.): `stripe-checkout` und

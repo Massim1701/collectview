@@ -63,10 +63,10 @@ test("Hinweis nach dem Scan: nur ohne Plus und erst, wenn der Abo-Status bekannt
   assertEqual(appHinweisSichtbar({ aboBekannt: false, subscribed: false }), false, "Status unbekannt: nichts anzeigen");
 });
 
-test("Hinweis nach dem Scan verlinkt auf die Webseite, ohne Preis und Kauf", () => {
+test("Hinweis nach dem Scan ist nur Text: kein Link zur Webseite, kein Preis, kein Kauf", () => {
   for (const gast of [true, false]) {
     const html = appHinweisMarkup(gast);
-    assert(html.includes(`href="${APP_WEB_URL}"`), "Link zur Webseite fehlt");
+    assert(!/href="https?:/.test(html), "externer Link im Hinweis");
     for (const wort of ["pricing", "Plus", "Abo", "€", "Preis", "kaufen", "bezahl", "checkout", "stripe"]) {
       assert(!html.toLowerCase().includes(wort.toLowerCase()), `"${wort}" steht im Hinweis`);
     }
