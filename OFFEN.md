@@ -96,6 +96,17 @@ ist jetzt im Repo; Supabase-Projekt ist ACTIVE_HEALTHY. `_diag-stripe-status` is
 bewusst nicht ins Repo uebernommen (es gaebe ohne Anmeldung Stripe-Kontodaten aus). Die Dateien im
 alten Arbeitsverzeichnis /Volumes/Daten/Dokumente/schallplatten-katalog bleiben unberuehrt.
 
+**App Store Connect Entwurf iOS 1.0 (27.10.2026, App-ID 6807394925), NICHT eingereicht:**
+Build 1 ausgewaehlt; Screenshots iPhone 6,3" (1206x2622) + iPad 13" (2064x2752) hochgeladen
+(~/collectview-screenshots, Skript screenshots-erzeugen.mjs); Beschreibung, Keywords, Untertitel
+ersetzt (alter Text: store/ALT-beschreibung-appstore-de.txt); Pruefer-Notiz mit Test-Barcode
+0720642442524 gesetzt; Anmeldedaten fuer Pruefer entfernt (App braucht keine); Veroeffentlichung
+manuell. **App-Datenschutz neu veroeffentlicht:** Email Address, Photos or Videos, User ID,
+Product Interaction (je App-Funktion, mit Identitaet verknuepft, kein Tracking); Purchase
+History entfernt. Offen dort: Altersfreigabe pruefen, Copyright (steht "Massimo Manca"),
+Screenshot-Verarbeitung abwarten, Datenschutzseite live korrigieren (store/DATENSCHUTZ-TEXTBAUSTEINE.md),
+dann "Add for Review" (Massimo).
+
 **Noch offen auf echtem Geraet:** Barcode-Scan mit echter Kamera, Cover-Foto, Anmelden mit
 echtem Konto. Release-Build/Signierung fuer Play noch nicht gemacht.
 
