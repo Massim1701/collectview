@@ -314,7 +314,41 @@ css += """
 (HIER / "assets").mkdir(exist_ok=True)
 (HIER / "assets" / "site.css").write_text(css.strip() + "\n", encoding="utf-8")
 (HIER / "assets" / "site.js").write_text(js, encoding="utf-8")
+# ---------------------------------------------------------------- Suchmaschinen-Kopfdaten (idempotent)
+import html as _html, json as _json
+BASIS_URL = "https://collectview.site"
+APPSTORE_ID = "6807394925"
+OG_BILD = BASIS_URL + "/assets/og-bild.png"
+APP_LD = {"@type": "MobileApplication", "name": "CollectView", "url": BASIS_URL + "/",
+          "description": "Schallplatten und CDs per Barcode oder Cover-Foto erkennen, Marktwert laut Discogs sehen und die Sammlung verwalten. Kostenlos und ohne Anmeldung nutzbar, ein Konto ist optional.",
+          "applicationCategory": "LifestyleApplication", "operatingSystem": "iOS, Android", "inLanguage": "de",
+          "isAccessibleForFree": True, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
+          "downloadUrl": "https://apps.apple.com/de/app/collectview/id" + APPSTORE_ID,
+          "publisher": {"@type": "Organization", "name": "Driftware", "url": "https://driftware.online/"}}
+def seo_block(name, t):
+    e = _html.escape
+    titel = re.search(r"<title>(.*?)</title>", t, re.S).group(1)
+    beschr = re.search(r'<meta name="description" content="([^"]*)"', t).group(1)
+    url = BASIS_URL + ("/" if name == "index" else "/" + name)
+    z = ['<!-- seo -->',
+         '<link rel="preload" href="assets/fonts/BricolageGrotesque-latin.woff2" as="font" type="font/woff2" crossorigin>',
+         f'<link rel="canonical" href="{url}">',
+         '<meta property="og:type" content="website">', '<meta property="og:locale" content="de_DE">',
+         '<meta property="og:site_name" content="CollectView">',
+         f'<meta property="og:title" content="{titel}">', f'<meta property="og:description" content="{beschr}">',
+         f'<meta property="og:url" content="{url}">', f'<meta property="og:image" content="{OG_BILD}">',
+         '<meta property="og:image:width" content="1200">', '<meta property="og:image:height" content="630">',
+         '<meta name="twitter:card" content="summary_large_image">']
+    if name in ("index", "download"):
+        z.append(f'<meta name="apple-itunes-app" content="app-id={APPSTORE_ID}">')
+        z.append('<script type="application/ld+json">' + _json.dumps({"@context": "https://schema.org", **APP_LD}, ensure_ascii=False) + '</script>')
+    if name == "index":
+        z.append('<script type="application/ld+json">' + _json.dumps({"@context": "https://schema.org", "@type": "WebSite", "name": "CollectView", "url": BASIS_URL + "/", "inLanguage": "de"}, ensure_ascii=False) + '</script>')
+    z.append('<!-- /seo -->')
+    t = re.sub(r"<!-- seo -->.*?<!-- /seo -->\n?", "", t, flags=re.S)
+    return t.replace('<link rel="stylesheet" href="assets/site.css">', "\n".join(z) + '\n<link rel="stylesheet" href="assets/site.css">', 1)
 for name, inhalt in (("index", index_html), ("download", app_html), ("plus", plus_html), ("support", support_html),
                      ("datenschutz", datenschutz_html), ("impressum", impressum_html)):
+    inhalt = seo_block(name, inhalt)
     (HIER / f"{name}.html").write_text(inhalt, encoding="utf-8")
 print("Seiten erzeugt:", ", ".join(sorted(p.name for p in HIER.glob("*.html"))))
