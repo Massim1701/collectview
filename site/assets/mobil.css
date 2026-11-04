@@ -1,0 +1,28 @@
+
+/* Telefon und iPad (Stand 04.11.2026): lesbar, antippbar, kein Überlaufen */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+h1,h2,h3,summary{overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
+.prose a[href^="mailto:"],.hinweis a{display:inline-block;padding:11px 0}
+@media (max-width:900px){
+  /* Kopfzeile ist auf dem Telefon immer hell: Schrift liegt sonst auf dem Foto und ist schlecht zu lesen */
+  header.site{background:var(--bg);box-shadow:0 1px 0 var(--rule);color:var(--ink)}
+  header.site nav a:not(.brand){color:var(--ink2);min-height:60px;padding:0 12px;font-size:16px}
+  header.site .brand{min-height:60px}
+  .wrap{padding-left:max(28px,env(safe-area-inset-left));padding-right:max(28px,env(safe-area-inset-right))}
+  .cf label{font-size:14px}
+  .stage .note,.lead,.prose .stand,.hinweis,.two .preis{font-size:16px}
+  footer,.fuss{font-size:15px}
+  .faq summary{min-height:56px}
+}
+@media (max-width:480px){
+  header.site nav{padding:0 14px}
+  header.site nav a:not(.brand){padding:0 10px;font-size:15px}
+  .stage .sub p,.show p.t,.home p,.end p,.sub-head p{font-size:20px}
+  .item p,.row2 p,.prose p,.prose address,.faq p,.two li{font-size:18px}
+  .pill{width:100%;max-width:420px}
+}
+@media (min-width:600px) and (max-width:1100px){
+  /* iPad: Text nicht zu breit, Überschriften nicht zu klein */
+  .item p,.row2 p,.prose p,.faq p{font-size:20px;max-width:44ch}
+  .stage .sub p{font-size:26px}
+}
