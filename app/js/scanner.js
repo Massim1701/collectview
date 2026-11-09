@@ -72,8 +72,8 @@ function setStatus(text, { active = false, busy = false } = {}) {
 const lampEl = document.getElementById("scan-lamp");
 
 /**
- * Scan-Ampel. Rot = die App arbeitet nicht, gelb = sie sucht, gruen = Ergebnis da.
- *   "off"    Ruhe, bereit fuer den naechsten Scan  -> rot leuchtet, "Bereit"
+ * Scan-Ampel. Blau = bereit, rot = Fehler/nichts gefunden, gelb = sie sucht, gruen = Ergebnis da.
+ *   "off"    Ruhe, bereit fuer den naechsten Scan  -> blau leuchtet, "Bereit"
  *   "red"    nichts gefunden, gestoppt oder Fehler -> rot leuchtet, Text je Fall
  *   "yellow" Kamera sucht einen Code oder die Suche laeuft
  *   "green"  Treffer da
@@ -86,7 +86,7 @@ const LAMP_STANDARDTEXT = { off: "Bereit", red: "Gestoppt", yellow: "Sucht …",
 
 function setLamp(state, text) {
   if (!lampEl) return;
-  const leuchtet = state === "off" ? "red" : state;
+  const leuchtet = state === "off" ? "blue" : state;
   lampEl.querySelectorAll(".scan-lamp-dot").forEach((dot) => {
     dot.classList.toggle("on", dot.dataset.lamp === leuchtet);
   });

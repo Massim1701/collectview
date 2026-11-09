@@ -108,10 +108,11 @@
       <div class="segmented-item" data-mode="cover">Cover-Foto</div>
     </div>
 
-    <!-- Ampel: Rot = die App arbeitet nicht, Gelb = sie sucht, Gruen = Ergebnis da.
+    <!-- Ampel: Blau = bereit, Rot = Fehler/kein Treffer, Gelb = sie sucht, Gruen = Ergebnis da.
          Gross und direkt ueber dem Kamerabild, mit Klartext daneben. -->
     <div class="scan-lamp" id="scan-lamp" data-state="off" role="status" aria-live="polite">
       <div class="scan-lamp-lights" aria-hidden="true">
+        <span class="scan-lamp-dot" data-lamp="blue"></span>
         <span class="scan-lamp-dot" data-lamp="red"></span>
         <span class="scan-lamp-dot" data-lamp="yellow"></span>
         <span class="scan-lamp-dot" data-lamp="green"></span>

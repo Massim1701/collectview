@@ -15,9 +15,9 @@ Stand: 19.10.2026 (Kurzfassung oben neu, der Rest der Datei ist vom 02.09.2026)
 Anlass (Massimo): Die Kamera erfasste den Barcode nicht zuverlässig, und die drei Ampelpunkte
 waren zu klein, um auf einen Blick zu sehen, was die App tut.
 
-- **Ampel** (`scanner.html`, `app.css`, `setLamp()` in `scanner.js`): drei 38-px-Lichter direkt über dem
-  Kamerabild, daneben Klartext. Rot = die App arbeitet nicht ("Bereit", "Kein Treffer", "Kamera aus" ...),
-  Gelb = sie sucht ("Sucht …", pulsiert), Grün = Treffer. Ruhezustand ist jetzt Rot "Bereit" (vorher alles aus).
+- **Ampel** (`scanner.html`, `app.css`, `setLamp()` in `scanner.js`): vier 36-px-Lichter direkt über dem
+  Kamerabild, daneben Klartext. Blau = bereit ("Bereit", Ruhezustand, vorher alles aus), Rot = Fehler/nichts
+  ("Kein Treffer", "Kamera aus" ...), Gelb = sie sucht ("Sucht …", pulsiert), Grün = Treffer.
 - **Nativer Scanner**: `@capacitor/barcode-scanner` 3.1.3 (Capacitor-Plugin, SPM-fähig; Android ML Kit, iOS Apple Vision).
   In der App öffnet "Barcode-Scan starten" den Vollbild-Scanner des Telefons (Dauerfokus). Im Browser bleibt ZXing.
   Das Ergebnis läuft durch dieselbe Prüfziffer-Kontrolle wie bisher, eine Lesung genügt (`nativScan()` in `scanner.js`).

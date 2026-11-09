@@ -20,7 +20,7 @@
 <select id="camera-select"></select>
 <div id="mode-toggle"></div>
 <div class="notice" id="scan-notice" hidden></div>
-<div class="scan-lamp" id="scan-lamp" data-state="off"><div class="scan-lamp-lights"><span class="scan-lamp-dot" data-lamp="red"></span><span class="scan-lamp-dot" data-lamp="yellow"></span><span class="scan-lamp-dot" data-lamp="green"></span></div><div class="scan-lamp-text" id="scan-lamp-text">Bereit</div></div>
+<div class="scan-lamp" id="scan-lamp" data-state="off"><div class="scan-lamp-lights"><span class="scan-lamp-dot" data-lamp="blue"></span><span class="scan-lamp-dot" data-lamp="red"></span><span class="scan-lamp-dot" data-lamp="yellow"></span><span class="scan-lamp-dot" data-lamp="green"></span></div><div class="scan-lamp-text" id="scan-lamp-text">Bereit</div></div>
 <p class="status" id="scan-status"></p>
 <p class="scan-quota" id="scan-quota"></p>
 <form id="code-form"><input id="code-input"><button id="code-submit" type="submit"></button><p class="err" id="code-error"></p></form>
@@ -1530,9 +1530,9 @@ test("Aus der Serie werden nur die besten Vollbilder aufgehoben", async () => {
 const lampAn = () => [...document.querySelectorAll("#scan-lamp .scan-lamp-dot.on")].map((d) => d.dataset.lamp);
 const lampText = () => document.getElementById("scan-lamp-text").textContent;
 
-test("Ampel: Ruhe leuchtet rot und sagt 'Bereit'", () => {
+test("Ampel: Ruhe leuchtet blau und sagt 'Bereit'", () => {
   setLamp("off");
-  assertEqual(lampAn().join(), "red");
+  assertEqual(lampAn().join(), "blue");
   assertEqual(lampText(), "Bereit");
 });
 
@@ -1621,7 +1621,7 @@ test("Nativ: Abbruch durch die Nutzerin ist kein Fehler", async () => {
   await mitNativPlugin({ scanBarcode: async () => { throw new Error("Scan cancelled"); } }, async (gesucht) => {
     await toggleScan();
     assertEqual(gesucht.length, 0);
-    assertEqual(lampAn().join(), "red");
+    assertEqual(lampAn().join(), "blue");
     assertEqual(lampText(), "Bereit");
   });
 });

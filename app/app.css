@@ -652,8 +652,8 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .placeholder{ font-size:14.5px; }
 .notice{ font-size:14.5px; }
 
-/* Scan-Ampel: rot = die App arbeitet nicht (bereit, gestoppt, Fehler, kein
-   Treffer), gelb = sie sucht, gruen = Ergebnis da. Immer alle drei sichtbar
+/* Scan-Ampel: blau = bereit, rot = Fehler/kein Treffer/gestoppt, gelb = sie
+   sucht, gruen = Ergebnis da. Immer alle drei sichtbar
    (blass), nur eine leuchtet. Gross genug, um sie im Augenwinkel zu lesen,
    und mit Klartext daneben: Farbe allein reicht nicht (Farbenblindheit). */
 .scan-lamp{
@@ -663,13 +663,15 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 }
 .scan-lamp-lights{ display:flex; gap:10px; align-items:center; }
 .scan-lamp-dot{
-  width:38px; height:38px; border-radius:999px; flex:none;
+  width:36px; height:36px; border-radius:999px; flex:none;
   border:2px solid transparent;
   transition:background-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
+.scan-lamp-dot[data-lamp="blue"]{ background:rgba(77,163,255,.20); border-color:rgba(77,163,255,.55); }
 .scan-lamp-dot[data-lamp="red"]{ background:rgba(255,77,94,.20); border-color:rgba(255,77,94,.55); }
 .scan-lamp-dot[data-lamp="yellow"]{ background:rgba(255,210,63,.24); border-color:rgba(214,170,0,.60); }
 .scan-lamp-dot[data-lamp="green"]{ background:rgba(52,199,89,.20); border-color:rgba(52,199,89,.55); }
+.scan-lamp-dot[data-lamp="blue"].on{ background:#4DA3FF; border-color:#4DA3FF; box-shadow:0 0 14px rgba(77,163,255,.65); transform:scale(1.08); }
 .scan-lamp-dot[data-lamp="red"].on{ background:#FF4D5E; border-color:#FF4D5E; box-shadow:0 0 14px rgba(255,77,94,.65); transform:scale(1.08); }
 .scan-lamp-dot[data-lamp="yellow"].on{ background:#FFD23F; border-color:#FFD23F; box-shadow:0 0 14px rgba(255,210,63,.7); transform:scale(1.08); animation:lampe-puls 1s ease-in-out infinite; }
 .scan-lamp-dot[data-lamp="green"].on{ background:#34C759; border-color:#34C759; box-shadow:0 0 14px rgba(52,199,89,.65); transform:scale(1.08); }
