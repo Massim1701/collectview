@@ -72,17 +72,27 @@ function setStatus(text, { active = false, busy = false } = {}) {
 const lampEl = document.getElementById("scan-lamp");
 
 /**
- * Scan-Ampel: "aus" (noch nichts los), "gelb" (Kamera sucht einen Code
- * oder die Discogs-/Katalog-Suche läuft), "gruen" (Treffer da), "rot"
- * (kein Barcode erkannt, keine Treffer, oder die Suche ist fehlgeschlagen).
- * Reine Anzeige, ändert nichts am Ablauf -- darf also überall zusätzlich
- * zu setStatus() stehen, ohne dass ein Fehler hier den Scan gefährdet.
+ * Scan-Ampel. Rot = die App arbeitet nicht, gelb = sie sucht, gruen = Ergebnis da.
+ *   "off"    Ruhe, bereit fuer den naechsten Scan  -> rot leuchtet, "Bereit"
+ *   "red"    nichts gefunden, gestoppt oder Fehler -> rot leuchtet, Text je Fall
+ *   "yellow" Kamera sucht einen Code oder die Suche laeuft
+ *   "green"  Treffer da
+ * Der Text steht gross neben den Lichtern; die Begruendung im Detail steht
+ * wie bisher in setStatus(). Reine Anzeige, aendert nichts am Ablauf -- darf
+ * also ueberall zusaetzlich zu setStatus() stehen, ohne dass ein Fehler hier
+ * den Scan gefaehrdet.
  */
-function setLamp(state) {
+const LAMP_STANDARDTEXT = { off: "Bereit", red: "Gestoppt", yellow: "Sucht …", green: "Treffer" };
+
+function setLamp(state, text) {
   if (!lampEl) return;
+  const leuchtet = state === "off" ? "red" : state;
   lampEl.querySelectorAll(".scan-lamp-dot").forEach((dot) => {
-    dot.classList.toggle("on", dot.dataset.lamp === state);
+    dot.classList.toggle("on", dot.dataset.lamp === leuchtet);
   });
+  lampEl.dataset.state = state;
+  const textEl = document.getElementById("scan-lamp-text");
+  if (textEl) textEl.textContent = text || LAMP_STANDARDTEXT[state] || "";
 }
 
 function setResultsHead(title, sub) {
@@ -359,11 +369,111 @@ cameraSelect.addEventListener("change", () => {
 
 /* ---------- Barcode-Scan ---------- */
 
+/* ---------- Nativer Scanner (App) ---------- */
+
+/*
+ * In der App liest nicht mehr JavaScript (ZXing) den Barcode, sondern das
+ * Telefon selbst: @capacitor/barcode-scanner. Android nutzt ML Kit, iOS die
+ * Texterkennung von Apple (Vision). Beide laufen mit der echten Kamera,
+ * Dauerfokus und Vollbild-Sucher, nicht mit einem 180-Pixel-Streifen im
+ * WebView. Im Browser (Web-App, Entwicklung) bleibt der ZXing-Weg unten.
+ *
+ * Das Plugin ist nicht gebundelt (die App hat keinen Bundler), deshalb
+ * registerPlugin: Der Aufruf geht ueber die Capacitor-Bruecke an den
+ * nativen Teil. Fehlt der native Teil, ist nativerScanner() null und alles
+ * laeuft wie bisher ueber ZXing.
+ */
+const NATIV_HINT_ALLE = 17;          // CapacitorBarcodeScannerTypeHint.ALL
+const NATIV_RUECKKAMERA = 1;         // CameraDirection.BACK
+const NATIV_ORIENTIERUNG_ADAPTIV = 3; // ScanOrientation.ADAPTIVE
+
+let nativPlugin;          // undefined = noch nicht gesucht, null = nicht vorhanden
+let nativScanLaeuft = false;
+
+function nativerScanner() {
+  if (nativPlugin !== undefined) return nativPlugin;
+  nativPlugin = null;
+  try {
+    const cap = window.Capacitor;
+    if (cap?.isNativePlatform?.() && cap.isPluginAvailable?.("CapacitorBarcodeScanner")) {
+      nativPlugin = cap.registerPlugin("CapacitorBarcodeScanner");
+    }
+  } catch {
+    nativPlugin = null;
+  }
+  return nativPlugin;
+}
+
+/**
+ * Oeffnet den Vollbild-Scanner des Telefons und sucht mit dem Ergebnis.
+ * Die Pruefziffer wird wie beim Web-Weg geprueft: ein nativer Leser ist
+ * sehr viel zuverlaessiger, aber ein QR-Code mit zufaellig 13 Ziffern oder
+ * ein halb verdeckter Code soll trotzdem nicht als Platte durchgehen.
+ * Eine einzelne Lesung genuegt hier: die doppelte Bestaetigung des
+ * Web-Wegs gleicht die Schwaeche des JavaScript-Lesers aus, nicht die des
+ * nativen.
+ */
+async function nativScan(plugin) {
+  if (nativScanLaeuft) return;
+  nativScanLaeuft = true;
+  setLamp("yellow", "Kamera offen");
+  setStatus("Scanner wird geöffnet …", { active: true, busy: true });
+
+  let res;
+  try {
+    res = await plugin.scanBarcode({
+      hint: NATIV_HINT_ALLE,
+      scanInstructions: "Strichcode ruhig in den Rahmen halten",
+      scanButton: false,
+      cameraDirection: NATIV_RUECKKAMERA,
+      scanOrientation: NATIV_ORIENTIERUNG_ADAPTIV,
+      cancelButtonAccessibilityLabel: "Abbrechen",
+      torchButtonOnAccessibilityLabel: "Licht ausschalten",
+      torchButtonOffAccessibilityLabel: "Licht einschalten",
+      android: { scanningLibrary: "mlkit" },
+    });
+  } catch (e) {
+    nativScanLaeuft = false;
+    const msg = String(e?.message || e || "");
+    if (/cancel|abort|abgebrochen|dismiss/i.test(msg)) {
+      setStatus("Scan abgebrochen. Bereit für den nächsten Scan.");
+      setLamp("off");
+    } else {
+      setStatus("Der Scanner konnte nicht geöffnet werden: " + msg + " Kamera-Zugriff in den Einstellungen erlauben oder die Ziffern unten eintippen.");
+      setLamp("red", "Kamera aus");
+    }
+    return;
+  }
+  nativScanLaeuft = false;
+
+  const roh = String(res?.ScanResult ?? "").trim();
+  if (!roh) {
+    setStatus("Nichts gelesen. Noch einmal versuchen.");
+    setLamp("off");
+    return;
+  }
+  const code = normalizeBarcode(roh);
+  if (!eanPruefzifferStimmt(code)) {
+    setStatus("Der Code wurde nicht sauber gelesen. Noch einmal versuchen oder die Ziffern unten eintippen.");
+    setLamp("red", "Nicht lesbar");
+    return;
+  }
+  setStatus("Erkannt: " + code);
+  lookupBarcode(code);
+}
+
 async function toggleScan() {
   if (mode !== "barcode") return;
   if (scanning) {
     stopScan();
     setLamp("off");
+    return;
+  }
+
+  // App: das Telefon liest den Barcode selbst (siehe oben).
+  const nativ = nativerScanner();
+  if (nativ) {
+    await nativScan(nativ);
     return;
   }
 
@@ -404,7 +514,7 @@ async function toggleScan() {
     frameEl.classList.remove("live");
     scanBtn.textContent = "Barcode-Scan starten";
     setStatus("Kamera-Zugriff fehlgeschlagen: " + e.message);
-    setLamp("red");
+    setLamp("red", "Kamera aus");
   }
 }
 
@@ -905,7 +1015,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
   resultsCard.style.display = "none";
   if (!(await allowScan("cover", text, counted))) return;
 
-  setLamp("yellow");
+  setLamp("yellow", "Suche läuft …");
   setStatus("Suche bei Discogs …", { active: true, busy: true });
 
   try {
@@ -913,7 +1023,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
     if (res.status === 429) {
       showRateLimitNotice(text, lookupCoverText);
       setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
-      setLamp("red");
+      setLamp("red", "Discogs bremst");
       return;
     }
     if (!res.ok) throw new Error(`Discogs antwortete mit ${res.status}`);
@@ -924,7 +1034,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
     await showScan(null, results, Promise.resolve([]));
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
-    setLamp("red");
+    setLamp("red", "Suche fehlgeschlagen");
   }
 }
 
@@ -1287,7 +1397,7 @@ async function allowScan(source, term, counted) {
     noticeEl.hidden = false;
     noticeEl.innerHTML = scanLimitNoticeMarkup();
     setStatus("");
-    setLamp("red");
+    setLamp("red", "Limit erreicht");
     scanQuota = { ...scanQuota, used: FREE_SCAN_LIMIT, known: true };
     paintScanQuota();
     return false;
@@ -1295,7 +1405,7 @@ async function allowScan(source, term, counted) {
 
   if (!result.ok) {
     setStatus("Scan konnte nicht gezählt werden: " + result.message);
-    setLamp("red");
+    setLamp("red", "Fehler");
     return false;
   }
 
@@ -1359,7 +1469,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
   resultsCard.style.display = "none";
   if (!(await allowScan("barcode", barcode, counted))) return;
 
-  setLamp("yellow");
+  setLamp("yellow", "Suche läuft …");
   setStatus("Suche bei Discogs …", { active: true, busy: true });
 
   // Schritt 3 startet hier, nicht nach der Discogs-Antwort: der Barcode
@@ -1394,7 +1504,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     if (res.status === 429) {
       showRateLimitNotice(barcode);
       setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
-      setLamp("red");
+      setLamp("red", "Discogs bremst");
       return;
     }
 
@@ -1431,7 +1541,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
       resultsCard.style.display = "block";
       renderUnreliableBarcode(barcode, results);
       setStatus("");
-      setLamp("red");
+      setLamp("red", "Code unsicher");
       return;
     }
 
@@ -1443,7 +1553,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     katalogLaeuft = katalogFuellen(results);
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
-    setLamp("red");
+    setLamp("red", "Suche fehlgeschlagen");
   }
 }
 
@@ -1478,7 +1588,7 @@ async function showScan(barcode, results, collectionByBarcodePromise, quelle = "
   if (results.length === 0) {
     renderNoMatch(barcode);
     setStatus("");
-    setLamp("red");
+    setLamp("red", "Kein Treffer");
     return;
   }
 
@@ -1989,6 +2099,7 @@ async function loadRecentlySaved() {
 /* ---------- Start ---------- */
 
 async function init() {
+  setLamp("off");
   // ensureSession() statt requireAuth(): kein Redirect zum Login, ohne
   // Sitzung wird eine anonyme angelegt (siehe auth.js) -- Scannen soll
   // ohne Konto gehen, nur das Speichern bleibt an CollectView Plus

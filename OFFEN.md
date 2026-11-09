@@ -10,6 +10,26 @@ Beide Sitzungen sehen den Code — also gehört die Liste in den Code.
 
 Stand: 19.10.2026 (Kurzfassung oben neu, der Rest der Datei ist vom 02.09.2026)
 
+## Stand 09.11.2026: Scanner-Ampel und nativer Barcode-Scanner (Branch `scanner-nativ`)
+
+Anlass (Massimo): Die Kamera erfasste den Barcode nicht zuverlässig, und die drei Ampelpunkte
+waren zu klein, um auf einen Blick zu sehen, was die App tut.
+
+- **Ampel** (`scanner.html`, `app.css`, `setLamp()` in `scanner.js`): drei 38-px-Lichter direkt über dem
+  Kamerabild, daneben Klartext. Rot = die App arbeitet nicht ("Bereit", "Kein Treffer", "Kamera aus" ...),
+  Gelb = sie sucht ("Sucht …", pulsiert), Grün = Treffer. Ruhezustand ist jetzt Rot "Bereit" (vorher alles aus).
+- **Nativer Scanner**: `@capacitor/barcode-scanner` 3.1.3 (Capacitor-Plugin, SPM-fähig; Android ML Kit, iOS Apple Vision).
+  In der App öffnet "Barcode-Scan starten" den Vollbild-Scanner des Telefons (Dauerfokus). Im Browser bleibt ZXing.
+  Das Ergebnis läuft durch dieselbe Prüfziffer-Kontrolle wie bisher, eine Lesung genügt (`nativScan()` in `scanner.js`).
+  Nicht gewählt: `@capacitor-mlkit/barcode-scanning` (nur CocoaPods, das Projekt nutzt SPM).
+- Android: `minSdkVersion` 24 -> 26 (Vorgabe des Plugins). iOS: Mindestversion bleibt 15.
+- Geprüft: iOS-Simulator-Build (Debug) erfolgreich mit Plugin; Testreihe 19 von 201 rot wie vorher (alle bekannt),
+  neue Tests für Ampel und nativen Scanner in `test/scan-flow.test.html` grün.
+- **NICHT geprüft:** der Scanner mit echter Kamera (Simulator und Emulator haben keine), der Android-Build
+  (auf dem Mac fehlt das Android-SDK). Vor einem Store-Update auf einem echten iPhone und Android-Gerät testen.
+- **Offen:** Branch ist nur lokal/auf Fornetta, nicht in `app-gratis` gemerged, keine neue Build-Nummer, kein Store-Update.
+  Cover-Foto-Modus liest weiter per WebView-Kamera (nicht Teil dieser Änderung).
+
 ## Entscheidung 19.10.2026: Die App ist kostenlos, bezahlt wird nur im Web
 
 Massimo: Die App kostet nichts, es gibt in ihr nichts freizuschalten. Nur die

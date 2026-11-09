@@ -108,6 +108,17 @@
       <div class="segmented-item" data-mode="cover">Cover-Foto</div>
     </div>
 
+    <!-- Ampel: Rot = die App arbeitet nicht, Gelb = sie sucht, Gruen = Ergebnis da.
+         Gross und direkt ueber dem Kamerabild, mit Klartext daneben. -->
+    <div class="scan-lamp" id="scan-lamp" data-state="off" role="status" aria-live="polite">
+      <div class="scan-lamp-lights" aria-hidden="true">
+        <span class="scan-lamp-dot" data-lamp="red"></span>
+        <span class="scan-lamp-dot" data-lamp="yellow"></span>
+        <span class="scan-lamp-dot" data-lamp="green"></span>
+      </div>
+      <div class="scan-lamp-text" id="scan-lamp-text">Bereit</div>
+    </div>
+
     <div class="scan-frame" id="scan-frame">
       <video id="video" autoplay muted playsinline></video>
       <div class="placeholder">
@@ -134,11 +145,6 @@
       <button class="btn-secondary" style="height:52px;" id="torch-btn" type="button" hidden aria-pressed="false">Licht an</button>
     </div>
     <div class="notice" id="scan-notice" role="status" aria-live="polite" hidden></div>
-    <div class="scan-lamp" id="scan-lamp" role="status" aria-live="polite" aria-label="Scan-Status">
-      <span class="scan-lamp-dot" data-lamp="red"></span>
-      <span class="scan-lamp-dot" data-lamp="yellow"></span>
-      <span class="scan-lamp-dot" data-lamp="green"></span>
-    </div>
     <p class="status" id="scan-status" role="status" aria-live="polite"></p>
     <p class="scan-quota" id="scan-quota" role="status" aria-live="polite"></p>
 

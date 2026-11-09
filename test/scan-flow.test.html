@@ -20,6 +20,7 @@
 <select id="camera-select"></select>
 <div id="mode-toggle"></div>
 <div class="notice" id="scan-notice" hidden></div>
+<div class="scan-lamp" id="scan-lamp" data-state="off"><div class="scan-lamp-lights"><span class="scan-lamp-dot" data-lamp="red"></span><span class="scan-lamp-dot" data-lamp="yellow"></span><span class="scan-lamp-dot" data-lamp="green"></span></div><div class="scan-lamp-text" id="scan-lamp-text">Bereit</div></div>
 <p class="status" id="scan-status"></p>
 <p class="scan-quota" id="scan-quota"></p>
 <form id="code-form"><input id="code-input"><button id="code-submit" type="submit"></button><p class="err" id="code-error"></p></form>
@@ -1523,6 +1524,140 @@ test("Aus der Serie werden nur die besten Vollbilder aufgehoben", async () => {
     "mehr als zwei Durchgänge durch die Texterkennung gibt es ohnehin nicht");
   assert(SERIE_BEHALTEN < SERIE_BILDER, "sonst wird nichts eingespart");
 });
+
+/* ---------- Ampel: rot = arbeitet nicht, gelb = sucht, gruen = Ergebnis da ---------- */
+
+const lampAn = () => [...document.querySelectorAll("#scan-lamp .scan-lamp-dot.on")].map((d) => d.dataset.lamp);
+const lampText = () => document.getElementById("scan-lamp-text").textContent;
+
+test("Ampel: Ruhe leuchtet rot und sagt 'Bereit'", () => {
+  setLamp("off");
+  assertEqual(lampAn().join(), "red");
+  assertEqual(lampText(), "Bereit");
+});
+
+test("Ampel: Suche leuchtet nur gelb", () => {
+  setLamp("yellow");
+  assertEqual(lampAn().join(), "yellow");
+  assertEqual(lampText(), "Sucht …");
+});
+
+test("Ampel: Treffer leuchtet nur gruen", () => {
+  setLamp("green");
+  assertEqual(lampAn().join(), "green");
+  assertEqual(lampText(), "Treffer");
+});
+
+test("Ampel: rot kann einen eigenen Text tragen", () => {
+  setLamp("red", "Kein Treffer");
+  assertEqual(lampAn().join(), "red");
+  assertEqual(lampText(), "Kein Treffer");
+  setLamp("red");
+  assertEqual(lampText(), "Gestoppt");
+});
+
+test("Ampel: immer genau ein Licht an", () => {
+  for (const z of ["off", "red", "yellow", "green"]) {
+    setLamp(z);
+    assertEqual(lampAn().length, 1, "Zustand " + z);
+  }
+});
+
+test("Ampel: die Lichter sind gross genug zum Erkennen", () => {
+  // fetch ist in dieser Testseite ersetzt, deshalb XMLHttpRequest.
+  const x = new XMLHttpRequest();
+  x.open("GET", "../app/app.css", false);
+  x.send();
+  const m = x.responseText.match(/\.scan-lamp-dot\{[^}]*width:(\d+)px/);
+  assert(m && Number(m[1]) >= 32, "Ampelpunkt kleiner als 32 px: " + (m && m[1]));
+});
+
+/* ---------- Nativer Scanner (App) ---------- */
+
+async function mitNativPlugin(plugin, fn) {
+  const alt = { nativPlugin, lookupBarcode: window.lookupBarcode };
+  const gesucht = [];
+  nativPlugin = plugin;
+  window.lookupBarcode = async (code) => { gesucht.push(code); };
+  mode = "barcode";
+  try { await fn(gesucht); }
+  finally { nativPlugin = alt.nativPlugin; window.lookupBarcode = alt.lookupBarcode; nativScanLaeuft = false; }
+}
+
+test("Nativ: ein gueltiger Code geht in die Suche", async () => {
+  await mitNativPlugin({ scanBarcode: async () => ({ ScanResult: "4006381333931", format: 9 }) }, async (gesucht) => {
+    await toggleScan();
+    assertEqual(gesucht.join(), "4006381333931");
+  });
+});
+
+test("Nativ: der Scanner bekommt die Rueckkamera und keine Aufnahmetaste", async () => {
+  let optionen = null;
+  await mitNativPlugin({ scanBarcode: async (o) => { optionen = o; return { ScanResult: "4006381333931" }; } }, async () => {
+    await toggleScan();
+  });
+  assertEqual(optionen.cameraDirection, 1, "Rueckkamera");
+  assertEqual(optionen.scanButton, false, "automatisch scannen");
+  assertEqual(optionen.hint, 17, "alle Formate, geprueft wird danach");
+});
+
+test("Nativ: falsche Pruefziffer wird verworfen, Ampel rot", async () => {
+  await mitNativPlugin({ scanBarcode: async () => ({ ScanResult: "4006381333932" }) }, async (gesucht) => {
+    await toggleScan();
+    assertEqual(gesucht.length, 0, "darf nicht gesucht werden");
+    assertEqual(lampAn().join(), "red");
+    assertEqual(lampText(), "Nicht lesbar");
+  });
+});
+
+test("Nativ: ein QR-Code mit Text wird nicht als Barcode gesucht", async () => {
+  await mitNativPlugin({ scanBarcode: async () => ({ ScanResult: "https://example.com/abc", format: 0 }) }, async (gesucht) => {
+    await toggleScan();
+    assertEqual(gesucht.length, 0);
+  });
+});
+
+test("Nativ: Abbruch durch die Nutzerin ist kein Fehler", async () => {
+  await mitNativPlugin({ scanBarcode: async () => { throw new Error("Scan cancelled"); } }, async (gesucht) => {
+    await toggleScan();
+    assertEqual(gesucht.length, 0);
+    assertEqual(lampAn().join(), "red");
+    assertEqual(lampText(), "Bereit");
+  });
+});
+
+test("Nativ: ein Fehler des Scanners steht da und die Ampel sagt 'Kamera aus'", async () => {
+  await mitNativPlugin({ scanBarcode: async () => { throw new Error("Camera permission denied"); } }, async () => {
+    await toggleScan();
+    assertEqual(lampText(), "Kamera aus");
+    assert(document.getElementById("scan-status").textContent.includes("permission denied"), "Grund fehlt");
+  });
+});
+
+test("Nativ: ohne Plugin laeuft der ZXing-Weg wie bisher", async () => {
+  const alt = nativPlugin;
+  nativPlugin = null;
+  zxingAufrufe.length = 0;
+  mode = "barcode";
+  try {
+    await toggleScan();
+    assert(zxingAufrufe.length === 1, "ZXing haette starten muessen");
+  } finally { nativPlugin = alt; stopScan(); }
+});
+
+test("Nativ: Doppeltippen oeffnet den Scanner nicht zweimal", async () => {
+  let aufrufe = 0;
+  let fertig;
+  const warten = new Promise((r) => { fertig = r; });
+  await mitNativPlugin({ scanBarcode: () => { aufrufe++; return warten.then(() => ({ ScanResult: "" })); } }, async () => {
+    const a = toggleScan();
+    const b = toggleScan();
+    fertig();
+    await Promise.all([a, b]);
+    assertEqual(aufrufe, 1);
+  });
+});
+
 
 runTests();
 </script>

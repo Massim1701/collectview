@@ -652,19 +652,30 @@ a.link-chip:hover{ border-color:var(--accent); transform:translateY(-1px); }
 .placeholder{ font-size:14.5px; }
 .notice{ font-size:14.5px; }
 
-/* Scan-Ampel: rot = nicht erkannt/kein Treffer, gelb = Suche läuft,
-   gruen = Treffer da. Immer alle drei sichtbar, nur eine davon leuchtet --
-   klarer als ein einzelner Punkt, der Farbe wechselt und dabei
-   uebersehen werden kann. */
-.scan-lamp{ display:flex; gap:8px; align-items:center; margin:2px 0 4px; }
-.scan-lamp-dot{
-  width:11px; height:11px; border-radius:999px;
-  background:var(--border); opacity:.45;
-  transition:opacity .15s ease, box-shadow .15s ease;
+/* Scan-Ampel: rot = die App arbeitet nicht (bereit, gestoppt, Fehler, kein
+   Treffer), gelb = sie sucht, gruen = Ergebnis da. Immer alle drei sichtbar
+   (blass), nur eine leuchtet. Gross genug, um sie im Augenwinkel zu lesen,
+   und mit Klartext daneben: Farbe allein reicht nicht (Farbenblindheit). */
+.scan-lamp{
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px;
+  margin:0 0 14px; padding:12px 16px;
+  border:1px solid var(--border); border-radius:var(--radius-sm);
 }
-.scan-lamp-dot[data-lamp="red"].on{ background:#FF4D5E; opacity:1; box-shadow:0 0 6px rgba(255,77,94,.6); }
-.scan-lamp-dot[data-lamp="yellow"].on{ background:#FFD23F; opacity:1; box-shadow:0 0 6px rgba(255,210,63,.6); }
-.scan-lamp-dot[data-lamp="green"].on{ background:#34C759; opacity:1; box-shadow:0 0 6px rgba(52,199,89,.6); }
+.scan-lamp-lights{ display:flex; gap:10px; align-items:center; }
+.scan-lamp-dot{
+  width:38px; height:38px; border-radius:999px; flex:none;
+  border:2px solid transparent;
+  transition:background-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.scan-lamp-dot[data-lamp="red"]{ background:rgba(255,77,94,.20); border-color:rgba(255,77,94,.55); }
+.scan-lamp-dot[data-lamp="yellow"]{ background:rgba(255,210,63,.24); border-color:rgba(214,170,0,.60); }
+.scan-lamp-dot[data-lamp="green"]{ background:rgba(52,199,89,.20); border-color:rgba(52,199,89,.55); }
+.scan-lamp-dot[data-lamp="red"].on{ background:#FF4D5E; border-color:#FF4D5E; box-shadow:0 0 14px rgba(255,77,94,.65); transform:scale(1.08); }
+.scan-lamp-dot[data-lamp="yellow"].on{ background:#FFD23F; border-color:#FFD23F; box-shadow:0 0 14px rgba(255,210,63,.7); transform:scale(1.08); animation:lampe-puls 1s ease-in-out infinite; }
+.scan-lamp-dot[data-lamp="green"].on{ background:#34C759; border-color:#34C759; box-shadow:0 0 14px rgba(52,199,89,.65); transform:scale(1.08); }
+@keyframes lampe-puls{ 50%{ box-shadow:0 0 4px rgba(255,210,63,.35); } }
+@media (prefers-reduced-motion: reduce){ .scan-lamp-dot[data-lamp="yellow"].on{ animation:none; } }
+.scan-lamp-text{ font-size:22px; font-weight:800; line-height:1.15; letter-spacing:-.01em; color:var(--text); min-width:0; }
 
 /* --- Bedienelemente: Größe UND Touch-Ziel ----------------------------- */
 .btn-secondary.small{ height:44px; font-size:14.5px; }
