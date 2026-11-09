@@ -32,7 +32,11 @@ waren zu klein, um auf einen Blick zu sehen, was die App tut.
 - Android: `minSdkVersion` 24 -> 26 (Vorgabe des Plugins). iOS: Mindestversion bleibt 15.
 - Geprüft: iOS-Simulator-Build (Debug) erfolgreich mit Plugin; Testreihe 19 von 201 rot wie vorher (alle bekannt),
   neue Tests für Ampel und nativen Scanner in `test/scan-flow.test.html` grün.
-- **NICHT geprüft:** der Scanner mit echter Kamera (Simulator und Emulator haben keine), der Android-Build
+- **Release 09.11.2026:** iOS **1.1 (Build 5)** archiviert (Release) und zu App Store Connect hochgeladen
+  ("Upload succeeded"). Massimo hat den Scanner auf dem iPhone 17 Pro Max getestet: "jetzt passt es".
+  Offen: in App Store Connect Build 5 der Version 1.1 zuordnen, "Was ist neu" schreiben, zur Prüfung einreichen
+  (Einreichung macht Massimo selbst). Android (APK auf collectview.site) ist NICHT neu gebaut.
+- (Hinweis zum Stand davor) **Nicht geprüft** war der Scanner mit echter Kamera der Scanner mit echter Kamera (Simulator und Emulator haben keine), der Android-Build
   (auf dem Mac fehlt das Android-SDK). Vor einem Store-Update auf einem echten iPhone und Android-Gerät testen.
 - **Offen:** Branch ist nur lokal/auf Fornetta, nicht in `app-gratis` gemerged, keine neue Build-Nummer, kein Store-Update.
   Cover-Foto-Modus liest weiter per WebView-Kamera (nicht Teil dieser Änderung).
