@@ -139,8 +139,8 @@ app_inhalt = f"""<section style="padding-top:0">
     <div class="rows">
       {zeile("iPhone <b>und iPad</b>", "Die kostenlose CollectView-App für iOS. Scannen, erkennen, weitermachen, ohne Konto.",
              '<span class="tag">Version 1.0 · iPhone und iPad · App Store</span><br>', '<a class="pill dunkel" href="https://apps.apple.com/de/app/collectview/id6807394925" rel="noopener">Im App Store laden <span aria-hidden="true">→</span></a>')}
-      {zeile("<b>Android</b>", "Die kostenlose CollectView-App für Android, direkt als APK. Beim Installieren fragt Android einmal nach der Erlaubnis für unbekannte Quellen. Prüfsumme (SHA-256): <span style=\"word-break:break-all;font-size:13px\">5eae915b119c7287d437bc390b42258815beb25b9e2e516cfaab98e60d2843f8</span>",
-             '<span class="tag">Version 1.0 · 10,2 MB · APK</span><br>', '<a class="pill dunkel" href="https://driftware.online/dl/CollectView-1.0.apk" download>APK laden <span aria-hidden="true">↓</span></a>')}
+      {zeile("<b>Android</b>", "Die kostenlose CollectView-App für Android, direkt als APK. Beim Installieren fragt Android einmal nach der Erlaubnis für unbekannte Quellen. Prüfsumme (SHA-256): <span style=\"word-break:break-all;font-size:13px\">aee24d9fa34492c762cacd076c7d964a84eb49cd1fcdbecd8b0528849039fe9b</span>",
+             '<span class="tag">Version 1.1 · 37,8 MB · APK · ab Android 8</span><br>', '<a class="pill dunkel" href="https://driftware.online/dl/CollectView-1.1.apk" download>APK laden <span aria-hidden="true">↓</span></a>')}
       {zeile("Im <b>Browser</b>", "Auch ohne App: Scannen und Marktwert ansehen geht direkt im Browser, mit Konto auch Sammlung und Marktplatz.",
              '', '<a class="pill dunkel" href="/app/login.html">Im Browser öffnen <span aria-hidden="true">→</span></a>')}
     </div>
