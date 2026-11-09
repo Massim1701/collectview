@@ -1,0 +1,25 @@
+// swift-tools-version:5.7
+import PackageDescription
+
+let package = Package(
+    name: "OSBarcodeLib",
+    platforms: [
+        .iOS(.v15)
+    ],
+    products: [
+        .library(
+            name: "OSBarcodeLib",
+            type: .dynamic,
+            targets: ["OSBarcodeLib"]
+        ),
+    ],
+    targets: [
+        .target(
+            name: "OSBarcodeLib",
+            path: "Sources/OSBarcodeLib",
+            resources: [
+                .process("Scanner/OSBARCScannerView.xcassets")
+            ]
+        ),
+    ]
+)

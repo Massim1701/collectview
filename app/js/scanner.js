@@ -72,9 +72,11 @@ function setStatus(text, { active = false, busy = false } = {}) {
 const lampEl = document.getElementById("scan-lamp");
 
 /**
- * Scan-Ampel. Blau = bereit, rot = Fehler/nichts gefunden, gelb = sie sucht, gruen = Ergebnis da.
- *   "off"    Ruhe, bereit fuer den naechsten Scan  -> blau leuchtet, "Bereit"
- *   "red"    nichts gefunden, gestoppt oder Fehler -> rot leuchtet, Text je Fall
+ * Scan-Ampel. Blau = bereit, rot NUR wenn die Suche nichts gefunden hat, gelb = sie sucht,
+ * gruen = Ergebnis da.
+ *   "off"    Ruhe, bereit fuer den naechsten Scan  -> blau leuchtet, Text "Bereit" oder der Grund
+ *            (Kamera aus, Discogs bremst, Nicht lesbar ...): Fehler sind keine Suchergebnisse
+ *   "red"    die Suche lief und fand nichts ("Kein Treffer") -> rot leuchtet
  *   "yellow" Kamera sucht einen Code oder die Suche laeuft
  *   "green"  Treffer da
  * Der Text steht gross neben den Lichtern; die Begruendung im Detail steht
@@ -440,7 +442,7 @@ async function nativScan(plugin) {
       setLamp("off");
     } else {
       setStatus("Der Scanner konnte nicht geöffnet werden: " + msg + " Kamera-Zugriff in den Einstellungen erlauben oder die Ziffern unten eintippen.");
-      setLamp("red", "Kamera aus");
+      setLamp("off", "Kamera aus");
     }
     return;
   }
@@ -455,7 +457,7 @@ async function nativScan(plugin) {
   const code = normalizeBarcode(roh);
   if (!eanPruefzifferStimmt(code)) {
     setStatus("Der Code wurde nicht sauber gelesen. Noch einmal versuchen oder die Ziffern unten eintippen.");
-    setLamp("red", "Nicht lesbar");
+    setLamp("off", "Nicht lesbar");
     return;
   }
   setStatus("Erkannt: " + code);
@@ -514,7 +516,7 @@ async function toggleScan() {
     frameEl.classList.remove("live");
     scanBtn.textContent = "Barcode-Scan starten";
     setStatus("Kamera-Zugriff fehlgeschlagen: " + e.message);
-    setLamp("red", "Kamera aus");
+    setLamp("off", "Kamera aus");
   }
 }
 
@@ -1023,7 +1025,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
     if (res.status === 429) {
       showRateLimitNotice(text, lookupCoverText);
       setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
-      setLamp("red", "Discogs bremst");
+      setLamp("off", "Discogs bremst");
       return;
     }
     if (!res.ok) throw new Error(`Discogs antwortete mit ${res.status}`);
@@ -1034,7 +1036,7 @@ async function lookupCoverText(text, { counted = false } = {}) {
     await showScan(null, results, Promise.resolve([]));
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
-    setLamp("red", "Suche fehlgeschlagen");
+    setLamp("off", "Suche fehlgeschlagen");
   }
 }
 
@@ -1397,7 +1399,7 @@ async function allowScan(source, term, counted) {
     noticeEl.hidden = false;
     noticeEl.innerHTML = scanLimitNoticeMarkup();
     setStatus("");
-    setLamp("red", "Limit erreicht");
+    setLamp("off", "Limit erreicht");
     scanQuota = { ...scanQuota, used: FREE_SCAN_LIMIT, known: true };
     paintScanQuota();
     return false;
@@ -1405,7 +1407,7 @@ async function allowScan(source, term, counted) {
 
   if (!result.ok) {
     setStatus("Scan konnte nicht gezählt werden: " + result.message);
-    setLamp("red", "Fehler");
+    setLamp("off", "Fehler");
     return false;
   }
 
@@ -1504,7 +1506,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     if (res.status === 429) {
       showRateLimitNotice(barcode);
       setStatus("Discogs bremst gerade – Limit von 25 Anfragen pro Minute erreicht.");
-      setLamp("red", "Discogs bremst");
+      setLamp("off", "Discogs bremst");
       return;
     }
 
@@ -1541,7 +1543,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
       resultsCard.style.display = "block";
       renderUnreliableBarcode(barcode, results);
       setStatus("");
-      setLamp("red", "Code unsicher");
+      setLamp("off", "Code unsicher");
       return;
     }
 
@@ -1553,7 +1555,7 @@ async function lookupBarcode(barcode, { counted = false } = {}) {
     katalogLaeuft = katalogFuellen(results);
   } catch (e) {
     setStatus("Discogs-Suche fehlgeschlagen: " + e.message);
-    setLamp("red", "Suche fehlgeschlagen");
+    setLamp("off", "Suche fehlgeschlagen");
   }
 }
 

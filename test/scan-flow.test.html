@@ -1572,6 +1572,14 @@ test("Ampel: die Lichter sind gross genug zum Erkennen", () => {
   assert(m && Number(m[1]) >= 32, "Ampelpunkt kleiner als 32 px: " + (m && m[1]));
 });
 
+test("Ampel: rot wird nur fuer 'Kein Treffer' gesetzt", () => {
+  const x = new XMLHttpRequest();
+  x.open("GET", "../app/js/scanner.js", false);
+  x.send();
+  const rote = [...x.responseText.matchAll(/setLamp\("red"[^)]*\)/g)].map((m) => m[0]);
+  assertEqual(rote, ['setLamp("red", "Kein Treffer")']);
+});
+
 /* ---------- Nativer Scanner (App) ---------- */
 
 async function mitNativPlugin(plugin, fn) {
@@ -1601,11 +1609,11 @@ test("Nativ: der Scanner bekommt die Rueckkamera und keine Aufnahmetaste", async
   assertEqual(optionen.hint, 17, "alle Formate, geprueft wird danach");
 });
 
-test("Nativ: falsche Pruefziffer wird verworfen, Ampel rot", async () => {
+test("Nativ: falsche Pruefziffer wird verworfen, Ampel blau mit Grund (rot nur bei 'Kein Treffer')", async () => {
   await mitNativPlugin({ scanBarcode: async () => ({ ScanResult: "4006381333932" }) }, async (gesucht) => {
     await toggleScan();
     assertEqual(gesucht.length, 0, "darf nicht gesucht werden");
-    assertEqual(lampAn().join(), "red");
+    assertEqual(lampAn().join(), "blue");
     assertEqual(lampText(), "Nicht lesbar");
   });
 });
@@ -1629,6 +1637,7 @@ test("Nativ: Abbruch durch die Nutzerin ist kein Fehler", async () => {
 test("Nativ: ein Fehler des Scanners steht da und die Ampel sagt 'Kamera aus'", async () => {
   await mitNativPlugin({ scanBarcode: async () => { throw new Error("Camera permission denied"); } }, async () => {
     await toggleScan();
+    assertEqual(lampAn().join(), "blue", "ein Fehler ist kein Suchergebnis");
     assertEqual(lampText(), "Kamera aus");
     assert(document.getElementById("scan-status").textContent.includes("permission denied"), "Grund fehlt");
   });

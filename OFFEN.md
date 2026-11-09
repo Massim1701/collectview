@@ -22,6 +22,13 @@ waren zu klein, um auf einen Blick zu sehen, was die App tut.
   In der App öffnet "Barcode-Scan starten" den Vollbild-Scanner des Telefons (Dauerfokus). Im Browser bleibt ZXing.
   Das Ergebnis läuft durch dieselbe Prüfziffer-Kontrolle wie bisher, eine Lesung genügt (`nativScan()` in `scanner.js`).
   Nicht gewählt: `@capacitor-mlkit/barcode-scanning` (nur CocoaPods, das Projekt nutzt SPM).
+- **Rot nur bei "Kein Treffer"** (Massimo, 09.11.): Fehler (Kamera aus, Discogs bremst, Limit, Nicht lesbar ...)
+  zeigen Blau mit dem Grund als Text.
+- **Kamera-Fokus iOS** (Massimo: "man muss die Kamera wechseln"): Das Original-Plugin startet mit der normalen
+  Kamera (1x), die erst ab ca. 15-20 cm scharf stellt. Darum liegt eine lokale Kopie in
+  `plugins/capacitor-barcode-scanner/` (siehe dort `COLLECTVIEW-AENDERUNGEN.md`): Start mit der
+  Ultraweitwinkel-Kamera (0,5x, Nahfokus), falls vorhanden, Dauerfokus auf den Nahbereich; Zoom-Wähler bleibt.
+  `package.json` zeigt per `file:` darauf. Beim Plugin-Update die Stellen mit `COLLECTVIEW` neu anwenden.
 - Android: `minSdkVersion` 24 -> 26 (Vorgabe des Plugins). iOS: Mindestversion bleibt 15.
 - Geprüft: iOS-Simulator-Build (Debug) erfolgreich mit Plugin; Testreihe 19 von 201 rot wie vorher (alle bekannt),
   neue Tests für Ampel und nativen Scanner in `test/scan-flow.test.html` grün.
